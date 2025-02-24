@@ -71,3 +71,10 @@ php artisan view:clear
 php artisan route:clear
 php artisan clear-compiled
 php artisan config:cache
+
+
+mkdir storage\framework\sessions
+mkdir storage\framework\cache
+mkdir storage\framework\views
+
+php artisan config:clear
