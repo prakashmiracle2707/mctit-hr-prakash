@@ -22,7 +22,7 @@
 
 
     @if (\Auth::user()->type == 'employee')
-        <div class="col-xxl-8" >
+        <div class="col-xxl-6" >
             <div class="card">
                 <div class="card-header">
                     <div class="row">
@@ -48,11 +48,11 @@
                 </div>
                 <div class="card-body">
                     <!-- <div id='event_calendar' class='calendar'></div> -->
-                    <iframe src="https://calendar.google.com/calendar/embed?src={{\Auth::user()->email}}&ctz=UTC&mode=AGENDA&showPrint=0" style="border: 0" width="100%" height="600" frameborder="0" scrolling="no"></iframe>
+                    <iframe src="https://calendar.google.com/calendar/embed?src={{\Auth::user()->email}}&ctz=Asia/Kolkata&mode=AGENDA&showPrint=0" style="border: 0" width="100%" height="500" frameborder="0" scrolling="no"></iframe>
                 </div>
             </div>
         </div>
-        <div class="col-xxl-4">
+        <div class="col-xxl-6">
             <div class="card">
                 <div class="card-header">
                     <h5>{{ __('Mark Attandance') }}</h5>
@@ -61,7 +61,7 @@
 
                     @if (!empty($employeeAttendance))
                     <div class="row">
-                        <div class="col-lg-12 col-md-12">
+                        <div class="col-lg-6 col-md-6">
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -82,7 +82,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-12 col-md-12">
+                        <div class="col-lg-6 col-md-6">
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -106,7 +106,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-12 col-md-12">
+                        <div class="col-lg-6 col-md-6">
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
