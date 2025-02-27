@@ -22,7 +22,7 @@
 
 
     @if (\Auth::user()->type == 'employee')
-        <div class="col-xxl-6">
+        <div class="col-xxl-8" >
             <div class="card">
                 <div class="card-header">
                     <div class="row">
@@ -34,23 +34,25 @@
                             {{-- <div class="form-group"> --}}
                                 <label for=""></label>
                                 @if (isset($setting['is_enabled']) && $setting['is_enabled'] == 'on')
-                                    <select class="form-control" name="calender_type" id="calender_type"
+                                    <!-- <select class="form-control" name="calender_type" id="calender_type"
                                     style="float: right;width: 155px;" onchange="get_data()">
                                         <option value="google_calender">{{ __('Google Calendar') }}</option>
                                         <option value="local_calender" selected="true">
                                             {{ __('Local Calendar') }}</option>
-                                    </select>
+                                    </select> -->
                                 @endif
                             {{-- </div> --}}
+
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id='event_calendar' class='calendar'></div>
+                    <!-- <div id='event_calendar' class='calendar'></div> -->
+                    <iframe src="https://calendar.google.com/calendar/embed?src={{\Auth::user()->email}}&ctz=UTC&mode=AGENDA&showPrint=0" style="border: 0" width="100%" height="600" frameborder="0" scrolling="no"></iframe>
                 </div>
             </div>
         </div>
-        <div class="col-xxl-6">
+        <div class="col-xxl-4">
             <div class="card">
                 <div class="card-header">
                     <h5>{{ __('Mark Attandance') }}</h5>
@@ -59,7 +61,7 @@
 
                     @if (!empty($employeeAttendance))
                     <div class="row">
-                        <div class="col-lg-6 col-md-6">
+                        <div class="col-lg-12 col-md-12">
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -80,7 +82,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-6 col-md-6">
+                        <div class="col-lg-12 col-md-12">
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -104,7 +106,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-6 col-md-6">
+                        <div class="col-lg-12 col-md-12">
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -142,17 +144,17 @@
                             @if (!empty($employeeAttendance) && $employeeAttendance->clock_out == '00:00:00')
                                 {{ Form::model($employeeAttendance, ['route' => ['attendanceemployee.update', $employeeAttendance->id], 'method' => 'PUT']) }}
                                 <button type="submit" value="1" name="out" id="clock_out"
-                                    class="btn btn-danger">{{ __('CLOCK OUT') }}</button>
+                                    class="btn btn-danger" style="float: right;">{{ __('CLOCK OUT') }}</button>
                             @else
                                 <button type="submit" value="1" name="out" id="clock_out"
-                                    class="btn btn-danger disabled" disabled>{{ __('CLOCK OUT') }}</button>
+                                    class="btn btn-danger disabled float-right" disabled style="float: right;">{{ __('CLOCK OUT') }}</button>
                             @endif
                             {{ Form::close() }}
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="card" style="height: 462px;">
+            <div class="card" style="height: 462px;display: none;">
                 <div class="card-header card-body table-border-style">
                     <h5>{{ __('Meeting schedule') }}</h5>
                 </div>
@@ -180,7 +182,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-12 col-lg-12 col-md-12">
+        <div class="col-xl-12 col-lg-12 col-md-12" style="display:none;">
             <div class="card">
                 <div class="card-header card-body table-border-style">
                     <h5>{{ __('Announcement List') }}</h5>
@@ -378,7 +380,7 @@
 
         {{-- end --}}
 
-        <div class="col-xxl-12">
+        <div class="col-xxl-12" style="display:none;">
             <div class="row">
                 <div class="col-xl-5">
 
@@ -449,26 +451,27 @@
                                     {{-- <div class="form-group"> --}}
                                         <label for=""></label>
                                         @if (isset($setting['is_enabled']) && $setting['is_enabled'] == 'on')
-                                            <select class="form-control" name="calender_type" id="calender_type"
+                                            <!-- <select class="form-control" name="calender_type" id="calender_type"
                                             style="float: right;width: 155px;" onchange="get_data()">
                                                 <option value="google_calender">{{ __('Google Calendar') }}</option>
                                                 <option value="local_calender" selected="true">
                                                     {{ __('Local Calendar') }}</option>
-                                            </select>
+                                            </select> -->
                                         @endif
                                     {{-- </div> --}}
                                 </div>
                             </div>
                         </div>
                         <div class="card-body card-635">
-                            <div id='calendar' class='calendar'></div>
+                            <!-- <div id='calendar' class='calendar'></div> -->
+                            <iframe src="https://calendar.google.com/calendar/embed?src={{\Auth::user()->email}}&ctz=UTC&mode=AGENDA&showPrint=0" style="border: 0" width="100%" height="600" frameborder="0" scrolling="no"></iframe>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-12 col-lg-12 col-md-12">
+        <div class="col-xl-12 col-lg-12 col-md-12" style="display:none;">
             <div class="card">
                 <div class="card-header card-body table-border-style">
                     <h5>{{ __('Announcement List') }}</h5>
@@ -510,7 +513,7 @@
 
 
 
-    @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr')
+    @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'CEO')
     <script type="text/javascript">
         $(document).ready(function() {
             get_data();
