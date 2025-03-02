@@ -25,29 +25,42 @@
 </div>
 {{Form::close()}} --}}
 
-{{ Form::open(['url' => 'attendanceemployee', 'method' => 'post', 'class' => 'needs-validation', 'novalidate']) }}
-<div class="card-body p-0">
+{{ Form::open(['route' => 'attendanceemployee.store', 'method' => 'POST', 'class' => 'needs-validation', 'novalidate']) }}
+<div class="modal-body">
     <div class="row">
-        <div class="form-group col-lg-6 col-md-6">
+        <div class="form-group col-lg-6 col-md-6 ">
             {{ Form::label('employee_id', __('Employee'), ['class' => 'col-form-label']) }}
             {{ Form::select('employee_id', $employees, null, ['class' => 'form-control select2']) }}
         </div>
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('date', __('Date'), ['class' => 'col-form-label']) }}
-            {{ Form::text('date', null, ['class' => 'form-control d_week','autocomplete'=>'off']) }}
+            {{ Form::date('date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off']) }}
         </div>
+
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('clock_in', __('Clock In'), ['class' => 'col-form-label']) }}
-            {{ Form::text('clock_in', null, ['class' => 'form-control timepicker']) }}
+            {{ Form::time('clock_in', null, ['class' => 'form-control pc-timepicker-2', 'id' => 'clock_in']) }}
         </div>
+
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('clock_out', __('Clock Out'), ['class' => 'col-form-label']) }}
-            {{ Form::text('clock_out', null, ['class' => 'form-control timepicker']) }}
+            {{ Form::time('clock_out', null, ['class' => 'form-control pc-timepicker-2 ', 'id' => 'clock_out']) }}
+        </div>
+
+        <!-- Work from Home Checkbox -->
+        <div class="form-group col-lg-6 col-md-6">
+            <div class="form-check mt-4">
+                {{ Form::checkbox('work_from_home', 1, false, [
+                    'class' => 'form-check-input',
+                    'id' => 'work_from_home'
+                ]) }}
+                <label class="form-check-label" for="work_from_home">{{ __('Work from Home') }}</label>
+            </div>
         </div>
     </div>
 </div>
-<div class="modal-footer pr-0">
-    <button type="button" class="btn dark btn-outline" data-dismiss="modal">{{ __('Cancel') }}</button>
-    {{ Form::submit(__('Create'), ['class' => 'btn btn-primary']) }}
+<div class="modal-footer">
+    <input type="button" value="{{ __('Cancel') }}" class="btn btn-light" data-bs-dismiss="modal">
+    <input type="submit" value="{{ __('Create') }}" class="btn btn-primary">
 </div>
 {{ Form::close() }}

@@ -16,6 +16,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Utility;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class HomeController extends Controller
 {
@@ -87,10 +88,17 @@ class HomeController extends Controller
 
                 // echo "<pre>";print_r($employeeAttendance);exit;
 
+                // Determine if the Work from Home checkbox should be disabled
+                $disableCheckbox = !empty($employeeAttendance) && $employeeAttendance->clock_in !== null;
+
+                // Determine if the Work from Home checkbox should be checked
+                $isWorkFromHome = !empty($employeeAttendance) && $employeeAttendance->work_from_home == 1;
+
                 $officeTime['startTime'] = Utility::getValByName('company_start_time');
                 $officeTime['endTime']   = Utility::getValByName('company_end_time');
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime'));
+
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome'));
             }
             else
             {
@@ -140,7 +148,29 @@ class HomeController extends Controller
 
                 $meetings = Meeting::where('created_by', '=', \Auth::user()->creatorId())->limit(5)->get();
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer'));
+                /* *************** New Add Start ****************************/
+                $employee = Employee::select('id')->where('created_by', \Auth::user()->creatorId());
+
+                if (!empty($request->branch)) {
+                    $employee->where('branch_id', $request->branch);
+                }
+
+                if (!empty($request->department)) {
+                    $employee->where('department_id', $request->department);
+                }
+
+                $employee = $employee->get()->pluck('id');
+
+                // Get only today's attendance
+                $today = Carbon::today()->toDateString();
+
+                $attendanceEmployee = AttendanceEmployee::whereIn('employee_id', $employee)
+                    ->whereDate('date', $today)
+                    ->orderBy('updated_at', 'desc')
+                    ->get();
+                /* *************** New Add End ****************************/
+
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee'));
             }
         }
         else

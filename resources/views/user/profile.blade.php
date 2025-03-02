@@ -71,7 +71,7 @@ $profile = \App\Models\Utility::get_file('uploads/avatar/');
                                         <label for="email" class="col-form-label text-dark">{{ __('Email') }}</label><x-required></x-required>
                                         <input class="form-control @error('email') is-invalid @enderror" name="email"
                                             type="text" id="email" placeholder="{{ __('Enter Your Email Address') }}"
-                                            value="{{ $userDetail->email }}" required autocomplete="email">
+                                            value="{{ $userDetail->email }}" required autocomplete="email" readonly>
                                         @error('email')
                                             <span class="invalid-feedback text-danger text-xs"
                                                 role="alert">{{ $message }}</span>

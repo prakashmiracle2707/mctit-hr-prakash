@@ -57,13 +57,14 @@
 }
 
 .custom-login .navbar {
-    background: var(--bs-white);
+/*    background: var(--bs-white);*/
+    background: transparent;
     border-radius: 10px;
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
     -ms-border-radius: 10px;
     -o-border-radius: 10px;
-    box-shadow: 0 6px 30px rgba(182, 186, 203, 0.3);
+/*    box-shadow: 0 6px 30px rgba(182, 186, 203, 0.3);*/
     padding: 10px 0;
 }
 

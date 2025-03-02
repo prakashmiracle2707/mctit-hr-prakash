@@ -27,7 +27,7 @@
                         <thead>
                             <tr>
                                 <th>{{ __('Project Name') }}</th>
-                                <th>{{ __('Created By') }}</th>
+                                <!-- <th>{{ __('Created By') }}</th> -->
                                 <th>{{ __('Assigned Employees') }}</th>
                                 <th>{{ __('Created At') }}</th>
                                 @if (Gate::check('Edit Project') || Gate::check('Delete Project'))
@@ -39,7 +39,7 @@
                             @foreach ($projects as $project)
                                 <tr>
                                     <td>{{ $project->name }}</td>
-                                    <td>{{ $project->creator ? $project->creator->name : 'Unknown' }}</td>
+                                    <!-- <td>{{ $project->creator ? $project->creator->name : 'Unknown' }}</td> -->
                                     <td>
                                         @if($project->employees->count() > 0)
                                             @foreach($project->employees as $employee)

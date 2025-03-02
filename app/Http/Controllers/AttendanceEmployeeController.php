@@ -66,7 +66,7 @@ class AttendanceEmployeeController extends Controller
                         ]
                     );
                 }
-                $attendanceEmployee = $attendanceEmployee->get();
+                $attendanceEmployee = $attendanceEmployee->orderBy('created_at', 'desc')->get();
             } else {
                 $employee = Employee::select('id')->where('created_by', \Auth::user()->creatorId());
                 if (!empty($request->branch)) {
@@ -119,8 +119,10 @@ class AttendanceEmployeeController extends Controller
                 }
 
 
-                $attendanceEmployee = $attendanceEmployee->get();
+                $attendanceEmployee = $attendanceEmployee->orderBy('created_at', 'desc')->get();
             }
+
+            // echo "<pre>";print_r($attendanceEmployee);exit;
 
             return view('attendance.index', compact('attendanceEmployee', 'branch', 'department'));
         } else {
@@ -131,7 +133,8 @@ class AttendanceEmployeeController extends Controller
     public function create()
     {
         if (\Auth::user()->can('Create Attendance')) {
-            $employees = User::where('created_by', '=', Auth::user()->creatorId())->where('type', '=', "employee")->get()->pluck('name', 'id');
+            // $employees = User::where('created_by', '=', Auth::user()->creatorId())->where('type', '=', "employee")->get()->pluck('name', 'id');
+            $employees          = Employee::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
 
             return view('attendance.create', compact('employees'));
         } else {
@@ -191,6 +194,24 @@ class AttendanceEmployeeController extends Controller
                     $overtime = '00:00:00';
                 }
 
+                $clockInTime = $request->clock_in ? $request->clock_in : null;
+                $clockOutTime = $request->clock_out;
+
+                if ($clockInTime) {
+                    //  Calculate Checkout Time Difference
+                    $checkoutTimeDiffSeconds = strtotime($clockOutTime) - strtotime($clockInTime);
+                    if ($checkoutTimeDiffSeconds > 0) {
+                        $checkoutHours = floor($checkoutTimeDiffSeconds / 3600);
+                        $checkoutMinutes = floor(($checkoutTimeDiffSeconds % 3600) / 60);
+                        $checkoutSeconds = floor($checkoutTimeDiffSeconds % 60);
+                        $checkoutTimeDiff = sprintf('%02d:%02d:%02d', $checkoutHours, $checkoutMinutes, $checkoutSeconds);
+                    } else {
+                        $checkoutTimeDiff = '00:00:00';
+                    }
+                } else {
+                    $checkoutTimeDiff = '00:00:00';
+                }
+
                 $employeeAttendance                = new AttendanceEmployee();
                 $employeeAttendance->employee_id   = $request->employee_id;
                 $employeeAttendance->date          = $request->date;
@@ -202,6 +223,8 @@ class AttendanceEmployeeController extends Controller
                 $employeeAttendance->overtime      = $overtime;
                 $employeeAttendance->total_rest    = '00:00:00';
                 $employeeAttendance->created_by    = \Auth::user()->creatorId();
+                $employeeAttendance->checkout_time_diff    = $checkoutTimeDiff;
+                $employeeAttendance->work_from_home   = $request->has('work_from_home') ? 1 : 0;
                 $employeeAttendance->save();
 
                 return redirect()->route('attendanceemployee.index')->with('success', __('Employee attendance successfully created.'));
@@ -459,7 +482,8 @@ class AttendanceEmployeeController extends Controller
                         'clock_in' => $clockIn,
                         'clock_out' => $clockOut,
                         'checkout_date' => $check->date,
-                        'checkout_time_diff' => $checkoutTimeDiff
+                        'checkout_time_diff' => $checkoutTimeDiff,
+                        'work_from_home' => $request->has('work_from_home') ? 1 : 0
                     ]);
 
                     return redirect()->route('attendanceemployee.index')->with('success', __('Employee attendance successfully updated.'));
@@ -755,7 +779,7 @@ class AttendanceEmployeeController extends Controller
         $employeeAttendance->overtime = '00:00:00';
         $employeeAttendance->total_rest = '00:00:00';
         $employeeAttendance->created_by = \Auth::user()->id;
-
+        $employeeAttendance->work_from_home = $request->has('work_from_home') ? 1 : 0;
         $employeeAttendance->save();
 
         return redirect()->back()->with('success', __('Employee Successfully Clocked In.'));

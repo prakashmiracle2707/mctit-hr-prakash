@@ -22,7 +22,7 @@
 
 
     @if (\Auth::user()->type == 'employee')
-        <div class="col-xxl-6" >
+        <div class="col-xxl-6 col-md-6" >
             <div class="card">
                 <div class="card-header">
                     <div class="row">
@@ -48,11 +48,11 @@
                 </div>
                 <div class="card-body">
                     <!-- <div id='event_calendar' class='calendar'></div> -->
-                    <iframe src="https://calendar.google.com/calendar/embed?src={{\Auth::user()->email}}&ctz=Asia/Kolkata&mode=AGENDA&showPrint=0" style="border: 0" width="100%" height="500" frameborder="0" scrolling="no"></iframe>
+                    <iframe src="https://calendar.google.com/calendar/embed?src={{\Auth::user()->email}}&ctz=Asia/Kolkata&mode=AGENDA&showPrint=0" style="border: 0" width="100%" height="400" frameborder="0" scrolling="no"></iframe>
                 </div>
             </div>
         </div>
-        <div class="col-xxl-6">
+        <div class="col-xxl-6 col-md-6">
             <div class="card">
                 <div class="card-header">
                     <h5>{{ __('Mark Attandance') }}</h5>
@@ -61,7 +61,7 @@
 
                     @if (!empty($employeeAttendance))
                     <div class="row">
-                        <div class="col-lg-6 col-md-6">
+                        <div class="col-xxl-6 col-md-12">
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -73,7 +73,7 @@
                                                 <h5 class="mb-0">Clock In Time</h5>
                                                 <p class="text-muted text-sm mb-0">
                                                     @if (!empty($employeeAttendance))
-                                                        {{ __($employeeAttendance->clock_in) }}
+                                                        {{ \Carbon\Carbon::parse($employeeAttendance->clock_in)->format('h:i A') }}
                                                     @endif
                                                 </p>
                                             </div>
@@ -82,7 +82,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-6 col-md-6">
+                        <div class="col-xxl-6 col-md-12">
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -94,9 +94,9 @@
                                                 <h5 class="mb-0">Clock Out Time</h5>
                                                 <p class="text-muted text-sm mb-0">
                                                     @if (!empty($employeeAttendance))
-                                                    {{ __(($employeeAttendance->clock_out != '00:00:00' 
-                                                            ? $employeeAttendance->clock_out 
-                                                            : 'Not Clocked Out ('.date('H:i:s', strtotime($employeeAttendance->clock_in . ' +9 hours')) . ')') ) }}
+                                                    {{ __($employeeAttendance->clock_out != '00:00:00' 
+    ? \Carbon\Carbon::parse($employeeAttendance->clock_out)->format('h:i A') 
+    : 'Not Clocked Out (' . \Carbon\Carbon::parse($employeeAttendance->clock_in)->addHours(9)->format('h:i A') . ')') }}
                                                     @endif
                                                 </p>
                                             </div>
@@ -106,7 +106,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-6 col-md-6">
+                        <div class="col-xxl-6 col-md-12">
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -129,25 +129,35 @@
                     
                     
                     <div class="row">
-                        <div class="col-md-6 float-right border-right">
+                        <div class="col-6  float-right border-right">
                             {{ Form::open(['url' => 'attendanceemployee/attendance', 'method' => 'post']) }}
                             @if (empty($employeeAttendance) || $employeeAttendance->clock_out != '00:00:00')
-                                <button type="submit" value="0" name="in" id="clock_in"
-                                    class="btn btn-primary">{{ __('CLOCK IN') }}</button>
+                                <div class="form-check">
+                                    {{ Form::checkbox('work_from_home', 1, false, ['class' => 'form-check-input', 'id' => 'work_from_home_in']) }}
+                                    <label class="form-check-label" for="work_from_home_in">{{ __('Work from Home') }}</label>
+                                </div>
+                                <button type="submit" value="0" name="in" id="clock_in" class="btn btn-primary">{{ __('CLOCK IN') }}</button>
                             @else
-                                <button type="submit" value="0" name="in" id="clock_in"
-                                    class="btn btn-primary disabled" disabled>{{ __('CLOCK IN') }}</button>
+                                <button type="submit" value="0" name="in" id="clock_in" class="btn btn-primary disabled" disabled>{{ __('CLOCK IN') }}</button>
+                                
+                                <div class="form-check" style="margin-top:5px;">
+                                    {{ Form::checkbox('work_from_home', 1, $isWorkFromHome, [
+                                        'class' => 'form-check-input', 
+                                        'id' => 'work_from_home_in',
+                                        $disableCheckbox ? 'disabled' : ''
+                                    ]) }}
+                                    <label class="form-check-label" for="work_from_home_in">{{ __('Work from Home') }}</label>
+                                </div>
                             @endif
                             {{ Form::close() }}
                         </div>
-                        <div class="col-md-6 float-left">
+
+                        <div class="col-6 float-left">
                             @if (!empty($employeeAttendance) && $employeeAttendance->clock_out == '00:00:00')
                                 {{ Form::model($employeeAttendance, ['route' => ['attendanceemployee.update', $employeeAttendance->id], 'method' => 'PUT']) }}
-                                <button type="submit" value="1" name="out" id="clock_out"
-                                    class="btn btn-danger" style="float: right;">{{ __('CLOCK OUT') }}</button>
+                                <button type="submit" value="1" name="out" id="clock_out" class="btn btn-danger" style="float: right;">{{ __('CLOCK OUT') }}</button>
                             @else
-                                <button type="submit" value="1" name="out" id="clock_out"
-                                    class="btn btn-danger disabled float-right" disabled style="float: right;">{{ __('CLOCK OUT') }}</button>
+                                <button type="submit" value="1" name="out" id="clock_out" class="btn btn-danger disabled float-right" disabled style="float: right;">{{ __('CLOCK OUT') }}</button>
                             @endif
                             {{ Form::close() }}
                         </div>
@@ -244,7 +254,7 @@
                     </div>
                 </div>
 
-                <div class="col-lg-4 col-md-6">
+                <!-- <div class="col-lg-4 col-md-6">
 
                     <div class="card stats-wrapper dash-info-card">
                         <div class="card-body stats">
@@ -267,8 +277,34 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
+
                 <div class="col-lg-4 col-md-6">
+
+                    <div class="card stats-wrapper dash-info-card">
+                        <div class="card-body stats">
+                            <div class="row align-items-center justify-content-between">
+                                <div class="col-auto mb-3 mb-sm-0">
+                                    <div class="d-flex align-items-center">
+                                        <div class="badge theme-avtar bg-info">
+                                            <i class="ti ti-ticket"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <small class="text-muted">{{ __('Total') }}</small>
+                                            <h6 class="m-0"><a
+                                                href="{{ route('ticket.index') }}">{{ __("Today's Not Clock In") }}</a></h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto text-end">
+                                    <h4 class="m-0 text-info"> {{ count($notClockIns) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- <div class="col-lg-4 col-md-6">
 
                     <div class="card stats-wrapper dash-info-card">
                         <div class="card-body stats">
@@ -291,13 +327,38 @@
                             </div>
                         </div>
                     </div>
+                </div> -->
+
+                <div class="col-lg-4 col-md-6">
+
+                    <div class="card stats-wrapper dash-info-card">
+                        <div class="card-body stats">
+                            <div class="row align-items-center justify-content-between">
+                                <div class="col-auto mb-3 mb-sm-0">
+                                    <div class="d-flex align-items-center">
+                                        <div class="badge theme-avtar bg-warning">
+                                            <i class="ti ti-wallet"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <small class="text-muted">{{ __('Total') }}</small>
+                                            <h6 class="m-0"><a
+                                                href="{{ route('accountlist.index') }}">{{ __("Today's Clock In") }}</a></h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto text-end">
+                                    <h4 class="m-0 text-warning">{{ count($attendanceEmployee) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
 
 
-        <div class="col-lg-4 col-md-6">
+        <div class="col-lg-4 col-md-6" style="display: none;">
             <div class="card stats-wrapper dash-info-card">
                 <div class="card-body stats">
                     <div class="row align-items-center justify-content-between">
@@ -321,7 +382,7 @@
             </div>
 
         </div>
-        <div class="col-lg-4 col-md-6">
+        <div class="col-lg-4 col-md-6" style="display: none;">
 
             <div class="card stats-wrapper dash-info-card">
                 <div class="card-body stats">
@@ -348,7 +409,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 col-md-6">
+        <div class="col-lg-4 col-md-6" style="display: none;">
 
             <div class="card stats-wrapper dash-info-card">
                 <div class="card-body stats">
@@ -380,65 +441,169 @@
 
         {{-- end --}}
 
-        <div class="col-xxl-12" style="display:none;">
+        <div class="col-xxl-12">
             <div class="row">
-                <div class="col-xl-5">
+                
+                    <div class="col-xl-5">
 
-                    <div class="card">
-                        <div class="card-header card-body table-border-style">
-                            <h5>{{ __('Meeting schedule') }}</h5>
-                        </div>
-                        <div class="card-body" style="height: 324px; overflow:auto">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>{{ __('Title') }}</th>
-                                            <th>{{ __('Date') }}</th>
-                                            <th>{{ __('Time') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="list">
-                                        @foreach ($meetings as $meeting)
+                        <div class="card" style="display:none;">
+                            <div class="card-header card-body table-border-style">
+                                <h5>{{ __('Meeting schedule') }}</h5>
+                            </div>
+                            <div class="card-body" style="height: 324px; overflow:auto">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
                                             <tr>
-                                                <td>{{ $meeting->title }}</td>
-                                                <td>{{ \Auth::user()->dateFormat($meeting->date) }}</td>
-                                                <td>{{ \Auth::user()->timeFormat($meeting->time) }}</td>
+                                                <th>{{ __('Title') }}</th>
+                                                <th>{{ __('Date') }}</th>
+                                                <th>{{ __('Time') }}</th>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody class="list">
+                                            @foreach ($meetings as $meeting)
+                                                <tr>
+                                                    <td>{{ $meeting->title }}</td>
+                                                    <td>{{ \Auth::user()->dateFormat($meeting->date) }}</td>
+                                                    <td>{{ \Auth::user()->timeFormat($meeting->time) }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="card">
-                        <div class="card-header card-body table-border-style">
-                            <h5>{{ __("Today's Not Clock In") }}</h5>
-                        </div>
-                        <div class="card-body" style="height: 324px; overflow:auto">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>{{ __('Name') }}</th>
-                                            <th>{{ __('Status') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="list">
-                                        @foreach ($notClockIns as $notClockIn)
+                        <div class="card">
+                            <div class="card-header card-body table-border-style">
+                                <h5>{{ __("Today's Not Clock In") }}</h5>
+                            </div>
+                            <div class="card-body" style="height:300px; overflow:auto">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
                                             <tr>
-                                                <td>{{ $notClockIn->name }}</td>
-                                                <td><span class="absent-btn">{{ __('Absent') }}</span></td>
+                                                <th>{{ __('Name') }}</th>
+                                                <th>{{ __('Status') }}</th>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody class="list">
+                                            @foreach ($notClockIns as $notClockIn)
+                                                <tr>
+                                                    <td>{{ $notClockIn->name }}</td>
+                                                    <td><span class="absent-btn">{{ __('Absent') }}</span></td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
+
+                        <div class="card">
+                            <div class="card-header card-body table-border-style">
+                                <h5>{{ __("Today's Clock In") }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table" id="pc-dt-simple">
+                                        <thead>
+                                            <tr>
+                                                <!-- <th>{{ __('Date') }}</th> -->
+                                                @if (\Auth::user()->type != 'employee')
+                                                    <th>{{ __('Employee') }}</th>
+                                                @endif
+                                                <!-- <th>{{ __('Status') }}</th> -->
+                                                <th>{{ __('Clock In') }}</th>
+                                                <th>{{ __('Clock Out') }}</th>
+                                                <!-- <th>{{ __('Late') }}</th>
+                                                <th>{{ __('Early Leaving') }}</th>
+                                                <th>{{ __('Overtime') }}</th> -->
+                                                <th>{{ __('Total Hours') }}
+                                                <!-- @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
+                                                    <th width="200px">{{ __('Action') }}</th>
+                                                @endif -->
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+                                            @foreach ($attendanceEmployee as $attendance)
+                                                <tr>
+                                                    <!-- <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td> -->
+                                                    @if (\Auth::user()->type != 'employee')
+                                                        <td>{{ !empty($attendance->employee) ? $attendance->employee->name : '' }}
+                                                            @if($attendance->work_from_home)
+                                                                <span class="badge bg-secondary p-1 px-1">WFH</span>
+                                                            @endif
+                                                        </td>
+                                                    @endif
+                                                    
+                                                    <!-- <td>{{ $attendance->status }}</td> -->
+                                                    <td>{{ $attendance->clock_in != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_in) : '00:00' }}
+                                                    </td>
+                                                    <td>
+                                                    
+                                                        @if ($attendance->clock_out == '00:00:00' && $attendance->date < date('Y-m-d'))
+                                                            <span class="badge bg-danger p-1 px-1">Missed Checkout</span>
+                                                        @else
+                                                            {{ $attendance->clock_out != '00:00:00' ? date('h:i A', strtotime($attendance->clock_out)) : '00:00' }}
+                                                        @endif
+                                                    </td>
+                                                    <!-- <td>{{ $attendance->late }}</td>
+                                                    <td>{{ $attendance->early_leaving }}</td>
+                                                    <td>{{ $attendance->overtime }}</td> -->
+                                                    <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
+                                                   <!--  @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
+                                                    <td class="Action">
+                                                        
+                                                        <div class="dt-buttons">
+                                                        <span>
+                                                                @can('Edit Attendance')
+                                                                    <div class="action-btn bg-info me-2">
+                                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                                            data-size="lg"
+                                                                            data-url="{{ URL::to('attendanceemployee/' . $attendance->id . '/edit') }}"
+                                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                                            title="" data-title="{{ __('Edit Attendance') }}"
+                                                                            data-bs-original-title="{{ __('Edit') }}">
+                                                                            <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                                        </a>
+                                                                    </div>
+                                                                @endcan
+
+                                                                @can('Delete Attendance')
+                                                                    <div class="action-btn bg-danger">
+                                                                        {!! Form::open([
+                                                                            'method' => 'DELETE',
+                                                                            'route' => ['attendanceemployee.destroy', $attendance->id],
+                                                                            'id' => 'delete-form-' . $attendance->id,
+                                                                        ]) !!}
+                                                                        <a href="#"
+                                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                                            data-bs-toggle="tooltip" title=""
+                                                                            data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
+                                                                                class="ti ti-trash"></i></span></a>
+                                                                        </form>
+                                                                    </div>
+                                                                @endcan
+                                                            </span>
+                                                        </div>
+                                                        
+                                                    </td>
+                                                    @endif -->
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
-                </div>
+
+               
+
                 <div class="col-xl-7">
                     <div class="card">
                         <div class="card-header">
@@ -468,7 +633,11 @@
                         </div>
                     </div>
                 </div>
+
+                
+                
             </div>
+           
         </div>
 
         <div class="col-xl-12 col-lg-12 col-md-12" style="display:none;">
@@ -511,7 +680,9 @@
     <script src="{{ asset('assets/js/plugins/main.min.js') }}"></script>
 
 
-
+    <script>
+        const dataTable = new simpleDatatables.DataTable("#pc-dt-simple-dashbord");
+    </script>
 
     @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'CEO')
     <script type="text/javascript">

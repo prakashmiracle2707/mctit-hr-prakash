@@ -164,7 +164,7 @@
                             data-bs-target="#navbarlogin">
                             <span class="navbar-toggler-icon"></span>
                         </button>
-                        <div class="collapse navbar-collapse" id="navbarlogin">
+                        <div class="collapse navbar-collapse" id="navbarlogin" style="display:none !important;">
                             <ul class="navbar-nav align-items-center ms-auto mb-2 mb-lg-0">
                                 @include('landingpage::layouts.buttons')
                                 <!-- @yield('language-bar') -->

@@ -42,7 +42,7 @@ class TimeSheetController extends Controller
                     $timesheets->where('project_id', $request->project_id);
                 }
 
-                $timeSheets = $timesheets->get();
+                $timeSheets = $timesheets->orderBy('created_at', 'desc')->get();
 
 
                 
@@ -53,7 +53,7 @@ class TimeSheetController extends Controller
 
             } else {
                 // **Condition for "company" role**: Show all projects
-                if (\Auth::user()->hasRole('company')) {
+                if (\Auth::user()->type != 'employee') {
                     $projects = \App\Models\Project::pluck('name', 'id');
                 } else {
                     // **Condition for Assigned Employees**: Show only projects they are assigned to
@@ -79,7 +79,7 @@ class TimeSheetController extends Controller
                     $timesheets->where('project_id', $request->project_id);
                 }
 
-                $timeSheets = $timesheets->get();
+                $timeSheets = $timesheets->orderBy('created_at', 'desc')->get();
             }
 
             return view('timeSheet.index', compact('timeSheets', 'employeesList', 'projects'));

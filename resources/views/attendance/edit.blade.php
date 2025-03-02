@@ -19,6 +19,17 @@
             {{ Form::label('clock_out', __('Clock Out'), ['class' => 'col-form-label']) }}
             {{ Form::time('clock_out', null, ['class' => 'form-control pc-timepicker-2 ', 'id' => 'clock_out']) }}
         </div>
+
+        <!-- Work from Home Checkbox -->
+        <div class="form-group col-lg-6 col-md-6">
+            <div class="form-check mt-4">
+                {{ Form::checkbox('work_from_home', 1, $attendanceEmployee->work_from_home, [
+                    'class' => 'form-check-input',
+                    'id' => 'work_from_home'
+                ]) }}
+                <label class="form-check-label" for="work_from_home">{{ __('Work from Home') }}</label>
+            </div>
+        </div>
     </div>
 </div>
 <div class="modal-footer">

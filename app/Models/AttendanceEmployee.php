@@ -19,6 +19,7 @@ class AttendanceEmployee extends Model
         'total_rest',
         'created_by',
         'checkout_time_diff',
+        'work_from_home',
     ];
 
     public function employees()

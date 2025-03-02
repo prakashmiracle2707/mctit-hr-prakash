@@ -8,6 +8,23 @@
     <li class="breadcrumb-item">{{ __('Attendance List') }}</li>
 @endsection
 
+@section('action-button')
+
+    @can('Create Attendance')
+        <a  href="#" 
+            class="btn btn-sm btn-primary"
+            data-size="lg"
+            data-url="{{ route('attendanceemployee.create') }}" 
+            data-ajax-popup="true" 
+            data-bs-toggle="tooltip"
+            title=""
+            data-title="{{ __('Create New Attendance') }}" 
+            data-bs-original-title="{{ __('Create') }}">
+            <i class="ti ti-plus"></i>
+        </a>
+    @endcan
+@endsection
+
 
 @push('script-page')
     <script>
@@ -187,10 +204,10 @@
                     <table class="table" id="pc-dt-simple">
                         <thead>
                             <tr>
+                                <th>{{ __('Date') }}</th>
                                 @if (\Auth::user()->type != 'employee')
                                     <th>{{ __('Employee') }}</th>
                                 @endif
-                                <th>{{ __('Date') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Clock In') }}</th>
                                 <th>{{ __('Clock Out') }}</th>
@@ -207,10 +224,15 @@
 
                             @foreach ($attendanceEmployee as $attendance)
                                 <tr>
+                                    <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}
+                                        @if($attendance->work_from_home)
+                                            <span class="badge bg-secondary p-1 px-1">WFH</span>
+                                        @endif
+                                    </td>
                                     @if (\Auth::user()->type != 'employee')
                                         <td>{{ !empty($attendance->employee) ? $attendance->employee->name : '' }}</td>
                                     @endif
-                                    <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td>
+                                    
                                     <td>{{ $attendance->status }}</td>
                                     <td>{{ $attendance->clock_in != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_in) : '00:00' }}
                                     </td>
@@ -226,8 +248,9 @@
                                     <td>{{ $attendance->early_leaving }}</td>
                                     <td>{{ $attendance->overtime }}</td> -->
                                     <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
+                                    @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
                                     <td class="Action">
-                                        @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
+                                        
                                         <div class="dt-buttons">
                                         <span>
                                                 @can('Edit Attendance')
@@ -260,8 +283,9 @@
                                                 @endcan
                                             </span>
                                         </div>
-                                        @endif
+                                        
                                     </td>
+                                    @endif
                                 </tr>
                             @endforeach
                         </tbody>
