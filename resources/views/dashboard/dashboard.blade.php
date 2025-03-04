@@ -132,11 +132,11 @@
                         <div class="col-6  float-right border-right">
                             {{ Form::open(['url' => 'attendanceemployee/attendance', 'method' => 'post']) }}
                             @if (empty($employeeAttendance) || $employeeAttendance->clock_out != '00:00:00')
+                                <button type="submit" value="0" name="in" id="clock_in" class="btn btn-primary">{{ __('CLOCK IN') }}</button>
                                 <div class="form-check">
                                     {{ Form::checkbox('work_from_home', 1, false, ['class' => 'form-check-input', 'id' => 'work_from_home_in']) }}
                                     <label class="form-check-label" for="work_from_home_in">{{ __('Work from Home') }}</label>
                                 </div>
-                                <button type="submit" value="0" name="in" id="clock_in" class="btn btn-primary">{{ __('CLOCK IN') }}</button>
                             @else
                                 <button type="submit" value="0" name="in" id="clock_in" class="btn btn-primary disabled" disabled>{{ __('CLOCK IN') }}</button>
                                 
@@ -155,7 +155,7 @@
                         <div class="col-6 float-left">
                             @if (!empty($employeeAttendance) && $employeeAttendance->clock_out == '00:00:00')
                                 {{ Form::model($employeeAttendance, ['route' => ['attendanceemployee.update', $employeeAttendance->id], 'method' => 'PUT']) }}
-                                <button type="submit" value="1" name="out" id="clock_out" class="btn btn-danger" style="float: right;">{{ __('CLOCK OUT') }}</button>
+                                <button type="submit" value="1" name="out" id="clock_out" class="btn btn-danger" style="float: right;" onclick="return confirmClockOut();">{{ __('CLOCK OUT') }}</button>
                             @else
                                 <button type="submit" value="1" name="out" id="clock_out" class="btn btn-danger disabled float-right" disabled style="float: right;">{{ __('CLOCK OUT') }}</button>
                             @endif
@@ -164,6 +164,13 @@
                     </div>
                 </div>
             </div>
+
+            <script>
+                // Function to show confirmation alert before clocking out
+                function confirmClockOut() {
+                    return confirm("Are you sure you want to clock out?");
+                }
+            </script>
             <div class="card" style="height: 462px;display: none;">
                 <div class="card-header card-body table-border-style">
                     <h5>{{ __('Meeting schedule') }}</h5>

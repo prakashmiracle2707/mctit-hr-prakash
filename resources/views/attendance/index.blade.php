@@ -239,7 +239,7 @@
                                     <td>
                                     
                                         @if ($attendance->clock_out == '00:00:00' && $attendance->date < date('Y-m-d'))
-                                            <span class="badge bg-danger p-1 px-1">Missed Checkout</span>
+                                            <span class="badge bg-danger p-1 px-1">Missed Clock-out</span>
                                         @else
                                             {{ $attendance->clock_out != '00:00:00' ? date('h:i A', strtotime($attendance->clock_out)) : '00:00' }}
                                         @endif

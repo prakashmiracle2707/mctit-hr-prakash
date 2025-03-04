@@ -24,7 +24,7 @@
 
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('employees', __('Assign Employees'), ['class' => 'col-form-label']) }}<x-required></x-required>
-            {{ Form::select('employees', $employees, null, ['class' => 'form-control select2' , 'required' => 'required']) }}
+            {{ Form::select('employees[]', $employees, null, ['class' => 'form-control select2' , 'multiple' => 'multiple', 'required' => 'required']) }}
         </div>
 
     </div>

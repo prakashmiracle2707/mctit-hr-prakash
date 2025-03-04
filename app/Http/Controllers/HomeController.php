@@ -166,7 +166,8 @@ class HomeController extends Controller
 
                 $attendanceEmployee = AttendanceEmployee::whereIn('employee_id', $employee)
                     ->whereDate('date', $today)
-                    ->orderBy('updated_at', 'desc')
+                    ->orderByRaw('work_from_home DESC') // Order by work_from_home (1 first)
+                    ->orderBy('updated_at', 'desc') // Then order by updated_at in descending order
                     ->get();
                 /* *************** New Add End ****************************/
 
