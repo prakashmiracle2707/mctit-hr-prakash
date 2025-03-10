@@ -38,13 +38,13 @@
         <ul class="dash-navbar">
 
             <!-- dashboard-->
-            @if (\Auth::user()->type != 'company')
+            @if (\Auth::user()->type != 'company' && \Auth::user()->type != 'CEO')
                 <li class="dash-item">
                     <a href="{{ route('dashboard') }}" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-home"></i></span><span class="dash-mtext">{{ __('Dashboard') }}</span></a>
                 </li>
             @endif
-            @if (\Auth::user()->type == 'company')
+            @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'CEO')
                 <li class="dash-item dash-hasmenu  {{ Request::segment(1) == 'null' ? 'active dash-trigger' : '' }}">
                     <a href="#" class="dash-link"><span class="dash-micon"><i class="ti ti-home"></i></span><span
                             class="dash-mtext">{{ __('Dashboard') }}</span><span class="dash-arrow"><i
@@ -63,10 +63,10 @@
                                             data-feather="chevron-right"></i></span></a>
                                 <ul class="dash-submenu">
                                     @can('Manage Report')
-                                        <li class="dash-item">
+                                        <!-- <li class="dash-item">
                                             <a class="dash-link"
                                                 href="{{ route('report.income-expense') }}">{{ __('Income Vs Expense') }}</a>
-                                        </li>
+                                        </li> -->
 
                                         <li class="dash-item">
                                             <a class="dash-link"
@@ -79,7 +79,7 @@
                                         </li>
 
 
-                                        <li class="dash-item">
+                                        <!-- <li class="dash-item">
                                             <a class="dash-link"
                                                 href="{{ route('report.account.statement') }}">{{ __('Account Statement') }}</a>
                                         </li>
@@ -88,13 +88,13 @@
                                         <li class="dash-item">
                                             <a class="dash-link"
                                                 href="{{ route('report.payroll') }}">{{ __('Payroll') }}</a>
-                                        </li>
+                                        </li> -->
 
 
-                                        <li class="dash-item">
+                                        <!-- <li class="dash-item">
                                             <a class="dash-link"
                                                 href="{{ route('report.timesheet') }}">{{ __('Timesheet') }}</a>
-                                        </li>
+                                        </li> -->
                                     @endcan
 
 

@@ -22,12 +22,28 @@
             {{ Form::text('name', null, ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Project Name')]) }}
         </div>
 
-        <div class="form-group col-lg-6 col-md-6">
+        <!-- <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('employees', __('Assign Employees'), ['class' => 'col-form-label']) }}<x-required></x-required>
-            {{ Form::select('employees[]', $employees, null, ['class' => 'form-control select2' , 'multiple' => 'multiple', 'required' => 'required']) }}
-        </div>
-
+            {{ Form::select('employees[]', 
+                $employees->pluck('name', 'id'),
+                $employees->whereIn('id', [2, 19])->pluck('id')->toArray(), 
+                ['class' => 'form-control select2' , 'multiple' => 'multiple', 'required' => 'required']) }}
+        </div> -->
     </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                {{ Form::label('employees', __('Assign Employees'), ['class' => 'col-form-label']) }}<x-required></x-required>
+                {{ Form::select('employees[]', 
+                    $employees,
+                    $employees->whereIn('id', [2, 19])->pluck('id')->toArray(),
+                    ['class' => 'form-control select2', 'id' => 'employees', 'multiple' => 'multiple', 'placeholder' => __('Select Assign Employees')]
+                ) }}
+            </div>
+        </div>
+    </div>
+    
 </div>
 
 <div class="modal-footer">

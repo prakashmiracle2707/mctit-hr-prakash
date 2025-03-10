@@ -12,7 +12,7 @@
 @endsection
 
 @section('action-button')
-    <a href="{{ route('leave.export') }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
+    <!-- <a href="{{ route('leave.export') }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
         data-bs-original-title="{{ __('Export') }}">
         <i class="ti ti-file-export"></i>
     </a>
@@ -20,15 +20,16 @@
     <a href="{{ route('leave.calender') }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
         data-bs-original-title="{{ __('Calendar View') }}">
         <i class="ti ti-calendar"></i>
-    </a>
-
-    @can('Create Leave')
-        <a href="#" data-url="{{ route('leave.create') }}" data-ajax-popup="true" data-title="{{ __('Create New Leave') }}"
-            data-size="lg" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
-            data-bs-original-title="{{ __('Create') }}">
-            <i class="ti ti-plus"></i>
-        </a>
-    @endcan
+    </a> -->
+    @if (\Auth::user()->type != 'CEO')
+        @can('Create Leave')
+            <a href="#" data-url="{{ route('leave.create') }}" data-ajax-popup="true" data-title="{{ __('Create New Leave') }}"
+                data-size="lg" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
+                data-bs-original-title="{{ __('Create') }}">
+                <i class="ti ti-plus"></i>
+            </a>
+        @endcan
+    @endif
 @endsection
 
 @section('content')
@@ -44,12 +45,12 @@
                                     <th>{{ __('Employee') }}</th>
                                 @endif
                                 <th>{{ __('Leave Type') }}</th>
-                                <th>{{ __('Applied On') }}</th>
-                                <th>{{ __('Start Date') }}</th>
-                                <th>{{ __('End Date') }}</th>
+                                <th>{{ __('Leave Date') }}</th>
+                                <!-- <th>{{ __('End Date') }}</th> -->
                                 <th>{{ __('Total Days') }}</th>
                                 <th>{{ __('Leave Reason') }}</th>
                                 <th>{{ __('status') }}</th>
+                                <th>{{ __('Applied On') }}</th>
                                 <th width="200px">{{ __('Action') }}</th>
                             </tr>
                         </thead>
@@ -61,10 +62,27 @@
                                         </td>
                                     @endif
                                     <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                        <br />
+                                        @switch($leave->half_day_type)
+                                            @case('morning')
+                                                <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
+                                                @break
+                                            @case('afternoon')
+                                                <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
+                                                @break
+                                            @default
+                                                <div></div>
+                                        @endswitch
                                     </td>
-                                    <td>{{ \Auth::user()->dateFormat($leave->applied_on) }}</td>
-                                    <td>{{ \Auth::user()->dateFormat($leave->start_date) }}</td>
-                                    <td>{{ \Auth::user()->dateFormat($leave->end_date) }}</td>
+                                    <td>
+                                        @if($leave->start_date == $leave->end_date)
+                                            {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }}
+                                        @else
+                                            {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }} <b>To</b> {{ \Carbon\Carbon::parse($leave->end_date)->format('d/m/Y') }}
+                                        @endif
+                                        
+                                    </td>
+                                    <!-- <td>{{ \Auth::user()->dateFormat($leave->end_date) }}</td> -->
 
                                     <td>{{ $leave->total_leave_days }}</td>
                                     <td>{{ $leave->leave_reason }}</td>
@@ -75,73 +93,29 @@
                                             <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
                                         @elseif($leave->status == "Reject")
                                             <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                        @elseif($leave->status == "Draft")
+                                            <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
                                         @endif
                                     </td>
+                                    <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
 
                                     <td class="Action">
                                         <div class="dt-buttons">
                                         <span>
-                                            {{-- @if (\Auth::user()->type == 'employee')
-                                                @if ($leave->status == 'Pending')
-                                                    @can('Edit Leave')
-                                                        <div class="action-btn bg-info ms-2">
-                                                            <a href="#" class="mx-3 btn btn-sm  align-items-center"
-                                                                data-size="lg"
-                                                                data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
-                                                                data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
-                                                                title="" data-title="{{ __('Edit Leave') }}"
-                                                                data-bs-original-title="{{ __('Edit') }}">
-                                                                <i class="ti ti-pencil text-white"></i>
-                                                            </a>
-                                                        </div>
-                                                    @endcan
-                                                @endif
-                                            @else
-                                                <div class="action-btn bg-success ms-2">
-                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center" data-size="lg"
+
+                                            @if (\Auth::user()->type != 'employee')
+                                                <div class="action-btn bg-success me-2">
+                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                        data-size="lg"
                                                         data-url="{{ URL::to('leave/' . $leave->id . '/action') }}"
                                                         data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
                                                         title="" data-title="{{ __('Leave Action') }}"
                                                         data-bs-original-title="{{ __('Manage Leave') }}">
-                                                        <i class="ti ti-caret-right text-white"></i>
+                                                        <span class="text-white"><i class="ti ti-caret-right"></i></span>
                                                     </a>
                                                 </div>
                                                 @can('Edit Leave')
-                                                    <div class="action-btn bg-info ms-2">
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center" data-size="lg"
-                                                            data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
-                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
-                                                            title="" data-title="{{ __('Edit Leave') }}"
-                                                            data-bs-original-title="{{ __('Edit') }}">
-                                                            <i class="ti ti-pencil text-white"></i>
-                                                        </a>
-                                                    </div>
-                                                @endcan
-                                            @endif
-
-                                            @can('Delete Leave')
-                                                <div class="action-btn bg-danger ms-2">
-                                                    {!! Form::open(['method' => 'DELETE', 'route' => ['leave.destroy', $leave->id], 'id' => 'delete-form-' . $leave->id]) !!}
-                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
-                                                        data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
-                                                        aria-label="Delete"><i
-                                                            class="ti ti-trash text-white text-white"></i></a>
-                                                    </form>
-                                                </div>
-                                            @endcan --}}
-
-                                            @if (\Auth::user()->type != 'employee')
-                                                    <div class="action-btn bg-success me-2">
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
-                                                            data-size="lg"
-                                                            data-url="{{ URL::to('leave/' . $leave->id . '/action') }}"
-                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
-                                                            title="" data-title="{{ __('Leave Action') }}"
-                                                            data-bs-original-title="{{ __('Manage Leave') }}">
-                                                            <span class="text-white"><i class="ti ti-caret-right"></i></span>
-                                                        </a>
-                                                    </div>
-                                                    @can('Edit Leave')
+                                                    @if(\Auth::user()->type != 'CEO')
                                                         <div class="action-btn bg-info me-2">
                                                             <a href="#" class="mx-3 btn btn-sm  align-items-center"
                                                                 data-size="lg"
@@ -152,36 +126,66 @@
                                                                 <span class="text-white"><i class="ti ti-pencil"></i></span>
                                                             </a>
                                                         </div>
-                                                    @endcan
-                                                    @can('Delete Leave')
-                                                        @if (\Auth::user()->type != 'employee')
-                                                            <div class="action-btn bg-danger">
-                                                                {!! Form::open([
-                                                                    'method' => 'DELETE',
-                                                                    'route' => ['leave.destroy', $leave->id],
-                                                                    'id' => 'delete-form-' . $leave->id,
-                                                                ]) !!}
-                                                                <a href="#"
-                                                                    class="mx-3 btn btn-sm  align-items-center bs-pass-para"
-                                                                    data-bs-toggle="tooltip" title=""
-                                                                    data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
-                                                                        class="ti ti-trash"></i></span></a>
-                                                                </form>
-                                                            </div>
-                                                        @endif
-                                                    @endcan
-                                                @else
-                                                    <div class="action-btn bg-success me-2">
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
-                                                            data-size="lg"
-                                                            data-url="{{ URL::to('leave/' . $leave->id . '/action') }}"
-                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
-                                                            title="" data-title="{{ __('Leave Action') }}"
-                                                            data-bs-original-title="{{ __('Manage Leave') }}">
-                                                            <span class="text-white"><i class="ti ti-caret-right"></i></span>
-                                                        </a>
+                                                    @endif
+                                                @endcan
+                                                @can('Delete Leave')
+                                                    @if (\Auth::user()->type != 'employee' && \Auth::user()->type != 'CEO')
+                                                        <div class="action-btn bg-danger">
+                                                            {!! Form::open([
+                                                                'method' => 'DELETE',
+                                                                'route' => ['leave.destroy', $leave->id],
+                                                                'id' => 'delete-form-' . $leave->id,
+                                                            ]) !!}
+                                                            <a href="#"
+                                                                class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                                data-bs-toggle="tooltip" title=""
+                                                                data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
+                                                                    class="ti ti-trash"></i></span></a>
+                                                            </form>
+                                                        </div>
+                                                    @endif
+                                                @endcan
+                                            @else
+                                                <div class="action-btn bg-success me-2">
+                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                        data-size="lg"
+                                                        data-url="{{ URL::to('leave/' . $leave->id . '/action') }}"
+                                                        data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                        title="" data-title="{{ __('Leave Action') }}"
+                                                        data-bs-original-title="{{ __('Manage Leave') }}">
+                                                        <span class="text-white"><i class="ti ti-caret-right"></i></span>
+                                                    </a>
+                                                </div>
+                                            @endif
+
+                                            @if ($leave->status == "Draft")
+                                                <div class="action-btn bg-info me-2">
+                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                        data-size="lg"
+                                                        data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
+                                                        data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                        title="" data-title="{{ __('Edit Leave') }}"
+                                                        data-bs-original-title="{{ __('Edit') }}">
+                                                        <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                    </a>
+                                                </div>
+                                                @if (\Auth::user()->type != 'CEO')
+                                                    <div class="action-btn bg-danger">
+                                                        {!! Form::open([
+                                                            'method' => 'DELETE',
+                                                            'route' => ['leave.destroy', $leave->id],
+                                                            'id' => 'delete-form-' . $leave->id,
+                                                        ]) !!}
+                                                        <a href="#"
+                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                            data-bs-toggle="tooltip" title=""
+                                                            data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
+                                                                class="ti ti-trash"></i></span></a>
+                                                        </form>
                                                     </div>
                                                 @endif
+                                            @endif
+
                                         </span>
                                         </div>
                                     </td>

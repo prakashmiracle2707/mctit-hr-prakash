@@ -60,14 +60,14 @@ class TimesheetExport implements FromCollection,WithHeadings
         // Format Data and Calculate Total Minutes
         foreach ($data as $k => $timesheet) {
             $formattedData[] = [
-                "id" => $timesheet->id,
+                //"id" => $timesheet->id,
+                "date" => \Carbon\Carbon::parse($timesheet->date)->format('d/m/Y'),
                 "employee_name" => !empty($timesheet->employee) ? $timesheet->employee->name : '',
                 "project_name" => !empty($timesheet->project) ? $timesheet->project->name : '',
                 "milestone_name" => !empty($timesheet->milestone) ? $timesheet->milestone->name : '',
                 "task_name" => $timesheet->task_name,
-                "date" => \Carbon\Carbon::parse($timesheet->date)->format('d/m/Y'),
-                "hours" => $timesheet->hours,
                 "remark" => $timesheet->remark,
+                "hours" => $timesheet->hours,
             ];
 
             // Split hours and decimal part
@@ -84,14 +84,14 @@ class TimesheetExport implements FromCollection,WithHeadings
 
         // Add Total Hours Row
         $formattedData[] = [
-            "id" => '',
+            //"id" => '',
+            "date" => '',
             "employee_name" => '',
             "project_name" => '',
             "milestone_name" => '',
             "task_name" => '',
-            "date" => 'Total',
+            "remark" => 'Total',
             "hours" => $totalHours . "h " . $remainingMinutes . "m",
-            "remark" => ''
         ];
 
         return collect($formattedData);
@@ -99,14 +99,14 @@ class TimesheetExport implements FromCollection,WithHeadings
     public function headings(): array
     {
         return [
-            "ID",
+            //"ID",
+            "Date",
             "Name",
             "Project",
             "Milestone",
             "Task",
-            "Date",
-            "Hour",
             "Work Description",
+            "Hour",
             // "Created By"
         ];
     }
