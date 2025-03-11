@@ -85,7 +85,7 @@
                                     <!-- <td>{{ \Auth::user()->dateFormat($leave->end_date) }}</td> -->
 
                                     <td>{{ $leave->total_leave_days }}</td>
-                                    <td>{{ $leave->leave_reason }}</td>
+                                    <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 300px;">{{ $leave->leave_reason }}</td>
                                     <td>
                                         @if ($leave->status == 'Pending')
                                             <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>

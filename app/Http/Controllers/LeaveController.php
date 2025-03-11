@@ -24,7 +24,7 @@ class LeaveController extends Controller
             if (\Auth::user()->type == 'employee') {
                 $user     = \Auth::user();
                 $employee = Employee::where('user_id', '=', $user->id)->first();
-                $leaves   = LocalLeave::where('employee_id', '=', $employee->id)->get();
+                $leaves   = LocalLeave::where('employee_id', '=', $employee->id)->orderBy('applied_on', 'desc')->get();
             } else {
                 // $leaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())->with(['employees', 'leaveType'])->get();
                 $leaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
@@ -362,14 +362,16 @@ class LeaveController extends Controller
 
                     $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
 
-                    Mail::send('email.leave-request', $data, function ($message) use ($data,$emails) {
-                        $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
-                        $message->to($data["toEmail"])  // Manager’s email address
-                                ->subject($subjectTxt)
-                                ->from($data["fromEmail"], $data["fromNameEmail"])
-                                ->replyTo($data["replyTo"], $data["replyToName"])
-                                ->cc($emails);
-                    });
+                    $emails[] = $employee->email;
+
+                    // Mail::send('email.leave-request', $data, function ($message) use ($data,$emails) {
+                    //     $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                    //     $message->to($data["toEmail"])  // Manager’s email address
+                    //             ->subject($subjectTxt)
+                    //             ->from($data["fromEmail"], $data["fromNameEmail"])
+                    //             ->replyTo($data["replyTo"], $data["replyToName"])
+                    //             ->cc($emails);
+                    // });
                 }
 
 
@@ -705,14 +707,14 @@ class LeaveController extends Controller
 
             $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
 
-            Mail::send($emailTemp, $data, function ($message) use ($data,$emails) {
-                $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
-                $message->to($data["toEmail"])  // Manager’s email address
-                        ->subject($subjectTxt)
-                        ->from($data["fromEmail"], $data["fromNameEmail"])
-                        ->replyTo($data["replyTo"], $data["replyToName"])
-                        ->cc($emails);  // CC email address
-            });
+            // Mail::send($emailTemp, $data, function ($message) use ($data,$emails) {
+            //     $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+            //     $message->to($data["toEmail"])  // Manager’s email address
+            //             ->subject($subjectTxt)
+            //             ->from($data["fromEmail"], $data["fromNameEmail"])
+            //             ->replyTo($data["replyTo"], $data["replyToName"])
+            //             ->cc($emails);  // CC email address
+            // });
             
 
             return redirect()->route('leave.index')->with('success', __('Leave status successfully updated.') . 

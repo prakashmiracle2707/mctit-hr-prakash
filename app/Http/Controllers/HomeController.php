@@ -16,6 +16,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Utility;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Leave as LocalLeave;
 use Carbon\Carbon;
 
 class HomeController extends Controller
@@ -39,6 +40,70 @@ class HomeController extends Controller
         if(Auth::check())
         {
             $user = Auth::user();
+            $leaves = [];
+            $Todayleaves = [];
+
+
+            if (\Auth::user()->can('Manage Leave')) {
+                // Get current date and current month
+                // Get the current date
+                $currentDate = Carbon::today();
+
+                // Get the start and end of the current month
+                $startOfMonth = $currentDate->copy()->startOfMonth()->format('Y-m-d 00:00:00');
+                $endOfMonth = $currentDate->copy()->endOfMonth()->format('Y-m-d 23:59:59');
+
+                if (\Auth::user()->type == 'employee') {
+                    $user     = \Auth::user();
+                    $employee = Employee::where('user_id', '=', $user->id)->first();
+                    
+                    // Filter leaves that are either in the current month or in the future
+                    $leaves = LocalLeave::where('employee_id', '=', $employee->id)
+                        ->where(function ($query) use ($startOfMonth, $endOfMonth, $currentDate) {
+                            $query->whereBetween('start_date', [$startOfMonth, $endOfMonth])
+                            ->orWhere('start_date', '>', $currentDate);
+                        })
+                        ->orderBy('start_date', 'desc')
+                        ->get();
+                } else {
+                    // For non-employees (e.g., admin)
+                    $leaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
+                        ->where('status', '=', 'Pending')  
+                        ->with(['employees', 'leaveType']) 
+                        ->orderBy('start_date', 'desc')
+                        ->get();
+
+                    $today = Carbon::today(); // Get today's date
+
+                    // Check if today is a weekend (Saturday or Sunday)
+                    if (!$today->isWeekend()) {
+                        // Fetch leave records where the status is 'Approved' and today is between start_date and end_date
+                        $Todayleaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
+                            //->where('status', '=', 'Approved')  
+                            ->whereDate('start_date', '<=', $today)
+                            ->whereDate('end_date', '>=', $today)
+                            ->with(['employees', 'leaveType']) 
+                            ->orderBy('start_date', 'desc')
+                            ->get();
+
+                        // Calculate total leave days for each leave if not already calculated
+                        foreach ($Todayleaves as $Todayleave) {
+                            if ($Todayleave->total_leave_days == 0) {
+                                $Todayleave->total_leave_days = $this->getTotalLeaveDays($Todayleave->start_date, $Todayleave->end_date);
+                            }
+                        }
+                    }
+                }
+
+                // Calculate total leave days for each leave if not already calculated
+                foreach ($leaves as $leave) {
+                    if ($leave->total_leave_days == 0) {
+                        $leave->total_leave_days = $this->getTotalLeaveDays($leave->start_date, $leave->end_date);
+                    }
+                }
+            }
+
+
             if($user->type == 'employee')
             {
 
@@ -98,7 +163,7 @@ class HomeController extends Controller
                 $officeTime['endTime']   = Utility::getValByName('company_end_time');
 
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves'));
             }
             else
             {
@@ -169,9 +234,11 @@ class HomeController extends Controller
                     ->orderByRaw('work_from_home DESC') // Order by work_from_home (1 first)
                     ->orderBy('updated_at', 'desc') // Then order by updated_at in descending order
                     ->get();
+
+
                 /* *************** New Add End ****************************/
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves'));
             }
         }
         else
@@ -196,6 +263,27 @@ class HomeController extends Controller
 
             }
         }
+    }
+
+
+    // Private function to calculate leave days excluding weekends
+    private function getTotalLeaveDays($startDate, $endDate)
+    {
+        // Parse the start and end dates
+        $startDate = \Carbon\Carbon::parse($startDate);
+        $endDate = \Carbon\Carbon::parse($endDate);
+
+        $totalLeaveDays = 0;
+
+        // Loop from start date to end date
+        for ($date = $startDate; $date <= $endDate; $date->addDay()) {
+            // If the current day is not Saturday or Sunday, increment the total leave days
+            if (!$date->isWeekend()) {
+                $totalLeaveDays++;
+            }
+        }
+
+        return $totalLeaveDays;
     }
 
     public function getOrderChart($arrParam)

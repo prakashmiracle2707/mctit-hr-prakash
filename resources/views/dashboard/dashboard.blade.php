@@ -13,6 +13,14 @@
     <li class="breadcrumb-item"><a href="{{ route('home') }}">{{ __('Home') }}</a></li>
 @endsection --}}
 
+<style type="text/css">
+.leave-reason-column {
+    white-space: normal; /* Allow text to wrap normally */
+    word-wrap: break-word; /* Break long words when necessary */
+    word-break: break-word; /* Ensure that long words or URLs break and wrap */
+    overflow-wrap: break-word; /* Ensures word wrapping when text is too long */
+}
+</style>
 @section('content')
     @if (session('status'))
         <div class="alert alert-success" role="alert">
@@ -191,6 +199,174 @@
                                         <td>{{ $meeting->title }}</td>
                                         <td>{{ \Auth::user()->dateFormat($meeting->date) }}</td>
                                         <td>{{ \Auth::user()->timeFormat($meeting->time) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-12 col-lg-12 col-md-12">
+            <div class="card">
+                <div class="card-header card-body table-border-style">
+                    <h5>{{ __('Scheduled Leave Overview') }}</h5>
+                </div>
+                <div class="card-body">
+                    {{-- <h5> </h5> --}}
+                    <div class="table-responsive">
+                        <table class="table" id="pc-dt-simple">
+                            <thead>
+                                <tr>
+                                    @if (\Auth::user()->type != 'employee')
+                                        <th>{{ __('Employee') }}</th>
+                                    @endif
+                                    <th>{{ __('Leave Type') }}</th>
+                                    <th>{{ __('Leave Date') }}</th>
+                                    <!-- <th>{{ __('End Date') }}</th> -->
+                                    <th>{{ __('Total Days') }}</th>
+                                    <th>{{ __('Leave Reason') }}</th>
+                                    <th>{{ __('status') }}</th>
+                                    <th>{{ __('Applied On') }}</th>
+                                    <th width="200px">{{ __('Action') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($leaves as $leave)
+                                    <tr>
+                                        @if (\Auth::user()->type != 'employee')
+                                            <td>{{ !empty($leave->employee_id) ? $leave->employees->name : '' }}
+                                            </td>
+                                        @endif
+                                        <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                            <br />
+                                            @switch($leave->half_day_type)
+                                                @case('morning')
+                                                    <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
+                                                    @break
+                                                @case('afternoon')
+                                                    <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
+                                                    @break
+                                                @default
+                                                    <div></div>
+                                            @endswitch
+                                        </td>
+                                        <td>
+                                            @if($leave->start_date == $leave->end_date)
+                                                {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }}
+                                            @else
+                                                {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }} <b>To</b> {{ \Carbon\Carbon::parse($leave->end_date)->format('d/m/Y') }}
+                                            @endif
+                                            
+                                        </td>
+                                        <!-- <td>{{ \Auth::user()->dateFormat($leave->end_date) }}</td> -->
+
+                                        <td>{{ $leave->total_leave_days }}</td>
+                                        <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td>
+                                        <td>
+                                            @if ($leave->status == 'Pending')
+                                                <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == 'Approved')
+                                                <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == "Reject")
+                                                <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == "Draft")
+                                                <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                            @endif
+                                        </td>
+                                        <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
+
+                                        <td class="Action">
+                                            <div class="dt-buttons">
+                                            <span>
+
+                                                @if (\Auth::user()->type != 'employee')
+                                                    <div class="action-btn bg-success me-2">
+                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                            data-size="lg"
+                                                            data-url="{{ URL::to('leave/' . $leave->id . '/action') }}"
+                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                            title="" data-title="{{ __('Leave Action') }}"
+                                                            data-bs-original-title="{{ __('Manage Leave') }}">
+                                                            <span class="text-white"><i class="ti ti-caret-right"></i></span>
+                                                        </a>
+                                                    </div>
+                                                    @can('Edit Leave')
+                                                        @if(\Auth::user()->type != 'CEO')
+                                                            <div class="action-btn bg-info me-2">
+                                                                <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                                    data-size="lg"
+                                                                    data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
+                                                                    data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                                    title="" data-title="{{ __('Edit Leave') }}"
+                                                                    data-bs-original-title="{{ __('Edit') }}">
+                                                                    <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                                </a>
+                                                            </div>
+                                                        @endif
+                                                    @endcan
+                                                    @can('Delete Leave')
+                                                        @if (\Auth::user()->type != 'employee' && \Auth::user()->type != 'CEO')
+                                                            <div class="action-btn">
+                                                                {!! Form::open([
+                                                                    'method' => 'DELETE',
+                                                                    'route' => ['leave.destroy', $leave->id],
+                                                                    'id' => 'delete-form-' . $leave->id,
+                                                                ]) !!}
+                                                                <a href="#"
+                                                                    class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                                    data-bs-toggle="tooltip" title=""
+                                                                    data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
+                                                                        class="ti ti-trash"></i></span></a>
+                                                                </form>
+                                                            </div>
+                                                        @endif
+                                                    @endcan
+                                                @else
+                                                    <div class="action-btn bg-success me-2">
+                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                            data-size="lg"
+                                                            data-url="{{ URL::to('leave/' . $leave->id . '/action') }}"
+                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                            title="" data-title="{{ __('Leave Action') }}"
+                                                            data-bs-original-title="{{ __('Manage Leave') }}">
+                                                            <span class="text-white"><i class="ti ti-caret-right"></i></span>
+                                                        </a>
+                                                    </div>
+                                                @endif
+
+                                                @if ($leave->status == "Draft")
+                                                    <div class="action-btn bg-info me-2">
+                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                            data-size="lg"
+                                                            data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
+                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                            title="" data-title="{{ __('Edit Leave') }}"
+                                                            data-bs-original-title="{{ __('Edit') }}">
+                                                            <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                        </a>
+                                                    </div>
+                                                    @if (\Auth::user()->type != 'CEO')
+                                                        <div class="action-btn">
+                                                            {!! Form::open([
+                                                                'method' => 'DELETE',
+                                                                'route' => ['leave.destroy', $leave->id],
+                                                                'id' => 'delete-form-' . $leave->id,
+                                                            ]) !!}
+                                                            <a href="#"
+                                                                class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                                data-bs-toggle="tooltip" title=""
+                                                                data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
+                                                                    class="ti ti-trash"></i></span></a>
+                                                            </form>
+                                                        </div>
+                                                    @endif
+                                                @endif
+
+                                            </span>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -647,7 +823,263 @@
            
         </div>
 
-        <div class="col-xl-12 col-lg-12 col-md-12" style="display:none;">
+        <div class="col-xl-12 col-lg-12 col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs" id="leaveTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="people-on-leave-tab" data-bs-toggle="tab" href="#people-on-leave" role="tab" aria-controls="people-on-leave" aria-selected="true">
+                                <h6>{{ __('Today on Leave') }}</h6>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="pending-tab" data-bs-toggle="tab" href="#pending-leaves" role="tab" aria-controls="pending-leaves" aria-selected="false">
+                                <h6>{{ __('Pending Leave Applications') }}</h6>
+                            </a>
+                        </li>
+                        
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="leaveTabsContent">
+                    <!-- Pending Leave Applications Tab -->
+                    <div class="tab-pane fade" id="pending-leaves" role="tabpanel" aria-labelledby="pending-tab">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table datatable">
+                                    <thead>
+                                        <tr>
+                                            @if (\Auth::user()->type != 'employee')
+                                                <th>{{ __('Employee') }}</th>
+                                            @endif
+                                            <th>{{ __('Leave Type') }}</th>
+                                            <th>{{ __('Leave Date') }}</th>
+                                            <!-- <th>{{ __('End Date') }}</th> -->
+                                            <th>{{ __('Total Days') }}</th>
+                                            <th>{{ __('Leave Reason') }}</th>
+                                            <th>{{ __('status') }}</th>
+                                            <th>{{ __('Applied On') }}</th>
+                                            <th width="200px">{{ __('Action') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($leaves as $leave)
+                                            <tr>
+                                                @if (\Auth::user()->type != 'employee')
+                                                    <td>{{ !empty($leave->employee_id) ? $leave->employees->name : '' }}
+                                                    </td>
+                                                @endif
+                                                <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                                    <br />
+                                                    @switch($leave->half_day_type)
+                                                        @case('morning')
+                                                            <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
+                                                            @break
+                                                        @case('afternoon')
+                                                            <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
+                                                            @break
+                                                        @default
+                                                            <div></div>
+                                                    @endswitch
+                                                </td>
+                                                <td>
+                                                    @if($leave->start_date == $leave->end_date)
+                                                        {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }}
+                                                    @else
+                                                        {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }} <b>To</b> {{ \Carbon\Carbon::parse($leave->end_date)->format('d/m/Y') }}
+                                                    @endif
+                                                    
+                                                </td>
+                                                <!-- <td>{{ \Auth::user()->dateFormat($leave->end_date) }}</td> -->
+
+                                                <td>{{ $leave->total_leave_days }}</td>
+                                                <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td>
+                                                <td>
+                                                    @if ($leave->status == 'Pending')
+                                                        <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == 'Approved')
+                                                        <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == "Reject")
+                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == "Draft")
+                                                        <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @endif
+                                                </td>
+                                                <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
+
+                                                <td class="Action">
+                                                    <div class="dt-buttons">
+                                                    <span>
+
+                                                        @if (\Auth::user()->type != 'employee')
+                                                            <div class="action-btn bg-success me-2">
+                                                                <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                                    data-size="lg"
+                                                                    data-url="{{ URL::to('leave/' . $leave->id . '/action') }}"
+                                                                    data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                                    title="" data-title="{{ __('Leave Action') }}"
+                                                                    data-bs-original-title="{{ __('Manage Leave') }}">
+                                                                    <span class="text-white"><i class="ti ti-caret-right"></i></span>
+                                                                </a>
+                                                            </div>
+                                                            @can('Edit Leave')
+                                                                @if(\Auth::user()->type != 'CEO')
+                                                                    <div class="action-btn bg-info me-2">
+                                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                                            data-size="lg"
+                                                                            data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
+                                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                                            title="" data-title="{{ __('Edit Leave') }}"
+                                                                            data-bs-original-title="{{ __('Edit') }}">
+                                                                            <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                                        </a>
+                                                                    </div>
+                                                                @endif
+                                                            @endcan
+                                                            @can('Delete Leave')
+                                                                @if (\Auth::user()->type != 'employee' && \Auth::user()->type != 'CEO')
+                                                                    <div class="action-btn bg-danger">
+                                                                        {!! Form::open([
+                                                                            'method' => 'DELETE',
+                                                                            'route' => ['leave.destroy', $leave->id],
+                                                                            'id' => 'delete-form-' . $leave->id,
+                                                                        ]) !!}
+                                                                        <a href="#"
+                                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                                            data-bs-toggle="tooltip" title=""
+                                                                            data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
+                                                                                class="ti ti-trash"></i></span></a>
+                                                                        </form>
+                                                                    </div>
+                                                                @endif
+                                                            @endcan
+                                                        @else
+                                                            <div class="action-btn bg-success me-2">
+                                                                <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                                    data-size="lg"
+                                                                    data-url="{{ URL::to('leave/' . $leave->id . '/action') }}"
+                                                                    data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                                    title="" data-title="{{ __('Leave Action') }}"
+                                                                    data-bs-original-title="{{ __('Manage Leave') }}">
+                                                                    <span class="text-white"><i class="ti ti-caret-right"></i></span>
+                                                                </a>
+                                                            </div>
+                                                        @endif
+
+                                                        @if ($leave->status == "Draft")
+                                                            <div class="action-btn bg-info me-2">
+                                                                <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                                    data-size="lg"
+                                                                    data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
+                                                                    data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                                    title="" data-title="{{ __('Edit Leave') }}"
+                                                                    data-bs-original-title="{{ __('Edit') }}">
+                                                                    <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                                </a>
+                                                            </div>
+                                                            @if (\Auth::user()->type != 'CEO')
+                                                                <div class="action-btn bg-danger">
+                                                                    {!! Form::open([
+                                                                        'method' => 'DELETE',
+                                                                        'route' => ['leave.destroy', $leave->id],
+                                                                        'id' => 'delete-form-' . $leave->id,
+                                                                    ]) !!}
+                                                                    <a href="#"
+                                                                        class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                                        data-bs-toggle="tooltip" title=""
+                                                                        data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
+                                                                            class="ti ti-trash"></i></span></a>
+                                                                    </form>
+                                                                </div>
+                                                            @endif
+                                                        @endif
+
+                                                    </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- People Today on Leave Tab -->
+                    <div class="tab-pane fade show active" id="people-on-leave" role="tabpanel" aria-labelledby="people-on-leave-tab">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table datatable">
+                                    <thead>
+                                        <tr>
+                                            @if (\Auth::user()->type != 'employee')
+                                                <th>{{ __('Employee') }}</th>
+                                            @endif
+                                            <th>{{ __('Leave Type') }}</th>
+                                            <th>{{ __('Leave Date') }}</th>
+                                            <!-- <th>{{ __('End Date') }}</th> -->
+                                            <th>{{ __('Total Days') }}</th>
+                                            <th>{{ __('Leave Reason') }}</th>
+                                            <th>{{ __('status') }}</th>
+                                            <th>{{ __('Applied On') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($Todayleaves as $leave)
+                                            <tr>
+                                                @if (\Auth::user()->type != 'employee')
+                                                    <td>{{ !empty($leave->employee_id) ? $leave->employees->name : '' }}
+                                                    </td>
+                                                @endif
+                                                <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                                    <br />
+                                                    @switch($leave->half_day_type)
+                                                        @case('morning')
+                                                            <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
+                                                            @break
+                                                        @case('afternoon')
+                                                            <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
+                                                            @break
+                                                        @default
+                                                            <div></div>
+                                                    @endswitch
+                                                </td>
+                                                <td>
+                                                    @if($leave->start_date == $leave->end_date)
+                                                        {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }}
+                                                    @else
+                                                        {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }} <b>To</b> {{ \Carbon\Carbon::parse($leave->end_date)->format('d/m/Y') }}
+                                                    @endif
+                                                    
+                                                </td>
+                                                <!-- <td>{{ \Auth::user()->dateFormat($leave->end_date) }}</td> -->
+
+                                                <td>{{ $leave->total_leave_days }}</td>
+                                                <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td>
+                                                <td>
+                                                    @if ($leave->status == 'Pending')
+                                                        <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == 'Approved')
+                                                        <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == "Reject")
+                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == "Draft")
+                                                        <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @endif
+                                                </td>
+                                                <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-12 col-lg-12 col-md-12" style="display: none;">
             <div class="card">
                 <div class="card-header card-body table-border-style">
                     <h5>{{ __('Announcement List') }}</h5>
@@ -688,7 +1120,9 @@
 
 
     <script>
+        
         const dataTable = new simpleDatatables.DataTable("#pc-dt-simple-dashbord");
+        // const dataTablePending = new simpleDatatables.DataTable("#pc-dt-simple-pending");
     </script>
 
     @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'CEO')
