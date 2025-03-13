@@ -34,6 +34,26 @@
             font-weight: bold;
             font-size: 16px;
         }
+        .button-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .approved {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .reject {
+            background-color: #f44336;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -44,7 +64,7 @@
 
         <p>I hope you are doing well.</p>
 
-        <p>Requesting you to <b>{{ $leaveType }} </b> on <b>{{ $leaveDate }} </b> as <b> {{ $leaveReason }} </b></p>
+        <p>Requesting you to <b>{{ $leaveType }} </b> on <b>{{ $leaveDate }} </b> as <b> {{ $leaveReason }} </b> </p>
 
         <p>So requesting you to kindly approve my application for the above mentioned days.</p>
 
@@ -53,6 +73,13 @@
         <p>Thank You,</p>
         <p>Regards</p>
         <p class="signature">{{ $employeeName }}</p>
+    </div>
+
+    <div class="button-container">
+        <a href="{{ route('leave.review', ['id' => $leaveId]) }}" 
+           style="background-color: #008ECC;border-radius:6px; color: white; padding: 10px; text-decoration: none;">
+           Review Leave
+        </a>
     </div>
 </div>
 

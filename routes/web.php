@@ -748,6 +748,13 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    Route::get('/leave/review/{id}', [LeaveController::class, 'reviewLeave'])->name('leave.review')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+    
     Route::get('ticket/{id}/reply', [TicketController::class, 'reply'])->name('ticket.reply')->middleware(
         [
             'auth',

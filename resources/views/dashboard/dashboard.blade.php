@@ -138,7 +138,7 @@
                     
                     <div class="row">
                         <div class="col-6  float-right border-right">
-                            {{ Form::open(['url' => 'attendanceemployee/attendance', 'method' => 'post']) }}
+                            {{ Form::open(['url' => 'attendanceemployee/attendance', 'method' => 'post' , 'id' => 'clockInForm']) }}
                             @if (empty($employeeAttendance) || $employeeAttendance->clock_out != '00:00:00')
                                 <button type="submit" value="0" name="in" id="clock_in" class="btn btn-primary">{{ __('CLOCK IN') }}</button>
                                 <div class="form-check">
@@ -208,6 +208,7 @@
             </div>
         </div>
 
+        @can('Manage Leave')
         <div class="col-xl-12 col-lg-12 col-md-12">
             <div class="card">
                 <div class="card-header card-body table-border-style">
@@ -375,6 +376,8 @@
                 </div>
             </div>
         </div>
+        @endcan
+
         <div class="col-xl-12 col-lg-12 col-md-12" style="display:none;">
             <div class="card">
                 <div class="card-header card-body table-border-style">
@@ -823,18 +826,19 @@
            
         </div>
 
+        @can('Manage Leave')
         <div class="col-xl-12 col-lg-12 col-md-12">
             <div class="card">
                 <div class="card-header">
                     <ul class="nav nav-tabs" id="leaveTabs" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" id="people-on-leave-tab" data-bs-toggle="tab" href="#people-on-leave" role="tab" aria-controls="people-on-leave" aria-selected="true">
-                                <h6>{{ __('Today on Leave') }}</h6>
+                                <h6><span class="text-danger">{{ __('Today on Leave') }} ({{count($Todayleaves)}})</span></h6>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="pending-tab" data-bs-toggle="tab" href="#pending-leaves" role="tab" aria-controls="pending-leaves" aria-selected="false">
-                                <h6>{{ __('Pending Leave Applications') }}</h6>
+                                <h6><span class="text-primary">{{ __('Pending Leave Applications') }} ({{count($leaves)}})</span></h6>
                             </a>
                         </li>
                         
@@ -938,7 +942,7 @@
                                                             @endcan
                                                             @can('Delete Leave')
                                                                 @if (\Auth::user()->type != 'employee' && \Auth::user()->type != 'CEO')
-                                                                    <div class="action-btn bg-danger">
+                                                                    <div class="action-btn">
                                                                         {!! Form::open([
                                                                             'method' => 'DELETE',
                                                                             'route' => ['leave.destroy', $leave->id],
@@ -1078,6 +1082,7 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <div class="col-xl-12 col-lg-12 col-md-12" style="display: none;">
             <div class="card">
@@ -1123,6 +1128,18 @@
         
         const dataTable = new simpleDatatables.DataTable("#pc-dt-simple-dashbord");
         // const dataTablePending = new simpleDatatables.DataTable("#pc-dt-simple-pending");
+    </script>
+
+    <script>
+        document.getElementById('clockInForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var button = document.getElementById('clock_in');
+            button.disabled = true;
+            button.innerText = "Processing..."; 
+            button.classList.remove("btn-primary");
+            button.classList.add("btn-secondary");
+            this.submit();
+        });
     </script>
 
     @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'CEO')

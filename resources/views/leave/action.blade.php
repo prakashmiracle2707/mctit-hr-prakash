@@ -77,6 +77,7 @@
                     </td>
                 </tr>
                 <input type="hidden" value="{{ $leave->id }}" name="leave_id">
+                <input type="hidden" value="index" name="leave_page">
             </table>
         </div>
     </div>

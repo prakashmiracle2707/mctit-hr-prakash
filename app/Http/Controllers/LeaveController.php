@@ -30,6 +30,8 @@ class LeaveController extends Controller
                 $leaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
                             ->where('status', '!=', 'Draft')  // Exclude 'Draft' status
                             ->with(['employees', 'leaveType'])  // Eager load related models
+                            ->orderByRaw("FIELD(status, 'Pending') DESC")
+                            ->orderBy('applied_on', 'desc')
                             ->get();
             }
 
@@ -205,9 +207,9 @@ class LeaveController extends Controller
             $leave_type = LeaveType::find($request->leave_type_id);
 
             // Check if the leave type is "work from home", and set total_leave_days to 0 if true
-            if ($leave_type->title == 'Work from home (WFH)') {
+            /*if ($leave_type->title == 'Work from home (WFH)') {
                 $total_leave_days = 0;
-            } else {
+            } else {*/
                 $startDate = new \DateTime($request->start_date);
                 $endDate = new \DateTime($request->end_date);
                 $endDate->add(new \DateInterval('P1D')); // Include end date in the range
@@ -227,7 +229,7 @@ class LeaveController extends Controller
                 if ($request->half_day_type != 'full_day') {
                     $total_leave_days = 0.5; // If it's a half day, adjust total leave days accordingly
                 }
-            }
+            /*}*/
 
             $date = Utility::AnnualLeaveCycle();
 
@@ -345,6 +347,7 @@ class LeaveController extends Controller
 
                     $data = [
                         'employeeName' => $employee->name,
+                        'leaveId' => $leave->id,
                         'leaveType' => $leavetype->title,
                         'leaveFullHalfDay' => $this->getLeaveFullHalfDay($leave->half_day_type),
                         'appliedOn' => $leave->remark,
@@ -353,7 +356,8 @@ class LeaveController extends Controller
                         'status' => $leave->status,
                         'remark' => $leave->remark,
                         'total_leave_days' => $total_leave_days,
-                        'toEmail' => 'nishadprakash2699@gmail.com',
+                        // 'toEmail' => 'somit@miraclecloud-technology.com',
+                        'toEmail' => 'prakashn@miraclecloud-technology.com',
                         'fromEmail' => $employee->email,
                         'fromNameEmail' => $employee->name,
                         'replyTo' => $employee->email,
@@ -362,16 +366,25 @@ class LeaveController extends Controller
 
                     $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
 
-                    $emails[] = $employee->email;
+                    // $emails[] = $employee->email;
 
-                    // Mail::send('email.leave-request', $data, function ($message) use ($data,$emails) {
-                    //     $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
-                    //     $message->to($data["toEmail"])  // Manager’s email address
-                    //             ->subject($subjectTxt)
-                    //             ->from($data["fromEmail"], $data["fromNameEmail"])
-                    //             ->replyTo($data["replyTo"], $data["replyToName"])
-                    //             ->cc($emails);
-                    // });
+                    /*Mail::send('email.leave-request', $data, function ($message) use ($data,$emails) {
+                        $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                        $message->to($data["toEmail"])  // Manager’s email address
+                                ->subject($subjectTxt)
+                                ->from($data["fromEmail"], $data["fromNameEmail"])
+                                ->replyTo($data["replyTo"], $data["replyToName"])
+                                ->cc($emails);
+                    });*/
+
+                    Mail::send('email.leave-request-hr', $data, function ($message) use ($data,$emails) {
+                        $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                        $message->to($data["toEmail"])  // Manager’s email address
+                                ->subject($subjectTxt)
+                                ->from($data["fromEmail"], $data["fromNameEmail"])
+                                ->replyTo($data["replyTo"], $data["replyToName"]);
+                                ->cc($emails);
+                    });
                 }
 
 
@@ -384,7 +397,16 @@ class LeaveController extends Controller
         }
     }
 
+    // Show leave review form
+    public function reviewLeave($id)
+    {
+        $leave = LocalLeave::findOrFail($id);
 
+        $employee  = Employee::find($leave->employee_id);
+        $leavetype = LeaveType::find($leave->leave_type_id);
+
+        return view('leave.review_page', compact('employee', 'leavetype', 'leave'));
+    }
 
     public function show(LocalLeave $leave)
     {
@@ -447,9 +469,9 @@ class LeaveController extends Controller
                 $employee = Employee::where('employee_id', '=', \Auth::user()->creatorId())->first();
 
                 // If the leave type is "work from home", set total_leave_days to 0
-                if ($leave_type->title == 'Work from home (WFH)') {
+                /*if ($leave_type->title == 'Work from home (WFH)') {
                     $total_leave_days = 0;
-                } else {
+                } else {*/
                     $startDate = new \DateTime($request->start_date);
                     $endDate = new \DateTime($request->end_date);
                     $endDate->add(new \DateInterval('P1D')); // Adjust end date to include the last day
@@ -470,7 +492,7 @@ class LeaveController extends Controller
                     if ($request->half_day_type != 'full_day') {
                         $total_leave_days = 0.5; // If it's a half day, adjust the total leave days
                     }
-                }
+                /*}*/
 
                 $date = Utility::AnnualLeaveCycle();
 
@@ -673,8 +695,11 @@ class LeaveController extends Controller
 
             $leavetype = LeaveType::find($leave->leave_type_id);
 
-            $fromEmail='nkalma@miraclecloud-technology.com';
-            $fromName='Nilesh Kalma';
+            $fromEmail='ai@miraclecloud-technology.com';
+            $fromName='MCT USER';
+
+            // $fromEmail='rmb@miraclecloud-technology.com';
+            // $fromName='Ravi Brahmbhatt';
 
             $data = [
                 'employeeName' => $employee->name,
@@ -707,22 +732,36 @@ class LeaveController extends Controller
 
             $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
 
-            // Mail::send($emailTemp, $data, function ($message) use ($data,$emails) {
-            //     $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
-            //     $message->to($data["toEmail"])  // Manager’s email address
-            //             ->subject($subjectTxt)
-            //             ->from($data["fromEmail"], $data["fromNameEmail"])
-            //             ->replyTo($data["replyTo"], $data["replyToName"])
-            //             ->cc($emails);  // CC email address
-            // });
-            
+            $emails[] = $fromEmail;
 
-            return redirect()->route('leave.index')->with('success', __('Leave status successfully updated.') . 
+            Mail::send($emailTemp, $data, function ($message) use ($data,$emails) {
+                $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                $message->to($data["toEmail"])  // Manager’s email address
+                        ->subject($subjectTxt)
+                        ->from($data["fromEmail"], $data["fromNameEmail"])
+                        ->replyTo($data["replyTo"], $data["replyToName"])
+                        ->cc($emails);  // CC email address
+            });
+            
+            if($request->leave_page == 'index'){
+                return redirect()->route('leave.index')->with('success', __('Leave status successfully updated.') . 
                 ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
                 '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+            }else{
+                return redirect()->route('leave.review', ['id' => $request->leave_id])
+                        ->with('success', __('Leave status successfully updated.') . 
+                            ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
+                            '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+            }
+            
         }
 
-        return redirect()->route('leave.index')->with('success', __('Leave status successfully updated.'));
+        if($request->leave_page == 'index'){
+            return redirect()->route('leave.review', ['id' => $request->leave_id])->with('success', __('Leave status successfully updated.'));
+        }else{
+
+        }
+        
     }
 
 
