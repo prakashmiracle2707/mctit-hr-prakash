@@ -42,7 +42,14 @@ class HomeController extends Controller
             $user = Auth::user();
             $leaves = [];
             $Todayleaves = [];
+            $attendanceEmployee = [];
+            $ThisMonthattendanceCount = 0;
+            $LastMonthattendanceCount = 0;
+            $totalSeconds = 0;
+            $hasOngoingBreak = false;
 
+            $breakLogs = collect(); // Initialize empty collection for break logs
+            $totalBreakDuration = '00:00:00'; // Default to zero time
 
             if (\Auth::user()->can('Manage Leave')) {
                 // Get current date and current month
@@ -58,13 +65,132 @@ class HomeController extends Controller
                     $employee = Employee::where('user_id', '=', $user->id)->first();
                     
                     // Filter leaves that are either in the current month or in the future
-                    $leaves = LocalLeave::where('employee_id', '=', $employee->id)
+                    $leaves = LocalLeave::where('employee_id', '=', $employee->id)->where('status', '!=', 'Draft')
                         ->where(function ($query) use ($startOfMonth, $endOfMonth, $currentDate) {
                             $query->whereBetween('start_date', [$startOfMonth, $endOfMonth])
                             ->orWhere('start_date', '>', $currentDate);
                         })
                         ->orderBy('start_date', 'desc')
                         ->get();
+
+                    $emp = !empty(\Auth::user()->employee) ? \Auth::user()->employee->id : 0;
+                    $attendanceEmployee = AttendanceEmployee::where('employee_id', $emp);
+
+                    // Exclude today's date
+                    $attendanceEmployee = $attendanceEmployee->whereDate('date', '<>', now()->toDateString());
+
+                    // Take the first 5 records, excluding today's date
+                    // $attendanceEmployee = $attendanceEmployee->orderBy('created_at', 'desc')->take(5)->get();
+
+                    $attendanceEmployee = AttendanceEmployee::where('employee_id', $emp)
+                    ->whereDate('date', '<=', now()->toDateString())
+                    ->orderBy('created_at', 'desc')
+                    ->take(6)
+                    ->get()
+                    ->map(function ($attendance) {
+                        // Fetch all completed breaks for the given attendance record
+                        $breakLogs = $attendance->breaks()->whereNotNull('break_end')->get();
+                        
+                        $totalSeconds = 0;
+
+                        foreach ($breakLogs as $break) {
+                            if (!empty($break->break_start) && !empty($break->break_end)) {
+                                try {
+                                    $start = Carbon::parse($break->break_start);
+                                    $end = Carbon::parse($break->break_end);
+
+                                    // Ensure valid duration
+                                    if ($end->greaterThan($start)) {
+                                        $duration = $start->diffInSeconds($end);
+                                        $totalSeconds += (int) round($duration);
+                                    }
+                                } catch (\Exception $e) {
+                                    \Log::error("Error calculating break duration for attendance ID: " . $attendance->id . " - " . $e->getMessage());
+                                }
+                            }
+                        }
+
+                        // Convert total break duration into HH:MM:SS format
+                        $attendance->totalBreakDuration = sprintf('%02d:%02d:%02d', intdiv($totalSeconds, 3600), intdiv($totalSeconds % 3600, 60), $totalSeconds % 60);
+                        
+                        return $attendance;
+                    });
+
+
+
+                    // Get the current month and year
+                    $currentMonth = now()->month;
+                    $currentYear = now()->year;
+
+                    // Count attendance records for this month
+                    $ThisMonthattendanceCount = AttendanceEmployee::where('employee_id', $emp)->whereMonth('date', $currentMonth)
+                                                          ->whereYear('date', $currentYear)
+                                                          ->count();
+
+                    // Get the last month and year
+                    $lastMonth = now()->subMonth()->month;
+                    $lastYear = now()->subMonth()->year;
+
+                    // Count attendance records for the last month
+                    $LastMonthattendanceCount = AttendanceEmployee::where('employee_id', $emp)
+                                                                   ->whereMonth('date', $lastMonth)
+                                                                   ->whereYear('date', $lastYear)
+                                                                   ->count();
+
+                    // Fetch today's attendance record
+                    $employeeAttendance = AttendanceEmployee::where('employee_id', $emp)
+                        ->whereDate('date', now()->toDateString())
+                        ->first();
+
+                    // Fetch break logs for today's attendance
+                    if ($employeeAttendance) {
+                        $breakLogs = $employeeAttendance->breaks()->orderBy('break_start', 'desc')->get();
+
+                        // Fetch all completed breaks (only where `break_end` exists)
+                        // $breakLogsToday = $employeeAttendance->breaks()->whereNotNull('break_end')->get();
+
+
+                        $settings = Utility::settings();
+                        date_default_timezone_set($settings['timezone']);
+
+                        foreach ($breakLogs as $break) {
+                            if (!empty($break->break_start)) {
+                                try {
+                                    // Parse break start time
+                                    $start = Carbon::parse($break->break_start);
+                                    
+                                    // If break has ended, use its recorded end time
+                                    if (!empty($break->break_end)) {
+                                        $end = Carbon::parse($break->break_end);
+                                    } else {
+                                        // If break is in progress, use current time as end time
+                                        $end = Carbon::now();
+                                        $hasOngoingBreak = true;
+                                    }
+
+                                    // echo "<br />start  => ".$start." End ".$end;
+                                    // Ensure valid break duration calculation
+                                    if ($end->greaterThan($start)) {
+                                        $duration = $start->diffInSeconds($end);
+                                        $totalSeconds += $duration; // Accumulate total duration
+                                    } else {
+                                        \Log::error("Invalid break duration: Break end time is before start time for break ID: " . $break->id);
+                                    }
+                                } catch (\Exception $e) {
+                                    \Log::error("Error parsing break time for break ID: " . $break->id . " - " . $e->getMessage());
+                                }
+                            }
+                        }
+                        // exit;
+                        // Ensure totalSeconds is non-negative
+                        $totalSeconds = max(0, (int) round($totalSeconds)); // Round and cast to integer
+
+                        // Convert total seconds to HH:MM:SS format
+                        $totalBreakDuration = sprintf('%02d:%02d:%02d', intdiv($totalSeconds, 3600), intdiv($totalSeconds % 3600, 60), $totalSeconds % 60);
+                    }
+
+                    // echo "<pre>";print_r($hasOngoingBreak);exit;
+
                 } else {
                     // For non-employees (e.g., admin)
                     $leaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
@@ -163,7 +289,7 @@ class HomeController extends Controller
                 $officeTime['endTime']   = Utility::getValByName('company_end_time');
 
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak'));
             }
             else
             {
@@ -230,15 +356,48 @@ class HomeController extends Controller
                 $today = Carbon::today()->toDateString();
 
                 $attendanceEmployee = AttendanceEmployee::whereIn('employee_id', $employee)
-                    ->whereDate('date', $today)
-                    ->orderByRaw('work_from_home DESC') // Order by work_from_home (1 first)
-                    ->orderBy('updated_at', 'desc') // Then order by updated_at in descending order
-                    ->get();
+                ->whereDate('date', $today)
+                ->orderByRaw('work_from_home DESC')
+                ->orderBy('updated_at', 'desc')
+                ->get()
+                ->map(function ($attendance) {
+                    // Fetch all breaks for this attendance record
+                    $breakLogs = $attendance->breaks()->get();
+                    $totalSeconds = 0;
+                    $isInBreak = false; // Flag to track if the employee is currently in a break
 
+                    foreach ($breakLogs as $break) {
+                        if (!empty($break->break_start)) {
+                            try {
+                                $start = Carbon::parse($break->break_start);
 
+                                if (empty($break->break_end)) {
+                                    // If break_end is NULL, employee is currently on break
+                                    $isInBreak = true;
+                                } else {
+                                    $end = Carbon::parse($break->break_end);
+                                    if ($end->greaterThan($start)) {
+                                        $duration = $start->diffInSeconds($end);
+                                        $totalSeconds += (int) round($duration);
+                                    }
+                                }
+                            } catch (\Exception $e) {
+                                \Log::error("Error calculating break duration for attendance ID: " . $attendance->id . " - " . $e->getMessage());
+                            }
+                        }
+                    }
+
+                    // Convert total break duration into HH:MM:SS format
+                    $attendance->totalBreakDuration = sprintf('%02d:%02d:%02d', intdiv($totalSeconds, 3600), intdiv($totalSeconds % 3600, 60), $totalSeconds % 60);
+                    $attendance->isInBreak = $isInBreak; // Assign break status
+
+                    return $attendance;
+                });
+
+                
                 /* *************** New Add End ****************************/
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak'));
             }
         }
         else

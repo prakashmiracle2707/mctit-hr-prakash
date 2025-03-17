@@ -215,6 +215,7 @@
                                 <th>{{ __('Early Leaving') }}</th>
                                 <th>{{ __('Overtime') }}</th> -->
                                 <th>{{ __('Total Hours') }}
+                                <!-- <th>{{ __('Total Break Log') }}</th> -->
                                 @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
                                     <th width="200px">{{ __('Action') }}</th>
                                 @endif
@@ -248,6 +249,8 @@
                                     <td>{{ $attendance->early_leaving }}</td>
                                     <td>{{ $attendance->overtime }}</td> -->
                                     <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
+
+                                    <!-- <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td> -->
                                     @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
                                     <td class="Action">
                                         

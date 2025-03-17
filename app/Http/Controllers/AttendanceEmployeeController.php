@@ -10,8 +10,10 @@ use App\Models\Employee;
 use App\Models\IpRestrict;
 use App\Models\User;
 use App\Models\Utility;
+use App\Models\AttendanceBreak;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class AttendanceEmployeeController extends Controller
 {
@@ -122,6 +124,34 @@ class AttendanceEmployeeController extends Controller
                 $attendanceEmployee = $attendanceEmployee->orderBy('created_at', 'desc')->get();
             }
 
+            // Add Total Break Log Calculation
+            $attendanceEmployee = $attendanceEmployee->map(function ($attendance) {
+                // Fetch all completed breaks for this attendance record
+                $breakLogs = $attendance->breaks()->whereNotNull('break_end')->get();
+                $totalSeconds = 0;
+
+                foreach ($breakLogs as $break) {
+                    if (!empty($break->break_start) && !empty($break->break_end)) {
+                        try {
+                            $start = Carbon::parse($break->break_start);
+                            $end = Carbon::parse($break->break_end);
+
+                            // Ensure valid duration
+                            if ($end->greaterThan($start)) {
+                                $duration = $start->diffInSeconds($end);
+                                $totalSeconds += (int) round($duration);
+                            }
+                        } catch (\Exception $e) {
+                            \Log::error("Error calculating break duration for attendance ID: " . $attendance->id . " - " . $e->getMessage());
+                        }
+                    }
+                }
+
+                // Convert total break duration into HH:MM:SS format
+                $attendance->totalBreakDuration = sprintf('%02d:%02d:%02d', intdiv($totalSeconds, 3600), intdiv($totalSeconds % 3600, 60), $totalSeconds % 60);
+                return $attendance;
+            });
+
             // echo "<pre>";print_r($attendanceEmployee);exit;
 
             return view('attendance.index', compact('attendanceEmployee', 'branch', 'department'));
@@ -129,6 +159,8 @@ class AttendanceEmployeeController extends Controller
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
+
+    
 
     public function create()
     {
@@ -705,6 +737,62 @@ class AttendanceEmployeeController extends Controller
     //         return redirect()->back()->with('error', __('Employee are not allow multiple time clock in & clock for every day.'));
     //     }
     // }
+
+
+    public function startBreak(Request $request)
+    {
+        $settings = Utility::settings();
+        date_default_timezone_set($settings['timezone']); // Set timezone
+        $attendance = AttendanceEmployee::where('employee_id', $request->employee_id)
+                                        ->where('date', today())
+                                        ->first();
+
+        if (!$attendance) {
+            return response()->json(['error' => 'Attendance record not found'], 404);
+        }
+
+        // Check if an active break is already open
+        if ($attendance->breaks()->whereNull('break_end')->exists()) {
+            return response()->json(['error' => 'A break is already active. End the current break first.'], 400);
+        }
+
+        $time = date("H:i:s");
+
+        $break = AttendanceBreak::create([
+            'attendance_id' => $attendance->id,
+            'break_start' => $time,
+        ]);
+
+        return response()->json(['message' => 'Break started successfully']);
+    }
+
+    public function endBreak(Request $request)
+    {
+        $settings = Utility::settings();
+        date_default_timezone_set($settings['timezone']); // Set timezone
+        $attendance = AttendanceEmployee::where('employee_id', $request->employee_id)
+                                        ->where('date', today())
+                                        ->first();
+
+        if (!$attendance) {
+            return response()->json(['error' => 'Attendance record not found'], 404);
+        }
+
+        $break = AttendanceBreak::where('attendance_id', $attendance->id)
+                                ->whereNull('break_end')
+                                ->orderBy('id', 'desc')
+                                ->first();
+
+        if (!$break) {
+            return response()->json(['error' => 'No active break found'], 404);
+        }
+
+        $time = date("H:i:s");
+
+        $break->update(['break_end' => $time]);
+
+        return response()->json(['message' => 'Break ended successfully']);
+    }
 
     public function attendance(Request $request)
     {

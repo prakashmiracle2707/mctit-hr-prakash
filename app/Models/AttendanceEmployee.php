@@ -31,4 +31,9 @@ class AttendanceEmployee extends Model
     {
         return $this->hasOne('App\Models\Employee', 'id', 'employee_id');
     }
+
+    public function breaks()
+    {
+        return $this->hasMany(AttendanceBreak::class, 'attendance_id');
+    }
 }

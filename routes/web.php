@@ -774,6 +774,18 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    // Attendance Routes Group
+    Route::prefix('attendanceemployee')->middleware(['auth', 'XSS'])->group(function () {
+        // Break Management Routes
+        Route::prefix('break')->group(function () {
+            Route::post('/start', [AttendanceEmployeeController::class, 'startBreak'])->name('attendance.break_start');
+            Route::post('/end', [AttendanceEmployeeController::class, 'endBreak'])->name('attendance.break_end');
+        });
+
+        // Attendance Logs
+        Route::get('/logs', [AttendanceEmployeeController::class, 'getAttendance'])->name('attendance.logs');
+    });
+
     Route::get('attendanceemployee/bulkattendance', [AttendanceEmployeeController::class, 'bulkAttendance'])->name('attendanceemployee.bulkattendance')->middleware(
         [
             'auth',
