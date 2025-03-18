@@ -93,7 +93,7 @@
             <div class="card-header card-body table-border-style">
                 {{-- <h5></h5> --}}
                 <div class="table-responsive">
-                    <table class="table" id="pc-dt-simple">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>{{ __('Occasion') }}</th>
@@ -107,8 +107,10 @@
                         <tbody>
                             @foreach ($holidays as $holiday)
                                 <tr>
-                                    <td>{{ $holiday->occasion }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($holiday->start_date)->format('d/m/Y') }}</td>
+                                    <td style="color:{{ str_contains($holiday->occasion, 'Optional') ? 'grey' : 'black' }};">
+                                        {{ $holiday->occasion }}
+                                    </td>
+                                    <td style="color:{{ str_contains($holiday->occasion, 'Optional') ? 'grey' : 'black' }};">{{ \Carbon\Carbon::parse($holiday->start_date)->format('d/m/Y') }}</td>
                                     <!-- <td>{{ \Auth::user()->dateFormat($holiday->end_date) }}</td> -->
                                     @if (Gate::check('Edit Holiday') || Gate::check('Delete Holiday'))
                                         <td class="Action">

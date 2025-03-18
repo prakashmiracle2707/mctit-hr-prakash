@@ -25,7 +25,7 @@ class HolidayController extends Controller
             if (!empty($request->end_date)) {
                 $holidays->where('end_date', '<=', $request->end_date);
             }
-            $holidays = $holidays->get();
+            $holidays = $holidays->orderBy('start_date', 'asc')->get();
 
             return view('holiday.index', compact('holidays'));
         } else {

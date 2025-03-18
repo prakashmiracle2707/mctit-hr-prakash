@@ -48,7 +48,7 @@
 
         <div class="form-group  col-md-12">
             {{ Form::label('remark', __('Work Description'), ['class' => 'col-form-label']) }}
-            {!! Form::textarea('remark', null, ['class' => 'form-control', 'rows' => '3' ,'placeholder'=>__('Enter Description')]) !!}
+            {!! Form::textarea('remark', null, ['class' => 'form-control', 'rows' => '10' ,'placeholder'=>__('Enter Description')]) !!}
         </div>
     </div>
 </div>

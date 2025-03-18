@@ -356,8 +356,8 @@ class LeaveController extends Controller
                         'status' => $leave->status,
                         'remark' => $leave->remark,
                         'total_leave_days' => $total_leave_days,
-                        // 'toEmail' => 'somit@miraclecloud-technology.com',
-                        'toEmail' => 'prakashn@miraclecloud-technology.com',
+                        'toEmail' => 'rmb@miraclecloud-technology.com',
+                        //'toEmail' => 'prakashn@miraclecloud-technology.com',
                         'fromEmail' => $employee->email,
                         'fromNameEmail' => $employee->name,
                         'replyTo' => $employee->email,
@@ -368,21 +368,21 @@ class LeaveController extends Controller
 
                     // $emails[] = $employee->email;
 
-                    /*Mail::send('email.leave-request', $data, function ($message) use ($data,$emails) {
-                        $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
-                        $message->to($data["toEmail"])  // Manager’s email address
-                                ->subject($subjectTxt)
-                                ->from($data["fromEmail"], $data["fromNameEmail"])
-                                ->replyTo($data["replyTo"], $data["replyToName"])
-                                ->cc($emails);
-                    });*/
+                    // Mail::send('email.leave-request', $data, function ($message) use ($data,$emails) {
+                    //     $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                    //     $message->to($data["toEmail"])  // Manager’s email address
+                    //             ->subject($subjectTxt)
+                    //             ->from($data["fromEmail"], $data["fromNameEmail"])
+                    //             ->replyTo($data["replyTo"], $data["replyToName"])
+                    //             ->cc($emails);
+                    // });
 
                     Mail::send('email.leave-request-hr', $data, function ($message) use ($data,$emails) {
                         $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
                         $message->to($data["toEmail"])  // Manager’s email address
                                 ->subject($subjectTxt)
                                 ->from($data["fromEmail"], $data["fromNameEmail"])
-                                ->replyTo($data["replyTo"], $data["replyToName"]);
+                                ->replyTo($data["replyTo"], $data["replyToName"])
                                 ->cc($emails);
                     });
                 }
@@ -695,11 +695,11 @@ class LeaveController extends Controller
 
             $leavetype = LeaveType::find($leave->leave_type_id);
 
-            $fromEmail='ai@miraclecloud-technology.com';
-            $fromName='MCT USER';
+            // $fromEmail='ai@miraclecloud-technology.com';
+            // $fromName='MCT USER';
 
-            // $fromEmail='rmb@miraclecloud-technology.com';
-            // $fromName='Ravi Brahmbhatt';
+            $fromEmail='rmb@miraclecloud-technology.com';
+            $fromName='Ravi Brahmbhatt';
 
             $data = [
                 'employeeName' => $employee->name,

@@ -64,7 +64,7 @@
                         </tr>
                         <tr>
                             <th>{{ __('Leave Reason') }}</th>
-                            <td>{{ !empty($leave->leave_reason) ? $leave->leave_reason : '' }}</td>
+                            <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;">{{ !empty($leave->leave_reason) ? $leave->leave_reason : '' }}</td>
                         </tr>
                         <tr>
                             <th>{{ __('Status') }}</th>
@@ -80,16 +80,29 @@
                                 @endif
                             </td>
                         </tr>
-                        <tr>
-                            <th>{{ __('Remark') }}</th>
-                            <td>
-                                @if (Auth::user()->type != 'employee')
-                                    {{ Form::textarea('remark', $leave->remark, ['class' => 'form-control grammer_textarea', 'placeholder' => __('Leave Remark'), 'rows' => '3']) }}
-                                @else
-                                    {{ !empty($leave->remark) ? $leave->remark : '' }}
-                                @endif
-                            </td>
-                        </tr>
+                        @if (Auth::user()->type != 'employee')
+                            <tr>
+                                <td colspan="2">
+                                    
+                                    <div class="form-group">
+                                        <label for="remark">{{ __('Remark') }}</label>
+                                        {{ Form::textarea('remark', $leave->remark, ['class' => 'form-control grammer_textarea', 'placeholder' => __('Leave Remark'), 'rows' => '3']) }}
+                                    </div>
+                                </td>
+                            </tr>
+                        @else
+                            <tr>
+                                <th>{{ __('Remark') }}</th>
+                                <td>
+                                    @if (Auth::user()->type != 'employee')
+                                        {{ Form::textarea('remark', $leave->remark, ['class' => 'form-control grammer_textarea', 'placeholder' => __('Leave Remark'), 'rows' => '3']) }}
+                                    @else
+                                        {{ !empty($leave->remark) ? $leave->remark : '' }}
+                                    @endif
+                                </td>
+                            </tr>
+                        @endif
+                        
                         <input type="hidden" value="{{ $leave->id }}" name="leave_id">
                         <input type="hidden" value="samepage" name="leave_page">
                     </table>
