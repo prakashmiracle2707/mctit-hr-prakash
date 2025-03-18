@@ -38,13 +38,13 @@
         <ul class="dash-navbar">
 
             <!-- dashboard-->
-            @if (\Auth::user()->type != 'company' && \Auth::user()->type != 'CEO')
+            @if (\Auth::user()->type != 'company' && \Auth::user()->type != 'CEO' && \Auth::user()->type != 'management')
                 <li class="dash-item">
                     <a href="{{ route('dashboard') }}" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-home"></i></span><span class="dash-mtext">{{ __('Dashboard') }}</span></a>
                 </li>
             @endif
-            @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'CEO')
+            @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'CEO' || \Auth::user()->type == 'management')
                 <li class="dash-item dash-hasmenu  {{ Request::segment(1) == 'null' ? 'active dash-trigger' : '' }}">
                     <a href="#" class="dash-link"><span class="dash-micon"><i class="ti ti-home"></i></span><span
                             class="dash-mtext">{{ __('Dashboard') }}</span><span class="dash-arrow"><i

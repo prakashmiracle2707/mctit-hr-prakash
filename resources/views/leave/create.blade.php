@@ -68,9 +68,10 @@
                 {{ Form::label('cc_email', __('CC Email'), ['class' => 'col-form-label']) }}<x-required></x-required>
                 {{ Form::select('cc_email_id[]', 
                     $employeesList->pluck('name', 'id'),
-                    $employeesList->whereIn('id', [2, 19])->pluck('id')->toArray(),
+                    $employeesList->whereIn('id', [2])->pluck('id')->toArray(),
                     ['class' => 'form-control select2', 'id' => 'cc_email_id', 'multiple' => 'multiple']
                 ) }}
+                <span style="color:#6f42c1;font-size: 11px;"><b>Note :</b>Nilesh Kalma is added by default to cc.</span>
             </div>
         </div>
     </div>

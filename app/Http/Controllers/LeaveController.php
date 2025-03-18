@@ -366,7 +366,7 @@ class LeaveController extends Controller
 
                     $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
 
-                    // $emails[] = $employee->email;
+                    $emails[] = 'nkalma@miraclecloud-technology.com';
 
                     // Mail::send('email.leave-request', $data, function ($message) use ($data,$emails) {
                     //     $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
@@ -733,6 +733,10 @@ class LeaveController extends Controller
             $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
 
             $emails[] = $fromEmail;
+
+            $emails[] = 'nkalma@miraclecloud-technology.com';
+
+            
 
             Mail::send($emailTemp, $data, function ($message) use ($data,$emails) {
                 $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];

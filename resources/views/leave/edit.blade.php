@@ -69,6 +69,7 @@
                     $leave->cc_email,
                     ['class' => 'form-control select2', 'id' => 'cc_email_id', 'multiple' => 'multiple', 'placeholder' => __('Select Employees for CC Email')]
                 ) }}
+                <span style="color:#6f42c1;font-size: 11px;"><b>Note :</b>Nilesh Kalma is added by default to cc.</span>
             </div>
         </div>
     </div>
