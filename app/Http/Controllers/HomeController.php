@@ -205,12 +205,12 @@ class HomeController extends Controller
                     if (!$today->isWeekend()) {
                         // Fetch leave records where the status is 'Approved' and today is between start_date and end_date
                         $Todayleaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
-                            //->where('status', '=', 'Approved')  
-                            ->whereDate('start_date', '<=', $today)
-                            ->whereDate('end_date', '>=', $today)
-                            ->with(['employees', 'leaveType']) 
-                            ->orderBy('start_date', 'desc')
-                            ->get();
+                                        ->where('status', '!=', 'Draft') // Exclude Draft status
+                                        ->whereDate('start_date', '<=', $today)
+                                        ->whereDate('end_date', '>=', $today)
+                                        ->with(['employees', 'leaveType'])
+                                        ->orderBy('start_date', 'desc')
+                                        ->get();
 
                         // Calculate total leave days for each leave if not already calculated
                         foreach ($Todayleaves as $Todayleave) {

@@ -110,7 +110,9 @@
                                     <td style="color:{{ str_contains($holiday->occasion, 'Optional') ? 'grey' : 'black' }};">
                                         {{ $holiday->occasion }}
                                     </td>
-                                    <td style="color:{{ str_contains($holiday->occasion, 'Optional') ? 'grey' : 'black' }};">{{ \Carbon\Carbon::parse($holiday->start_date)->format('d/m/Y') }}</td>
+                                    <td style="color:{{ str_contains($holiday->occasion, 'Optional') ? 'grey' : 'black' }};">{{ \Carbon\Carbon::parse($holiday->start_date)->format('d/m/Y') }} 
+                                        <b>({{ \Carbon\Carbon::parse($holiday->start_date)->format('l') }})</b>
+                                    </td>
                                     <!-- <td>{{ \Auth::user()->dateFormat($holiday->end_date) }}</td> -->
                                     @if (Gate::check('Edit Holiday') || Gate::check('Delete Holiday'))
                                         <td class="Action">

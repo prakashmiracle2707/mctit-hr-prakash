@@ -84,6 +84,8 @@ use App\Http\Controllers\PayslipTypeController;
 use App\Http\Controllers\TemplateController;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SalarySlipController;
+use App\Http\Controllers\ReimbursementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -1440,7 +1442,38 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    Route::resource('salary_slips', SalarySlipController::class)->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
+    Route::get('/salary_slips/download/{id}', [SalarySlipController::class, 'download'])->name('salary_slips.download');
+
+    Route::post('/salary_slips/preview', [SalarySlipController::class, 'preview'])->name('salary_slips.preview');
+    Route::post('/salary_slips/confirm', [SalarySlipController::class, 'confirm'])->name('salary_slips.confirm');
+    Route::post('/salary_slips/delete_preview', [SalarySlipController::class, 'deletePreview'])->name('salary_slips.delete_preview');
+
     Route::get('/employees/search', [EmployeeController::class, 'search'])->name('employees.search');
+
+    Route::resource('reimbursements', ReimbursementController::class)->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
+    Route::get('/reimbursements/{id}/action', [ReimbursementController::class, 'action'])
+    ->name('reimbursements.action');
+
+    Route::post('reimbursements/changeaction', [ReimbursementController::class, 'changeaction'])->name('reimbursements.changeaction')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
 
 
     // remove biometric code

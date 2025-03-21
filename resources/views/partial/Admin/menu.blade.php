@@ -199,6 +199,8 @@
             @endif
             <!-- payroll-->
 
+
+
             @if (\Auth::user()->type == 'employee')
                 <!-- <li
                     class="dash-item dash-hasmenu {{ Request::segment(1) == 'setsalary' ? 'dash-trigger active' : '' }}">
@@ -300,7 +302,7 @@
             @endif
             <!--Attendance company-->
 
-             <!-- Project Not company-->
+            <!-- Project Not company-->
             @if (Gate::check('Manage Project'))
                
                 <li class="dash-item">
@@ -526,6 +528,26 @@
             @endcan
 
             <!-- Holiday-->
+
+            <!-- Pay Slip Not company-->
+            @if (Gate::check('Manage Pay Slip'))
+               
+                <li class="dash-item">
+                    <a href="{{ route('salary_slips.index') }}" class="dash-link"><span class="dash-micon"><i
+                                class="ti ti-wand"></i></span><span class="dash-mtext">{{ __('Pay Slip') }}</span></a>
+                </li>
+                
+            @endif
+            <!-- Pay Slip Not company-->
+
+            <!-- Leave-->
+            @can('Manage Leave')
+                <li class="dash-item {{ Request::segment(1) == 'leave' ? 'active' : '' }}">
+                    <a href="{{ route('reimbursements.index') }}" class="dash-link"><span class="dash-micon"><i
+                                class="ti ti-medical-cross"></i></span><span class="dash-mtext">{{ __('Reimbursement') }}</span></a>
+                </li>
+            @endcan
+            <!-- Leave-->
 
             <!-- recruitment-->
             @if (Gate::check('Manage Job') ||
