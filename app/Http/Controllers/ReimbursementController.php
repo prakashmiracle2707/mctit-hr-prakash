@@ -25,7 +25,10 @@ class ReimbursementController extends Controller
         $query = Reimbursement::with('employee', 'assignedUser')->latest();
 
         // Exclude Draft status for non-employees (Managers, CEO)
-        if (\Auth::user()->type != 'employee') {
+        if (\Auth::user()->type == 'employee') {
+            $query->where('employee_id', Auth::id());
+        } else {
+            // For non-employees, exclude Draft status
             $query->where('status', '!=', 'Draft');
         }
 
@@ -86,9 +89,8 @@ class ReimbursementController extends Controller
                 'expense_date' => $request->expense_date,
             ]);
 
-            $toEmail = 'mctsource@miraclecloud-technology.com';
-
-            
+            $toEmail = 'rmb@miraclecloud-technology.com';
+            //$toEmail = 'mctsource@miraclecloud-technology.com';
             Mail::to($toEmail)->send(new ReimbursementRequestMail($reimbursement));
         }else{
             Reimbursement::create([
@@ -172,7 +174,8 @@ class ReimbursementController extends Controller
                 'status' => $request->status ?? 'Pending',
             ]);
             
-            $toEmail = 'mctsource@miraclecloud-technology.com';
+            $toEmail = 'rmb@miraclecloud-technology.com';
+            // $toEmail = 'mctsource@miraclecloud-technology.com';
             Mail::to($toEmail)->send(new ReimbursementRequestMail($reimbursement));
         }else{
             $reimbursement->update([
@@ -214,14 +217,28 @@ class ReimbursementController extends Controller
             $Reimbursement->remark = $request->remark;
 
             // Send Email
-            // Mail::to($Reimbursement->employee->email)->send(new ReimbursementNotApprovedMail($Reimbursement));
-            Mail::to($Reimbursement->employee->email)->send(new ReimbursementPaidMail($Reimbursement));
+            Mail::to($Reimbursement->employee->email)->send(new ReimbursementNotApprovedMail($Reimbursement));
         }
 
         if ($request->status == 'Mark as Paid') {
             $Reimbursement->paid_at = Carbon::now();
             $Reimbursement->paid_by = Auth::id();
             $Reimbursement->status = 'Paid';
+
+            // Ensure Payment Type is provided
+            if (!$request->payment_type) {
+                return redirect()->back()->with('error', __('Please select a Payment Type.'));
+            }else{
+                $Reimbursement->payment_type = $request->payment_type;
+            }
+
+            // Store Paid Receipt File
+            if ($request->hasFile('paid_receipt')) {
+                $file = $request->file('paid_receipt');
+                $fileName = 'paid_receipt_' .time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('uploads/reimbursements'), $fileName);
+                $Reimbursement->paid_receipt = $fileName;
+            }
 
             // Send Email
             Mail::to($Reimbursement->employee->email)->send(new ReimbursementPaidMail($Reimbursement));

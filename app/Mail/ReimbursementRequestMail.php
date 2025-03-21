@@ -19,7 +19,7 @@ class ReimbursementRequestMail extends Mailable
 
     public function build()
     {
-        $emails = [$this->reimbursement->employee->email, 'hchavda@miraclecloud-technology.com'];
+        $emails = [$this->reimbursement->employee->email, 'hchavda@miraclecloud-technology.com', 'nkalma@miraclecloud-technology.com'];
 
         $mail = $this->from($this->reimbursement->employee->email, ucfirst($this->reimbursement->employee->name)) 
                     ->replyTo($this->reimbursement->employee->email, ucfirst($this->reimbursement->employee->name))

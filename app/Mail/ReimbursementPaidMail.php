@@ -21,21 +21,35 @@ class ReimbursementPaidMail extends Mailable
     /**
      * Build the message.
      */
+
     public function build()
     {
-        $emails = ['dharit@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com'];
+        $emails = ['rmb@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com'];
+        // $emails = ['hchavda@miraclecloud-technology.com'];
+        $fromEmail = 'nkalma@miraclecloud-technology.com';
+        $fromName = 'Nilesh Kalma';
 
-        $fromEmail = 'mctsource@miraclecloud-technology.com';
-        $fromName = 'MCT SOURCE';
+        $email = $this->from($fromEmail, ucfirst($fromName))
+                      ->replyTo($fromEmail, ucfirst($fromName))
+                      ->cc($emails)
+                      ->subject('Reimbursement Payment Confirmation - ' . $this->reimbursement->title . ' #R00' . $this->reimbursement->id)
+                      ->view('email.reimbursement_paid')
+                      ->with([
+                          'reimbursement' => $this->reimbursement
+                      ]);
 
+        // ✅ Attach file if it exists
+        if (!empty($this->reimbursement->paid_receipt)) {
+            $filePath = public_path('uploads/reimbursements/' . $this->reimbursement->paid_receipt);
 
-        return $this->from($fromEmail, ucfirst($fromName)) 
-                    ->replyTo($fromEmail, ucfirst($fromName))
-                    ->cc($emails)
-                    ->subject('Reimbursement Payment Confirmation - ' . $this->reimbursement->title.' #R00'.$this->reimbursement->id)
-                    ->view('email.reimbursement_paid')
-                    ->with([
-                        'reimbursement' => $this->reimbursement
-                    ]);
+            if (file_exists($filePath)) {
+                $email->attach($filePath, [
+                    'as' => 'Paid_Receipt_' . $this->reimbursement->id . '.' . pathinfo($filePath, PATHINFO_EXTENSION),
+                    'mime' => mime_content_type($filePath),
+                ]);
+            }
+        }
+
+        return $email;
     }
 }

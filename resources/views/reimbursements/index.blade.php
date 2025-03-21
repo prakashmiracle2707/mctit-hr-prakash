@@ -31,7 +31,7 @@
                                     <th>{{ __('Employee') }}</th>
                                 @endif
                                 <th>{{ __('Expense Date') }}</th>
-                                <th>{{ __('Title') }}</th>
+                                <th>{{ __('Subject') }}</th>
                                 <th>{{ __('Amount') }}</th>
                                 <!-- <th>{{ __('Description') }}</th> -->
                                 <th>{{ __('Status') }}</th>

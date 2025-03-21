@@ -20,6 +20,8 @@ class Reimbursement extends Model
         'assign_to',
         'approved_at',
         'expense_date',
+        'payment_type',
+        'paid_receipt',
     ];
 
     protected $casts = [

@@ -20,10 +20,13 @@ class ReimbursementApprovedMail extends Mailable
     public function build()
     {
 
-        $emails = ['dharit@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com'];
+        $emails = ['nkalma@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com'];
 
-        $fromEmail = 'mctsource@miraclecloud-technology.com';
-        $fromName = 'MCT SOURCE';
+        $fromEmail = 'rmb@miraclecloud-technology.com';
+        $fromName = 'Ravi Brahmbhatt';
+
+        // $fromEmail = 'mctsource@miraclecloud-technology.com';
+        // $fromName = 'MCTSOURCE';
 
 
         return $this->from($fromEmail, ucfirst($fromName)) 

@@ -542,7 +542,7 @@
 
             <!-- Leave-->
             @can('Manage Leave')
-                <li class="dash-item {{ Request::segment(1) == 'leave' ? 'active' : '' }}">
+                <li class="dash-item {{ Request::segment(1) == 'reimbursements' ? 'active' : '' }}">
                     <a href="{{ route('reimbursements.index') }}" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-medical-cross"></i></span><span class="dash-mtext">{{ __('Reimbursement') }}</span></a>
                 </li>

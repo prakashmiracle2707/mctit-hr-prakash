@@ -1,4 +1,4 @@
-{{ Form::open(['url' => 'reimbursements/changeaction', 'method' => 'post']) }}
+{{ Form::open(['url' => 'reimbursements/changeaction', 'method' => 'post', 'enctype' => 'multipart/form-data']) }}
 
 <style>
     .custom-table {
@@ -83,7 +83,7 @@
                     <th>{{ __('Paid By') }}</th>
                     <td>{{ $reimbursement->payer->name ?? 'N/A' }}</td>
                     <th>{{ __('Paid At') }}</th>
-                    <td>{{ $reimbursement->paid_at ? $reimbursement->paid_at->format('Y-m-d h:i A') : 'Not Paid' }}</td>
+                    <td>{{ $reimbursement->paid_at ? $reimbursement->paid_at->format('Y/m/d h:i A') : 'Not Paid' }}</td>
                 </tr>
 
                 <tr>
@@ -117,6 +117,49 @@
                             @endif
                         </td>
                     </tr>
+                @endif
+
+                @if (Auth::user()->type == 'management' && in_array($reimbursement->status, ['Approved']))
+                    <tr>
+                        <th>{{ __('Payment Type') }}</th>
+                        <td colspan="3">
+                            {{ Form::select('payment_type', ['Cash' => 'Cash', 'Online' => 'Online'], $reimbursement->payment_type ?? null, ['class' => 'form-control', 'placeholder' => 'Select Payment Type', 'required']) }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ __('Upload Paid Receipt') }}</th>
+                        <td colspan="3">
+                            {{ Form::file('paid_receipt', ['class' => 'form-control', 'accept' => 'image/*,application/pdf']) }}
+                            <small class="text-muted">{{ __('Accepted formats: PDF, JPG, PNG (Max: 2MB)') }}</small>
+
+                            @if ($reimbursement->paid_receipt)
+                                <br />
+                                <br />
+                                <a href="{{ asset('public/uploads/reimbursements/' . $reimbursement->paid_receipt) }}" target="_blank" class="btn-view">
+                                    <i class="ti ti-eye"></i> {{ __('View Uploaded Receipt') }}
+                                </a>
+                            @endif
+                        </td>
+                    </tr>
+                @endif
+
+                @if (in_array($reimbursement->status, ['Paid']))
+                    <tr>
+                        <th>{{ __('Payment Type') }}</th>
+                        <td colspan="3">
+                            {{$reimbursement->payment_type}}
+                        </td>
+                    </tr>
+                    @if ($reimbursement->paid_receipt)
+                    <tr>
+                        <th>{{ __('Paid Receipt') }}</th>
+                        <td colspan="3">
+                                <a href="{{ asset('public/uploads/reimbursements/' . $reimbursement->paid_receipt) }}" target="_blank" class="btn-view">
+                                    <i class="ti ti-eye"></i> {{ __('View Paid Receipt') }}
+                                </a>
+                        </td>
+                    </tr>
+                    @endif
                 @endif
 
                 <input type="hidden" name="reimbursement_id" value="{{ $reimbursement->id }}">
