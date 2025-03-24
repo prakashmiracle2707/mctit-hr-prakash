@@ -350,6 +350,20 @@
                                     </div>
                                 @else
                                     <button type="submit" class="btn btn-primary w-100 disabled" disabled>{{ __('CLOCK IN') }}</button>
+
+                                    <div class="form-check">
+                                        {{ Form::checkbox(
+                                            'work_from_home',
+                                            1,
+                                            $employeeAttendance->work_from_home == 1,  // Check if already enabled
+                                            [
+                                                'class' => 'form-check-input update-work-from-home-class',
+                                                'id' => 'work_from_home_in',
+                                                'data-id' => $employeeAttendance->id
+                                            ]
+                                        ) }}
+                                        <label class="form-check-label" for="work_from_home_in">{{ __('Work from Home') }}</label>
+                                    </div>
                                 @endif
                                 {{ Form::close() }}
                             </div>
@@ -1556,4 +1570,45 @@
         }
     </script>
     @endif
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const checkbox = document.querySelector('.update-work-from-home-class');
+
+            if (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    const isChecked = this.checked ? 1 : 0;
+                    const attendanceId = this.getAttribute('data-id');
+
+                    fetch("{{ url('attendanceemployee/update-work-from-home') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            id: attendanceId,
+                            work_from_home: isChecked
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log('Work from Home status updated.');
+                            // alert('Work from Home status updated.');
+                            toastr.success(data.message);
+                        } else {
+                            alert('Error updating status');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            }
+        });
+    </script>
 @endpush

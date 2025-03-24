@@ -434,6 +434,20 @@ class AttendanceEmployeeController extends Controller
     //     }
     // }
 
+    public function updateWorkFromHome(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:attendance_employees,id',
+            'work_from_home' => 'required|boolean',
+        ]);
+
+        $attendance = AttendanceEmployee::find($request->id);
+        $attendance->work_from_home = $request->work_from_home;
+        $attendance->save();
+
+        return response()->json(['success' => true, 'message' => 'Work from Home status updated successfully.']);
+    }
+
     public function update(Request $request, $id)
     {
         $settings = Utility::settings();

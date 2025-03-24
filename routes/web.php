@@ -788,6 +788,8 @@ Route::group(['middleware' => ['verified']], function () {
         Route::get('/logs', [AttendanceEmployeeController::class, 'getAttendance'])->name('attendance.logs');
     });
 
+    Route::post('/attendanceemployee/update-work-from-home', [AttendanceEmployeeController::class, 'updateWorkFromHome']);
+
     Route::get('attendanceemployee/bulkattendance', [AttendanceEmployeeController::class, 'bulkAttendance'])->name('attendanceemployee.bulkattendance')->middleware(
         [
             'auth',
