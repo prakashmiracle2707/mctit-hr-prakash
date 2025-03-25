@@ -549,6 +549,22 @@
             @endcan
             <!-- Leave-->
 
+            <!-- Leave-->
+            @can('Manage IT Ticket')
+                <li class="dash-item {{ Request::segment(1) == 'it-tickets' ? 'active' : '' }}">
+                    <a href="{{ route('it-tickets.index') }}" class="dash-link"><span class="dash-micon"><i
+                                class="ti ti-plug"></i></span><span class="dash-mtext">{{ __('IT-Tickets') }}</span></a>
+                </li>
+            @endcan
+
+            @can('Manage Office-Complaint')
+                <li class="dash-item {{ Request::segment(1) == 'complaints' ? 'active' : '' }}">
+                    <a href="{{ route('complaints.index') }}" class="dash-link"><span class="dash-micon"><i
+                                class="ti ti-ticket"></i></span><span class="dash-mtext">{{ __('Complaints') }}</span></a>
+                </li>
+            @endcan
+            <!-- Leave-->
+
             <!-- recruitment-->
             @if (Gate::check('Manage Job') ||
                     Gate::check('Manage Job Application') ||

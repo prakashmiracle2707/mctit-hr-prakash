@@ -87,6 +87,7 @@ class RoleUpdateTableSeeder extends Seeder
             'Manage Zoom meeting', 'Create Zoom meeting', 'Show Zoom meeting', 'Delete Zoom meeting',
             'Manage Biometric Attendance', 'Biometric Attendance Synchronize',
             'Manage Project','Create Project','Edit Project','Delete Project',
+            'Manage IT Ticket','Create IT Ticket','Edit IT Ticket','Delete IT Ticket',
         ];
 
         

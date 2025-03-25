@@ -111,6 +111,8 @@
                                 'Performance Type',
                                 'Zoom meeting',
                                 'Project',
+                                'IT Ticket',
+                                'Office-Complaint',
                             ];
                             if (Auth::user()->type == 'super admin') {
                                 $modules[] = 'Language';

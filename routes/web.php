@@ -86,6 +86,8 @@ use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SalarySlipController;
 use App\Http\Controllers\ReimbursementController;
+use App\Http\Controllers\ITTicketController;
+use App\Http\Controllers\ComplaintsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -1443,6 +1445,21 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
+
+    // IT Ticket Routes
+    Route::resource('it-tickets', ITTicketController::class)->middleware([
+        'auth',
+        'XSS',
+    ]);
+
+    Route::get('get-titles-by-category/{id}', function ($id) {
+        return \App\Models\IssueTitle::where('issue_category_id', $id)->pluck('name', 'id');
+    })->middleware(['auth', 'XSS'])->name('get.titles.by.category');
+
+    Route::resource('complaints', ComplaintsController::class)->middleware([
+        'auth',
+        'XSS',
+    ]);
 
     Route::resource('salary_slips', SalarySlipController::class)->middleware(
         [

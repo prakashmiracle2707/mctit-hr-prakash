@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             $this->call(AiTemplateSeeder::class);
             $this->call(MilestoneSeeder::class);
             $this->call(ProjectsTableSeeder::class);
+            $this->call(IssueDataSeeder::class);
         }else {
             Utility::languagecreate();
         }
