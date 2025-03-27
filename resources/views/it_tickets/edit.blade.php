@@ -40,7 +40,7 @@
                 'class' => 'form-control',
                 'rows' => 3,
                 'required' => true,
-                'placeholder' => __('Describe the issue in detail')
+                'placeholder' => __('Describe the issue in detail'),
             ]) }}
         </div>
 
@@ -54,7 +54,40 @@
 
         <div class="form-group col-md-6">
             {{ Form::label('status', __('Status'), ['class' => 'col-form-label']) }} <x-required></x-required>
-            {{ Form::select('status', ['Open' => 'Open', 'In Progress' => 'In Progress', 'Resolved' => 'Resolved', 'Closed' => 'Closed'], $it_ticket->status, [
+            @php
+                $allStatuses = [
+                    'Open' => 'Open',
+                    'In Progress' => 'In Progress',
+                    'Resolved' => 'Resolved',
+                    'Closed' => 'Closed',
+                ];
+
+                $reviewerStatuses = [
+                    'In Progress' => 'In Progress',
+                    'Resolved' => 'Resolved',
+                ];
+
+                $employeeStatuses = [
+                    'Open' => 'Open',
+                    'Closed' => 'Closed',
+                ];
+
+                $user = Auth::user();
+
+                $hasReviewerRole = $user->secondaryRoleAssignments()
+                    ->whereHas('role', fn($q) => $q->where('name', 'IT-Support-Engineer'))
+                    ->exists();
+
+                if ($hasReviewerRole && $it_ticket->employee_id == \Auth::user()->id) {
+                    $statusOptions = $allStatuses;
+                }elseif($hasReviewerRole){
+                    $statusOptions = $reviewerStatuses;
+                } else {
+                     $statusOptions = $employeeStatuses;
+                }
+            @endphp
+
+            {{ Form::select('status', $statusOptions, $it_ticket->status, [
                 'class' => 'form-control',
                 'required' => true
             ]) }}

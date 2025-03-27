@@ -1452,6 +1452,14 @@ Route::group(['middleware' => ['verified']], function () {
         'XSS',
     ]);
 
+    Route::get('/it-tickets/{id}/action', [ITTicketController::class, 'action'])->name('it-tickets.action');
+
+    Route::post('it-tickets/changeaction', [ITTicketController::class, 'changeaction'])->name('it-tickets.changeaction')->middleware(
+        [
+            'auth',
+        ]
+    );
+
     Route::get('get-titles-by-category/{id}', function ($id) {
         return \App\Models\IssueTitle::where('issue_category_id', $id)->pluck('name', 'id');
     })->middleware(['auth', 'XSS'])->name('get.titles.by.category');
@@ -1460,8 +1468,7 @@ Route::group(['middleware' => ['verified']], function () {
         'auth',
     ]);
 
-    Route::get('/complaints/{id}/action', [ComplaintsController::class, 'action'])
-    ->name('complaints.action');
+    Route::get('/complaints/{id}/action', [ComplaintsController::class, 'action'])->name('complaints.action');
 
     Route::post('complaints/changeaction', [ComplaintsController::class, 'changeaction'])->name('complaints.changeaction')->middleware(
         [

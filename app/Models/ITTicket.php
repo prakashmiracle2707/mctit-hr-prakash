@@ -9,7 +9,7 @@ class ITTicket extends Model
     protected $table = 'it_tickets';
     
     protected $fillable = [
-        'employee_id', 'issue_category_id', 'issue_title_id', 'description', 'priority', 'status'
+        'employee_id', 'issue_category_id', 'issue_title_id', 'description', 'priority', 'status','remark'
     ];
 
     public function employee()

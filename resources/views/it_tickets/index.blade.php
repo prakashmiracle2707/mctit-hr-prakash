@@ -10,13 +10,24 @@
 @endsection
 
 @section('action-button')
-    @can('Create IT Ticket')
-        <a href="#" data-url="{{ route('it-tickets.create') }}" data-ajax-popup="true" data-title="{{ __('Raise IT Ticket') }}" data-size="lg"
-            data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Raise Ticket') }}">
-            <i class="ti ti-plus"></i>
-        </a>
-    @endcan
+    @if(\Auth::user()->type == 'employee')
+        @can('Create IT Ticket')
+            <a href="#" data-url="{{ route('it-tickets.create') }}" data-ajax-popup="true"
+                data-title="{{ __('Raise IT Ticket') }}" data-size="lg"
+                data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
+                data-bs-original-title="{{ __('Raise IT Ticket') }}">
+                <i class="ti ti-plus"></i>
+            </a>
+        @endcan
+    @endif
 @endsection
+
+@php
+    $user = \Auth::user();
+    $hasReviewerRole = $user->secondaryRoleAssignments()
+        ->whereHas('role', fn($q) => $q->where('name', 'IT-Support-Engineer'))
+        ->exists();
+@endphp
 
 @section('content')
     <div class="col-xl-12">
@@ -26,15 +37,16 @@
                     <table class="table" id="pc-dt-simple">
                         <thead>
                             <tr>
-                                @if(\Auth::user()->type != 'employee')
-                                    <th>{{ __('Employee') }}</th>
+                                @if(\Auth::user()->type != 'employee' || $hasReviewerRole)
+                                <th>{{ __('Employee') }}</th>
                                 @endif
                                 <th>{{ __('Category') }}</th>
                                 <th>{{ __('Title') }}</th>
+                                <th>{{ __('Description') }}</th>
                                 <th>{{ __('Priority') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Created At') }}</th>
-                                @if (Gate::check('Edit IT Ticket') || Gate::check('Delete IT Ticket'))
+                                @if (Gate::check('Edit IT Ticket') || Gate::check('Delete IT Ticket') || \Auth::user()->type == 'company')
                                     <th width="200px">{{ __('Action') }}</th>
                                 @endif
                             </tr>
@@ -42,11 +54,12 @@
                         <tbody>
                             @foreach ($tickets as $ticket)
                                 <tr>
-                                    @if(\Auth::user()->type != 'employee')
-                                        <td>{{ $ticket->employee ? ucfirst($ticket->employee->name) : __('Unknown') }}</td>
+                                    @if(\Auth::user()->type != 'employee' || $hasReviewerRole)
+                                    <td>{{ $ticket->employee ? ucfirst($ticket->employee->name) : __('Unknown') }}</td>
                                     @endif
-                                    <td>{{ $ticket->category->name }}</td>
-                                    <td>{{ $ticket->title->name }}</td>
+                                    <td>{{ $ticket->category->name ?? '-' }}</td>
+                                    <td>{{ $ticket->title->name ?? '-' }}</td>
+                                    <td>{{ $ticket->description ?? '-' }}</td>
                                     <td>
                                         @if ($ticket->priority == 'Medium')
                                             <div class="badge bg-warning p-2 px-3 ">{{ strtoupper($ticket->priority) }}</div>
@@ -69,34 +82,46 @@
                                     </td>
                                     <td>{{ $ticket->created_at ? \Carbon\Carbon::parse($ticket->created_at)->format('d/m/Y') : '-' }}</td>
 
-                                    @if (Gate::check('Edit IT Ticket') || Gate::check('Delete IT Ticket'))
+                                    @if (Gate::check('Edit IT Ticket') || Gate::check('Delete IT Ticket') || \Auth::user()->type == 'company')
                                         <td class="Action">
                                             <div class="dt-buttons">
                                                 <span>
-                                                    @can('Edit IT Ticket')
-                                                        <div class="action-btn bg-info me-2">
-                                                            <a href="#" class="mx-3 btn btn-sm align-items-center"
-                                                                data-size="lg"
-                                                                data-url="{{ route('it-tickets.edit', $ticket->id) }}"
-                                                                data-ajax-popup="true" data-bs-toggle="tooltip"
-                                                                title="" data-title="{{ __('Edit Ticket') }}"
-                                                                data-bs-original-title="{{ __('Edit') }}">
-                                                                <span class="text-white"><i class="ti ti-pencil"></i></span>
-                                                            </a>
-                                                        </div>
-                                                    @endcan
+                                                    <div class="action-btn bg-success me-2">
+                                                        <a href="#" class="mx-3 btn btn-sm align-items-center"
+                                                            data-size="lg"
+                                                            data-url="{{ URL::to('it-tickets/' . $ticket->id . '/action') }}"
+                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                            title="" data-title="{{ __('IT Ticket Action') }}"
+                                                            data-bs-original-title="{{ __('Manage IT Ticket') }}">
+                                                            <span class="text-white"><i class="ti ti-caret-right"></i></span>
+                                                        </a>
+                                                    </div>
+                                                    @if($ticket->employee_id == auth()->id() && $ticket->status == 'Open')
+                                                        @can('Edit IT Ticket')
+                                                            <div class="action-btn bg-info me-2">
+                                                                <a href="#" class="mx-3 btn btn-sm align-items-center"
+                                                                    data-size="lg"
+                                                                    data-url="{{ route('it-tickets.edit', $ticket->id) }}"
+                                                                    data-ajax-popup="true" data-bs-toggle="tooltip"
+                                                                    title="" data-title="{{ __('Edit IT Ticket') }}"
+                                                                    data-bs-original-title="{{ __('Edit') }}">
+                                                                    <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                                </a>
+                                                            </div>
+                                                        @endcan
 
-                                                    @can('Delete IT Ticket')
-                                                        <div class="action-btn bg-danger">
-                                                            {!! Form::open(['method' => 'DELETE', 'route' => ['it-tickets.destroy', $ticket->id], 'id' => 'delete-form-' . $ticket->id]) !!}
-                                                            <a href="#" class="mx-3 btn btn-sm align-items-center bs-pass-para"
-                                                                data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
-                                                                aria-label="Delete">
-                                                                <span class="text-white"><i class="ti ti-trash"></i></span>
-                                                            </a>
-                                                            {!! Form::close() !!}
-                                                        </div>
-                                                    @endcan
+                                                        @can('Delete IT Ticket')
+                                                            <div class="action-btn bg-danger">
+                                                                {!! Form::open(['method' => 'DELETE', 'route' => ['it-tickets.destroy', $ticket->id], 'id' => 'delete-form-' . $ticket->id]) !!}
+                                                                <a href="#" class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                                                    data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
+                                                                    aria-label="Delete" onclick="event.preventDefault(); document.getElementById('delete-form-{{ $ticket->id }}').submit();">
+                                                                    <span class="text-white"><i class="ti ti-trash"></i></span>
+                                                                </a>
+                                                                {!! Form::close() !!}
+                                                            </div>
+                                                        @endcan
+                                                    @endif
                                                 </span>
                                             </div>
                                         </td>

@@ -40,8 +40,9 @@
                                 @if(\Auth::user()->type != 'employee' || $hasReviewerRole)
                                 <th>{{ __('Employee') }}</th>
                                 @endif
-                                <th>{{ __('Category') }}</th>
+                                <!-- <th>{{ __('Category') }}</th> -->
                                 <th>{{ __('Title') }}</th>
+                                <th>{{ __('Description') }}</th>
                                 <th>{{ __('Priority') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Created At') }}</th>
@@ -56,8 +57,9 @@
                                     @if(\Auth::user()->type != 'employee' || $hasReviewerRole)
                                     <td>{{ $complaint->employee ? ucfirst($complaint->employee->name) : __('Unknown') }}</td>
                                     @endif
-                                    <td>{{ $complaint->category->name ?? '-' }}</td>
+                                    <!-- <td>{{ $complaint->category->name ?? '-' }}</td> -->
                                     <td>{{ $complaint->title->name ?? '-' }}</td>
+                                    <td>{{ $ticket->description ?? '-' }}</td>
                                     <td>
                                         @if ($complaint->priority == 'Medium')
                                             <div class="badge bg-warning p-2 px-3 ">{{ strtoupper($complaint->priority) }}</div>
@@ -117,7 +119,7 @@
                                                             <span class="text-white"><i class="ti ti-caret-right"></i></span>
                                                         </a>
                                                     </div>
-                                                    @if($complaint->employee_id == auth()->id() && $complaint->status != 'Resolved' && $complaint->status != 'Closed')
+                                                    @if($complaint->employee_id == auth()->id() && $complaint->status == 'Open')
                                                         @can('Edit Office-Complaint')
                                                             <div class="action-btn bg-info me-2">
                                                                 <a href="#" class="mx-3 btn btn-sm align-items-center"
