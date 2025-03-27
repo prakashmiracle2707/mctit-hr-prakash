@@ -20,6 +20,13 @@
     @endcan
 @endsection
 
+@php
+    $user = \Auth::user();
+    $hasReviewerRole = $user->secondaryRoleAssignments()
+        ->whereHas('role', fn($q) => $q->where('name', 'Complaint-Reviewer'))
+        ->exists();
+@endphp
+
 @section('content')
     <div class="col-xl-12">
         <div class="card">
@@ -28,7 +35,7 @@
                     <table class="table" id="pc-dt-simple">
                         <thead>
                             <tr>
-                                @if(\Auth::user()->type != 'employee')
+                                @if(\Auth::user()->type != 'employee' || $hasReviewerRole)
                                 <th>{{ __('Employee') }}</th>
                                 @endif
                                 <th>{{ __('Category') }}</th>
@@ -36,7 +43,7 @@
                                 <th>{{ __('Priority') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Created At') }}</th>
-                                @if (Gate::check('Edit Office-Complaint') || Gate::check('Delete Office-Complaint'))
+                                @if (Gate::check('Edit Office-Complaint') || Gate::check('Delete Office-Complaint') || \Auth::user()->type == 'company')
                                     <th width="200px">{{ __('Action') }}</th>
                                 @endif
                             </tr>
@@ -44,7 +51,7 @@
                         <tbody>
                             @foreach ($complaints as $complaint)
                                 <tr>
-                                    @if(\Auth::user()->type != 'employee')
+                                    @if(\Auth::user()->type != 'employee' || $hasReviewerRole)
                                     <td>{{ $complaint->employee ? ucfirst($complaint->employee->name) : __('Unknown') }}</td>
                                     @endif
                                     <td>{{ $complaint->category->name ?? '-' }}</td>
@@ -59,46 +66,81 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if($complaint->status == "Pending")
-                                            <div class="text-danger"><b>{{ strtoupper($complaint->status) }}</b></div>
-                                        @elseif ($complaint->status == 'In Progress')
-                                            <div class="text-warning"><b>{{ strtoupper($complaint->status) }}</b></div>
-                                        @elseif($complaint->status == 'Resolved')
-                                            <div class="text-info"><b>{{ strtoupper($complaint->status) }}</b></div>
-                                        @elseif($complaint->status == "Rejected")
-                                            <div class="text-muted"><b>{{ strtoupper($complaint->status) }}</b></div>
-                                        @endif
+                                        @php
+                                            $status = strtoupper($complaint->status);
+                                        @endphp
+
+                                        @switch($complaint->status)
+                                            @case('Open')
+                                                <div class="text-primary"><b>{{ $status }}</b></div>
+                                                @break
+
+                                            @case('Under Review')
+                                                <div class="text-secondary"><b>{{ $status }}</b></div>
+                                                @break
+
+                                            @case('In Progress')
+                                                <div class="text-warning"><b>{{ $status }}</b></div>
+                                                @break
+
+                                            @case('Resolved')
+                                                <div class="text-info"><b>{{ $status }}</b></div>
+                                                @break
+
+                                            @case('Closed')
+                                                <div class="text-success"><b>{{ $status }}</b></div>
+                                                @break
+
+                                            @case('Rejected')
+                                                <div class="text-danger"><b>{{ $status }}</b></div>
+                                                @break
+
+                                            @default
+                                                <div><b>{{ $status }}</b></div>
+                                        @endswitch
                                     </td>
                                     <td>{{ $complaint->created_at ? \Carbon\Carbon::parse($complaint->created_at)->format('d/m/Y') : '-' }}</td>
 
-                                    @if (Gate::check('Edit Office-Complaint') || Gate::check('Delete Office-Complaint'))
+                                    @if (Gate::check('Edit Office-Complaint') || Gate::check('Delete Office-Complaint') || \Auth::user()->type == 'company')
                                         <td class="Action">
                                             <div class="dt-buttons">
                                                 <span>
-                                                    @can('Edit Office-Complaint')
-                                                        <div class="action-btn bg-info me-2">
-                                                            <a href="#" class="mx-3 btn btn-sm align-items-center"
-                                                                data-size="lg"
-                                                                data-url="{{ route('complaints.edit', $complaint->id) }}"
-                                                                data-ajax-popup="true" data-bs-toggle="tooltip"
-                                                                title="" data-title="{{ __('Edit Complaint') }}"
-                                                                data-bs-original-title="{{ __('Edit') }}">
-                                                                <span class="text-white"><i class="ti ti-pencil"></i></span>
-                                                            </a>
-                                                        </div>
-                                                    @endcan
+                                                    <div class="action-btn bg-success me-2">
+                                                        <a href="#" class="mx-3 btn btn-sm align-items-center"
+                                                            data-size="lg"
+                                                            data-url="{{ URL::to('complaints/' . $complaint->id . '/action') }}"
+                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                            title="" data-title="{{ __('Complaint Action') }}"
+                                                            data-bs-original-title="{{ __('Manage Complaint') }}">
+                                                            <span class="text-white"><i class="ti ti-caret-right"></i></span>
+                                                        </a>
+                                                    </div>
+                                                    @if($complaint->employee_id == auth()->id() && $complaint->status != 'Resolved' && $complaint->status != 'Closed')
+                                                        @can('Edit Office-Complaint')
+                                                            <div class="action-btn bg-info me-2">
+                                                                <a href="#" class="mx-3 btn btn-sm align-items-center"
+                                                                    data-size="lg"
+                                                                    data-url="{{ route('complaints.edit', $complaint->id) }}"
+                                                                    data-ajax-popup="true" data-bs-toggle="tooltip"
+                                                                    title="" data-title="{{ __('Edit Complaint') }}"
+                                                                    data-bs-original-title="{{ __('Edit') }}">
+                                                                    <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                                </a>
+                                                            </div>
+                                                        @endcan
 
-                                                    @can('Delete Office-Complaint')
-                                                        <div class="action-btn bg-danger">
-                                                            {!! Form::open(['method' => 'DELETE', 'route' => ['complaints.destroy', $complaint->id], 'id' => 'delete-form-' . $complaint->id]) !!}
-                                                            <a href="#" class="mx-3 btn btn-sm align-items-center bs-pass-para"
-                                                                data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
-                                                                aria-label="Delete">
-                                                                <span class="text-white"><i class="ti ti-trash"></i></span>
-                                                            </a>
-                                                            {!! Form::close() !!}
-                                                        </div>
-                                                    @endcan
+                                                        @can('Delete Office-Complaint')
+                                                            <div class="action-btn bg-danger">
+                                                                {!! Form::open(['method' => 'DELETE', 'route' => ['complaints.destroy', $complaint->id], 'id' => 'delete-form-' . $complaint->id]) !!}
+                                                                <a href="#" class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                                                    data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
+                                                                    aria-label="Delete" onclick="event.preventDefault(); document.getElementById('delete-form-{{ $complaint->id }}').submit();">
+                                                                    <span class="text-white"><i class="ti ti-trash"></i></span>
+                                                                </a>
+                                                                {!! Form::close() !!}
+                                                            </div>
+                                                        @endcan
+                                                    @endif
                                                 </span>
                                             </div>
                                         </td>

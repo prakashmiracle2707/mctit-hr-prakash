@@ -1458,8 +1458,16 @@ Route::group(['middleware' => ['verified']], function () {
 
     Route::resource('complaints', ComplaintsController::class)->middleware([
         'auth',
-        'XSS',
     ]);
+
+    Route::get('/complaints/{id}/action', [ComplaintsController::class, 'action'])
+    ->name('complaints.action');
+
+    Route::post('complaints/changeaction', [ComplaintsController::class, 'changeaction'])->name('complaints.changeaction')->middleware(
+        [
+            'auth',
+        ]
+    );
 
     Route::resource('salary_slips', SalarySlipController::class)->middleware(
         [

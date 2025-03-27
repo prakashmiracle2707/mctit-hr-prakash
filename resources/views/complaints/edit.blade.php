@@ -40,7 +40,7 @@
                 'class' => 'form-control',
                 'rows' => 3,
                 'required' => true,
-                'placeholder' => __('Describe the issue in detail')
+                'placeholder' => __('Describe the issue in detail'),
             ]) }}
         </div>
 
@@ -54,7 +54,45 @@
 
         <div class="form-group col-md-6">
             {{ Form::label('status', __('Status'), ['class' => 'col-form-label']) }} <x-required></x-required>
-            {{ Form::select('status', ['Open' => 'Open', 'In Progress' => 'In Progress', 'Resolved' => 'Resolved', 'Closed' => 'Closed'], $complaint->status, [
+
+            @php
+                $allStatuses = [
+                    'Open' => 'Open',
+                    'Under Review' => 'Under Review',
+                    'In Progress' => 'In Progress',
+                    'Resolved' => 'Resolved',
+                    'Closed' => 'Closed',
+                    'Rejected' => 'Rejected',
+                ];
+
+                $reviewerStatuses = [
+                    'Under Review' => 'Under Review',
+                    'In Progress' => 'In Progress',
+                    'Resolved' => 'Resolved',
+                    'Rejected' => 'Rejected',
+                ];
+
+                $employeeStatuses = [
+                    'Open' => 'Open',
+                    'Closed' => 'Closed',
+                ];
+
+                $user = Auth::user();
+
+                $hasReviewerRole = $user->secondaryRoleAssignments()
+                    ->whereHas('role', fn($q) => $q->where('name', 'Complaint-Reviewer'))
+                    ->exists();
+
+                if ($hasReviewerRole && $complaint->employee_id == \Auth::user()->id) {
+                    $statusOptions = $allStatuses;
+                }elseif($hasReviewerRole){
+                    $statusOptions = $reviewerStatuses;
+                } else {
+                     $statusOptions = $employeeStatuses;
+                }
+            @endphp
+
+            {{ Form::select('status', $statusOptions, $complaint->status, [
                 'class' => 'form-control',
                 'required' => true
             ]) }}

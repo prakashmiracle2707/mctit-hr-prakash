@@ -2682,5 +2682,11 @@ class User extends Authenticatable implements MustVerifyEmail
             );
         }
     }
+
+
+    public function secondaryRoleAssignments()
+    {
+        return $this->hasMany(SecondaryRoleAssign::class, 'user_id');
+    }
     
 }

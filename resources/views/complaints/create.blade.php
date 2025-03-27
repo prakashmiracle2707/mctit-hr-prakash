@@ -15,6 +15,7 @@
     </div>
     @endif
 
+    
     <div class="row">
         <div class="form-group col-md-6">
             {{ Form::label('issue_category_id', __('Issue Category'), ['class' => 'col-form-label']) }} <x-required></x-required>
