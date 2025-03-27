@@ -64,7 +64,7 @@
         </table>
 
         <p>You can manage the complaint by logging into the system:</p>
-        <p><a href="{{ url('/complaints') }}">{{ url('/complaints') }}</a></p>
+        <p><a href="{{ url('/complaints') }}">View Complaint</a></p>
 
         <br>
         <p>Best regards,<br><strong>{{ config('app.name') }} Support Team</strong></p>
