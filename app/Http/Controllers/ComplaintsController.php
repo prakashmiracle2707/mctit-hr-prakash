@@ -95,9 +95,9 @@ class ComplaintsController extends Controller
             'toEmail'       => $complaint->employee->email,
             'subject'       => 'Thank You for Raising Complaint CMP#00' . $complaint->id,
             'fromEmail'     => 'mctsource@miraclecloud-technology.com',
-            'fromNameEmail' => 'MCT-IT Support Team',
+            'fromNameEmail' => 'MCT IT SOLUTIONS PVT. LTD',
             'replyTo'       => 'mctsource@miraclecloud-technology.com',
-            'replyToName'   => 'MCT-IT Support Team',
+            'replyToName'   => 'MCT IT SOLUTIONS PVT. LTD',
         ];
 
         Mail::send('email.complaint_thank_you', $emp_data, function ($message) use ($emp_data) {
@@ -177,9 +177,9 @@ class ComplaintsController extends Controller
                 'toEmail'       => $complaint->employee->email,
                 'subject'       => 'Your Complaint Has Been Resolved: CMP#00'. $complaint->id,
                 'fromEmail' => 'janki@miraclecloud-technology.com',
-                'fromNameEmail' => 'MCT-IT Support Team',
+                'fromNameEmail' => 'MCT IT SOLUTIONS PVT. LTD',
                 'replyTo' => 'janki@miraclecloud-technology.com',
-                'replyToName' => 'MCT-IT Support Team',
+                'replyToName' => 'MCT IT SOLUTIONS PVT. LTD',
             ];
 
             $cc_emails = ['nkalma@miraclecloud-technology.com','rmb@miraclecloud-technology.com','hchavda@miraclecloud-technology.com','janki@miraclecloud-technology.com'];
