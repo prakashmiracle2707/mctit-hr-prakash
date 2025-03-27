@@ -357,7 +357,7 @@ class LeaveController extends Controller
                         'remark' => $leave->remark,
                         'total_leave_days' => $total_leave_days,
                         'toEmail' => 'rmb@miraclecloud-technology.com',
-                        //'toEmail' => 'prakashn@miraclecloud-technology.com',
+                        //'toEmail' => 'ai@miraclecloud-technology.com',
                         'fromEmail' => $employee->email,
                         'fromNameEmail' => $employee->name,
                         'replyTo' => $employee->email,
@@ -367,15 +367,7 @@ class LeaveController extends Controller
                     $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
 
                     $emails[] = 'nkalma@miraclecloud-technology.com';
-
-                    // Mail::send('email.leave-request', $data, function ($message) use ($data,$emails) {
-                    //     $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
-                    //     $message->to($data["toEmail"])  // Manager’s email address
-                    //             ->subject($subjectTxt)
-                    //             ->from($data["fromEmail"], $data["fromNameEmail"])
-                    //             ->replyTo($data["replyTo"], $data["replyToName"])
-                    //             ->cc($emails);
-                    // });
+                    $emails[] = $employee->email;
 
                     Mail::send('email.leave-request-hr', $data, function ($message) use ($data,$emails) {
                         $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
@@ -561,6 +553,65 @@ class LeaveController extends Controller
                         $leave->status = 'Draft';  // Set status to 'Draft' if the save as draft button is clicked
                     } else {
                         $leave->status = 'Pending'; // Default status if not a draft
+
+                        /* **********************  Email Send  Start ********************** */
+
+                        // Data to be passed into the email view
+                        $leaveDate = "";
+
+                        $formattedStartDate = \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y');
+                        $formattedEndDate = \Carbon\Carbon::parse($leave->end_date)->format('d/m/Y');
+
+                        if($leave->start_date == $leave->end_date){
+                            $leaveDate = $formattedStartDate;
+                        }else{
+
+                            
+
+                            if($total_leave_days > 1){
+                                $leaveDate = $formattedStartDate." To ".$formattedEndDate." [".$total_leave_days." Days ]";
+                            }else{
+                                $leaveDate = $formattedStartDate." To ".$formattedEndDate;
+                            }
+                            
+                        }
+
+                        $leavetype = LeaveType::find($leave->leave_type_id);
+                        $data = [
+                            'employeeName' => $employee->name,
+                            'leaveId' => $leave->id,
+                            'leaveType' => $leavetype->title,
+                            'leaveFullHalfDay' => $this->getLeaveFullHalfDay($leave->half_day_type),
+                            'appliedOn' => $leave->remark,
+                            'leaveDate' => $leaveDate,
+                            'leaveReason' => $leave->leave_reason,
+                            'status' => $leave->status,
+                            'remark' => $leave->remark,
+                            'total_leave_days' => $total_leave_days,
+                            'toEmail' => 'rmb@miraclecloud-technology.com',
+                            //'toEmail' => 'ai@miraclecloud-technology.com',
+                            'fromEmail' => $employee->email,
+                            'fromNameEmail' => $employee->name,
+                            'replyTo' => $employee->email,
+                            'replyToName' => $employee->name,
+                        ];
+
+                        $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
+
+                        $emails[] = 'nkalma@miraclecloud-technology.com';
+                        $emails[] = $employee->email;
+
+        
+                        Mail::send('email.leave-request-hr', $data, function ($message) use ($data,$emails) {
+                            $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                            $message->to($data["toEmail"])  // Manager’s email address
+                                    ->subject($subjectTxt)
+                                    ->from($data["fromEmail"], $data["fromNameEmail"])
+                                    ->replyTo($data["replyTo"], $data["replyToName"])
+                                    ->cc($emails);
+                        });
+
+                        /* **********************  Email Send  End ********************** */
                     }
 
                     $leave->save();
