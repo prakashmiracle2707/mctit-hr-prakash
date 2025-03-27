@@ -10,14 +10,16 @@
 @endsection
 
 @section('action-button')
-    @can('Create Office-Complaint')
-        <a href="#" data-url="{{ route('complaints.create') }}" data-ajax-popup="true"
-            data-title="{{ __('Raise Complaint') }}" data-size="lg"
-            data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
-            data-bs-original-title="{{ __('Raise Complaint') }}">
-            <i class="ti ti-plus"></i>
-        </a>
-    @endcan
+    @if(\Auth::user()->type == 'employee')
+        @can('Create Office-Complaint')
+            <a href="#" data-url="{{ route('complaints.create') }}" data-ajax-popup="true"
+                data-title="{{ __('Raise Complaint') }}" data-size="lg"
+                data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
+                data-bs-original-title="{{ __('Raise Complaint') }}">
+                <i class="ti ti-plus"></i>
+            </a>
+        @endcan
+    @endif
 @endsection
 
 @php
