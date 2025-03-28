@@ -107,9 +107,12 @@
                         <tbody>
                             @foreach ($holidays as $holiday)
                                 <tr>
-                                    <td style="color:{{ str_contains($holiday->occasion, 'Optional') ? 'grey' : 'black' }};">
-                                        {{ $holiday->occasion }}
-                                    </td>
+                                    @if($holiday->is_optional == true)
+                                        <td style="color:grey;">{{ $holiday->occasion }} (Optional)</td>
+                                    @else
+                                        <td style="color:black;">{{ $holiday->occasion }}</td>
+                                    @endif
+                                    
                                     <td style="color:{{ str_contains($holiday->occasion, 'Optional') ? 'grey' : 'black' }};">{{ \Carbon\Carbon::parse($holiday->start_date)->format('d/m/Y') }} 
                                         <b>({{ \Carbon\Carbon::parse($holiday->start_date)->format('l') }})</b>
                                     </td>
