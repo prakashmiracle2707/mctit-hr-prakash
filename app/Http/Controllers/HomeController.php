@@ -17,7 +17,10 @@ use App\Models\User;
 use App\Models\Utility;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Leave as LocalLeave;
+use App\Models\FinancialYear;
 use Carbon\Carbon;
+use App\Models\LeaveType;
+
 
 class HomeController extends Controller
 {
@@ -289,7 +292,80 @@ class HomeController extends Controller
                 $officeTime['endTime']   = Utility::getValByName('company_end_time');
 
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak'));
+                /* ******************* Leave calculation start ******************* */
+                $activeYear = FinancialYear::where('is_active', 1)->first();
+                $user = Auth::user();
+                $employee = Employee::where('user_id', $user->id)->first();
+
+                // All leave types
+                $leaveTypes = LeaveType::where(function ($query) {
+                                    $query->where('title', 'like', '%SL%')
+                                          ->orWhere('title', 'like', '%CL%');
+                                })->pluck('title', 'id');
+                $leaveCounts = [];
+
+                // Initialize structure
+                foreach ($leaveTypes as $id => $title) {
+                    $leaveCounts[$id] = [
+                        'Approved' => 0,
+                        'Rejected' => 0,
+                        'Pending' => 0,
+                    ];
+                }
+
+                // Get all leaves
+                $LeavesList = LocalLeave::where('employee_id', $employee->id)->get();
+
+                foreach ($LeavesList as $LeaveDetails) {
+                    $leaveTypeId = $LeaveDetails->leave_type_id;
+                    $status = $LeaveDetails->status;
+
+                    $start = Carbon::parse($LeaveDetails->start_date);
+                    $end = Carbon::parse($LeaveDetails->end_date);
+
+                    $halfDayType = $LeaveDetails->half_day_type;
+
+                    $days = 0;
+
+                    // Loop each date in range
+                    for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                        $isWeekend = in_array($date->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY]);
+
+                        if ($isWeekend) {
+                            continue;
+                        }
+
+                        // Count only if date within financial year
+                        if ($date->between(Carbon::parse($activeYear->start_date), Carbon::parse($activeYear->end_date))) {
+                            // Count 0.5 for half-day (only if single day leave)
+                            if ($start->equalTo($end) && $halfDayType != 'full_day') {
+                                $days += 0.5;
+                            } else {
+                                $days += 1;
+                            }
+                        }
+                    }
+
+                    // Add to counter
+                    if (isset($leaveCounts[$leaveTypeId][$status])) {
+                        $leaveCounts[$leaveTypeId][$status] += $days;
+                    }
+                }
+
+                $leaveTypes = LeaveType::pluck('title', 'id');
+
+
+
+                $leaveTypesAll = LeaveType::where(function ($query) {
+                                    $query->where('title', 'like', '%SL%')
+                                          ->orWhere('title', 'like', '%CL%');
+                                })->get()->keyBy('id');
+
+                
+                /* ******************* Leave calculation end ******************* */
+
+
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll'));
             }
             else
             {
@@ -313,7 +389,7 @@ class HomeController extends Controller
 
                 $announcements = Announcement::orderBy('announcements.id', 'desc')->take(5)->where('created_by', '=', \Auth::user()->creatorId())->get();
 
-                $emp           = User::where('type', '=', 'employee')->where('created_by', '=', \Auth::user()->creatorId())->get();
+                $emp = User::where('type', '=', 'employee')->where('created_by', '=', \Auth::user()->creatorId())->get();
                 $countEmployee = count($emp);
 
                 $user      = User::where('type', '!=', 'employee')->where('created_by', '=', \Auth::user()->creatorId())->get();

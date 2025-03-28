@@ -122,10 +122,11 @@
                                         <div class="ms-3">
                                             <h5 class="mb-0">Allowed Leave</h5>
                                             <div>
-                                                <p class="text-muted text-sm mb-0">Total Sick Leave (SL):
-                                                    0</p>
-                                                <p class="text-muted text-sm mb-0">Total Casual Leave (CL):
-                                                    0</p>
+                                                @foreach($leaveTypesAll as $type)
+                                                    <p class="text-muted text-sm mb-0">
+                                                        Total {{ $type->title }} : {{ $type->days }}
+                                                    </p>
+                                                @endforeach
                                             </div>
                                         </div>
                                     </div>
@@ -134,8 +135,13 @@
                         </div>
                     </div>
 
+                    @php
+                        // Simulate the same leaveCounts structure
+                        // $leaveCounts = [leave_type_id => ['Approved' => x, 'Rejected' => y, 'Pending' => z]];
+                        // $leaveTypes = [leave_type_id => 'Leave Type Name'];
+                    @endphp
+                    {{-- Approved --}}
                     <div class="col-lg-4 col-md-6">
-
                         <div class="card stats-wrapper dash-info-card">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center justify-content-between">
@@ -146,10 +152,12 @@
                                         <div class="ms-3">
                                             <h5 class="mb-0">Approved Leave</h5>
                                             <div>
-                                                <p class="text-muted text-sm mb-0">Total Sick Leave (SL):
-                                                    0</p>
-                                                <p class="text-muted text-sm mb-0">Total Casual Leave (CL):
-                                                    0</p>
+                                                @foreach ($leaveCounts as $leaveTypeId => $statuses)
+                                                    <p class="text-muted text-sm mb-0">
+                                                        Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
+                                                        {{ $statuses['Approved'] ?? 0 }}
+                                                    </p>
+                                                @endforeach
                                             </div>
                                         </div>
                                     </div>
@@ -158,8 +166,8 @@
                         </div>
                     </div>
 
+                    {{-- Rejected --}}
                     <div class="col-lg-4 col-md-6">
-
                         <div class="card stats-wrapper dash-info-card">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center justify-content-between">
@@ -170,10 +178,12 @@
                                         <div class="ms-3">
                                             <h5 class="mb-0">Rejected Leave</h5>
                                             <div>
-                                                <p class="text-muted text-sm mb-0">Total Sick Leave (SL):
-                                                    0</p>
-                                                <p class="text-muted text-sm mb-0">Total Casual Leave (CL):
-                                                    0</p>
+                                                @foreach ($leaveCounts as $leaveTypeId => $statuses)
+                                                    <p class="text-muted text-sm mb-0">
+                                                        Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
+                                                        {{ $statuses['Rejected'] ?? 0 }}
+                                                    </p>
+                                                @endforeach
                                             </div>
                                         </div>
                                     </div>
@@ -181,6 +191,32 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- Pending --}}
+                    <!-- <div class="col-lg-4 col-md-6">
+                        <div class="card stats-wrapper dash-info-card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="badge theme-avtar bg-secondary">
+                                            <i class="ti ti-file-report"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h5 class="mb-0">Pending Leave</h5>
+                                            <div>
+                                                @foreach ($leaveCounts as $leaveTypeId => $statuses)
+                                                    <p class="text-muted text-sm mb-0">
+                                                        Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
+                                                        {{ $statuses['Pending'] ?? 0 }}
+                                                    </p>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
                     
                 </div>
             </div>

@@ -21,6 +21,7 @@
         data-bs-original-title="{{ __('Calendar View') }}">
         <i class="ti ti-calendar"></i>
     </a> -->
+
     @if (\Auth::user()->type != 'CEO')
         @can('Create Leave')
             <a href="#" data-url="{{ route('leave.create') }}" data-ajax-popup="true" data-title="{{ __('Create New Leave') }}"
@@ -33,9 +34,134 @@
 @endsection
 
 @section('content')
+
+@if(\Auth::user()->type == 'employee')
+<div class="row">
+    <div class="col-lg-4 col-md-6">
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="badge theme-avtar bg-secondary">
+                            <i class="ti ti-file-report"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">Allowed Leave</h5>
+                            <div>
+                                @foreach($leaveTypesAll as $type)
+                                    <p class="text-muted text-sm mb-0">
+                                        Total {{ $type->title }} : {{ $type->days }}
+                                    </p>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @php
+        // Simulate the same leaveCounts structure
+        // $leaveCounts = [leave_type_id => ['Approved' => x, 'Rejected' => y, 'Pending' => z]];
+        // $leaveTypes = [leave_type_id => 'Leave Type Name'];
+    @endphp
+    {{-- Approved --}}
+    <div class="col-lg-4 col-md-6">
+        <div class="card stats-wrapper dash-info-card">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="badge theme-avtar bg-warning">
+                            <i class="ti ti-info-circle"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">Approved Leave</h5>
+                            <div>
+                                @foreach ($leaveCounts as $leaveTypeId => $statuses)
+                                    <p class="text-muted text-sm mb-0">
+                                        Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
+                                        {{ $statuses['Approved'] ?? 0 }}
+                                    </p>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Rejected --}}
+    <div class="col-lg-4 col-md-6">
+        <div class="card stats-wrapper dash-info-card">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="badge theme-avtar bg-danger">
+                            <i class="ti ti-wallet"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">Rejected Leave</h5>
+                            <div>
+                                @foreach ($leaveCounts as $leaveTypeId => $statuses)
+                                    <p class="text-muted text-sm mb-0">
+                                        Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
+                                        {{ $statuses['Rejected'] ?? 0 }}
+                                    </p>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Pending --}}
+    <!-- <div class="col-lg-4 col-md-6">
+        <div class="card stats-wrapper dash-info-card">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="badge theme-avtar bg-secondary">
+                            <i class="ti ti-file-report"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">Pending Leave</h5>
+                            <div>
+                                @foreach ($leaveCounts as $leaveTypeId => $statuses)
+                                    <p class="text-muted text-sm mb-0">
+                                        Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
+                                        {{ $statuses['Pending'] ?? 0 }}
+                                    </p>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+</div>
+@endif
+<div class="row">
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header card-body table-border-style">
+
+                <div class="col-xl-12">
+                    <!-- Financial Year Dropdown -->
+                    <div class="col-xl-2 col-lg-2 col-md-2 col-sm-12 col-12">
+                        <div class="btn-box">
+                            {{ Form::select('financial_year_id', $financialYears, request()->get('financial_year_id', $activeYearId), [
+                                'class' => 'form-control',
+                                'id' => 'financial_year_id',
+                            ]) }}
+                        </div>
+                    </div>
+                </div>
+                <br />
                 {{-- <h5> </h5> --}}
                 <div class="table-responsive">
                     <table class="table" id="pc-dt-simple">
@@ -197,7 +323,7 @@
             </div>
         </div>
     </div>
-    </div>
+</div>
 @endsection
 
 @push('script-page')
@@ -239,6 +365,15 @@
 
                 }
             });
+        });
+    </script>
+
+    <script>
+        document.getElementById('financial_year_id').addEventListener('change', function () {
+            let selectedYearId = this.value;
+            let url = new URL(window.location.href);
+            url.searchParams.set('financial_year_id', selectedYearId);
+            window.location.href = url.toString();
         });
     </script>
 @endpush
