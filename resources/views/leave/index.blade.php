@@ -221,6 +221,8 @@
                                             <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
                                         @elseif($leave->status == "Draft")
                                             <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                        @elseif($leave->status == "Cancelled")
+                                            <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
                                         @endif
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
@@ -228,6 +230,17 @@
                                     <td class="Action">
                                         <div class="dt-buttons">
                                         <span>
+                                            @if ($leave->status != 'Draft' && $leave->status != 'Cancelled' && \Auth::user()->type == 'employee')
+                                                <div class="action-btn bg-danger me-2">
+                                                    <a href="#" class="mx-3 btn btn-sm align-items-center"
+                                                        data-url="{{ route('leave.cancel.view', $leave->id) }}"
+                                                        data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                        title="{{ __('Cancel Leave') }}"
+                                                        data-title="{{ __('Cancel Leave Application') }}">
+                                                        <span class="text-white"><i class="ti ti-ban"></i></span>
+                                                    </a>
+                                                </div>
+                                            @endif
 
                                             @if (\Auth::user()->type != 'employee')
                                                 <div class="action-btn bg-success me-2">
@@ -346,14 +359,19 @@
 
                     $.each(data, function(key, value) {
 
-                        if (value.total_leave == value.days) {
+                        if (value.total_leave == value.days && value.title != 'Work from home (WFH)') {
                             $('#leave_type_id').append('<option value="' + value.id +
                                 '" disabled>' + value.title + '&nbsp(' + value.total_leave +
                                 '/' + value.days + ')</option>');
                         } else {
-                            $('#leave_type_id').append('<option value="' + value.id + '">' +
+                            if(value.title != 'Work from home (WFH)'){
+                                $('#leave_type_id').append('<option value="' + value.id + '">' +
                                 value.title + '&nbsp(' + value.total_leave + '/' + value
                                 .days + ')</option>');
+                            }else{
+                                $('#leave_type_id').append('<option value="' + value.id + '">' +
+                                value.title + '</option>');
+                            }
                         }
                         if (oldval) {
                             if (oldval == value.id) {

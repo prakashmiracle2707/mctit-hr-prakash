@@ -758,6 +758,9 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
+
+    Route::get('leave/{id}/cancel', [LeaveController::class, 'cancelView'])->name('leave.cancel.view');
+Route::post('leave/{id}/cancel', [LeaveController::class, 'cancelStore'])->name('leave.cancel.store');
     
     Route::get('ticket/{id}/reply', [TicketController::class, 'reply'])->name('ticket.reply')->middleware(
         [

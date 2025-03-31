@@ -15,6 +15,7 @@ class Leave extends Model
         'total_leave_days',
         'leave_reason',
         'remark',
+        'remark_cancelled',
         'status',
         'created_by',
         'half_day_type',

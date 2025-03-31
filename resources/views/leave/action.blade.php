@@ -62,6 +62,8 @@
                             <div class="badge bg-danger">{{ $leave->status }}</div>
                         @elseif($leave->status == "Draft")
                             <div class="badge bg-info">{{ $leave->status }}</div>
+                        @elseif($leave->status == "Cancelled")
+                            <div class="badge bg-danger">{{ $leave->status }}</div>
                         @endif
                     </td>
                 </tr>
@@ -69,13 +71,21 @@
                 <tr>
                     <th>{{ __('Remark') }}</th>
                     <td>
-                        @if (Auth::user()->type != 'employee')
+                        @if (Auth::user()->type != 'employee' && $leave->status != "Cancelled")
                             {{ Form::textarea('remark', $leave->remark, ['class' => 'form-control grammer_textarea', 'placeholder' => __('Leave Remark'), 'rows' => '3']) }}
                         @else
                             {{ !empty($leave->remark) ? $leave->remark : '' }}
                         @endif
                     </td>
                 </tr>
+                @if($leave->status == "Cancelled")
+                <tr>
+                    <th>{{ __('Cancelled Remark') }}</th>
+                    <td>
+                       <span style="color:red;">{{ !empty($leave->remark_cancelled) ? $leave->remark_cancelled : '' }}</span>
+                    </td>
+                </tr>
+                @endif
                 <input type="hidden" value="{{ $leave->id }}" name="leave_id">
                 <input type="hidden" value="index" name="leave_page">
             </table>
@@ -83,7 +93,7 @@
     </div>
 </div>
 
-@if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'CEO')
+@if ((Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'CEO') && $leave->status != "Cancelled")
 <div class="modal-footer">
     <input type="submit" value="{{ __('Approved') }}" class="btn btn-success rounded" name="status">
     <input type="submit" value="{{ __('Reject') }}" class="btn btn-danger rounded" name="status">
