@@ -64,7 +64,15 @@
 
         <p>I hope you are doing well.</p>
 
-        <p>Requesting you to <b>{{ $leaveType }} </b> on <b>{{ $leaveDate }} </b> as <b> {{ $leaveReason }} </b> </p>
+        <p>Requesting you to
+            @if($half_day_type == 'morning')
+                <b>1st H/D (Morning) Leave</b>
+            @elseif($half_day_type == 'afternoon')
+                <b>2nd H/D (Afternoon) Leave</b>
+            @else
+                <b>{{ $leaveType }}  </b> 
+            @endif
+        on <b>{{ $leaveDate }} </b> as <b> {{ $leaveReason }} </b> </p>
 
         <p>So requesting you to kindly approve my application for the above mentioned days.</p>
 
