@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\GoogleCalendar\Event as GoogleEvent;
+use App\Models\FinancialYear;
+
 
 class HolidayController extends Controller
 {
@@ -19,15 +21,31 @@ class HolidayController extends Controller
         if (\Auth::user()->can('Manage Holiday')) {
             $holidays = LocalHoliday::where('created_by', '=', \Auth::user()->creatorId());
 
-            if (!empty($request->start_date)) {
-                $holidays->where('start_date', '>=', $request->start_date);
+            // Financial Year filter
+            if (!empty($request->financial_year_id)) {
+                $financialYear = FinancialYear::find($request->financial_year_id);
+
+                if ($financialYear) {
+                    $holidays->whereDate('start_date', '>=', $financialYear->start_date)
+                             ->whereDate('start_date', '<=', $financialYear->end_date);
+                }
+            }else{
+                $activeYearId = \App\Models\FinancialYear::where('is_active', 1)->value('id');
+                $financialYear = FinancialYear::find($activeYearId);
+
+                if ($financialYear) {
+                    $holidays->whereDate('start_date', '>=', $financialYear->start_date)
+                             ->whereDate('start_date', '<=', $financialYear->end_date);
+                }
             }
-            if (!empty($request->end_date)) {
-                $holidays->where('end_date', '<=', $request->end_date);
-            }
+
             $holidays = $holidays->orderBy('start_date', 'asc')->get();
 
-            return view('holiday.index', compact('holidays'));
+            // For dropdown
+            $financialYears = \App\Models\FinancialYear::pluck('year_range', 'id');
+            $activeYearId = \App\Models\FinancialYear::where('is_active', 1)->value('id');
+
+            return view('holiday.index', compact('holidays', 'financialYears', 'activeYearId'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }

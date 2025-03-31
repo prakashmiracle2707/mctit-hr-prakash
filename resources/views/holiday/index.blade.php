@@ -38,37 +38,24 @@
 @endsection
 
 @section('content')
-    <div class="col-sm-12">
+    <div class="col-sm-6">
         <div class="mt-2" id="multiCollapseExample1">
             <div class="card">
                 <div class="card-body">
                     {{ Form::open(['route' => ['holiday.index'], 'method' => 'get', 'id' => 'holiday_filter']) }}
                     <div class="row align-items-center justify-content-end">
-                        <div class="col-xl-10">
+                        <div class="col-xl-12">
                             <div class="row">
-                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                    <div class="btn-box"></div>
-                                </div>
-                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                    <div class="btn-box"></div>
-                                </div>
-                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                <div class="col-xl-10 col-lg-10 col-md-10 col-sm-12 col-12">
                                     <div class="btn-box">
-                                        {{ Form::label('start_date', __('Start Date'), ['class' => 'form-label']) }}
-                                        {{ Form::date('start_date', isset($_GET['start_date']) ? $_GET['start_date'] : '', ['class' => 'month-btn form-control current_date', 'autocomplete' => 'off']) }}
+                                        {{ Form::label('financial_year_id', __('Financial Year'), ['class' => 'form-label']) }}
+                                        {{ Form::select('financial_year_id', $financialYears, request()->get('financial_year_id', $activeYearId), [
+                                            'class' => 'form-control',
+                                            'id' => 'financial_year_id',
+                                        ]) }}
                                     </div>
                                 </div>
-                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                    <div class="btn-box">
-                                        {{ Form::label('end_date', __('End Date'), ['class' => 'form-label']) }}
-                                        {{ Form::date('end_date', isset($_GET['end_date']) ? $_GET['end_date'] : '', ['class' => 'month-btn form-control current_date', 'autocomplete' => 'off']) }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="row">
-                                <div class="col-auto mt-4">
+                                <div class="col-auto mt-4" style="padding-top: 10px;">
                                     <a href="#" class="btn btn-sm btn-primary"
                                         onclick="document.getElementById('holiday_filter').submit(); return false;"
                                         data-bs-toggle="tooltip" title="" data-bs-original-title="apply">
@@ -81,6 +68,7 @@
                                 </div>
                             </div>
                         </div>
+                       
                     </div>
                     {{ Form::close() }}
                 </div>
@@ -88,17 +76,16 @@
         </div>
     </div>
 
+    {{-- Holiday Table --}}
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header card-body table-border-style">
-                {{-- <h5></h5> --}}
                 <div class="table-responsive">
                     <table class="table">
                         <thead>
                             <tr>
                                 <th>{{ __('Occasion') }}</th>
                                 <th>{{ __('Date') }}</th>
-                                <!-- <th>{{ __('End Date') }}</th> -->
                                 @if (Gate::check('Edit Holiday') || Gate::check('Delete Holiday'))
                                     <th width="200px">{{ __('Action') }}</th>
                                 @endif
@@ -107,48 +94,41 @@
                         <tbody>
                             @foreach ($holidays as $holiday)
                                 <tr>
-                                    @if($holiday->is_optional == true)
-                                        <td style="color:grey;">{{ $holiday->occasion }} (Optional)</td>
-                                    @else
-                                        <td style="color:black;">{{ $holiday->occasion }}</td>
-                                    @endif
-                                    
-                                    <td style="color:{{ str_contains($holiday->occasion, 'Optional') ? 'grey' : 'black' }};">{{ \Carbon\Carbon::parse($holiday->start_date)->format('d/m/Y') }} 
+                                    <td style="color:{{ $holiday->is_optional ? 'grey' : 'black' }}">
+                                        {{ $holiday->occasion }} {{ $holiday->is_optional ? '(Optional)' : '' }}
+                                    </td>
+                                    <td style="color:{{ $holiday->is_optional ? 'grey' : 'black' }}">
+                                        {{ \Carbon\Carbon::parse($holiday->start_date)->format('d/m/Y') }}
                                         <b>({{ \Carbon\Carbon::parse($holiday->start_date)->format('l') }})</b>
                                     </td>
-                                    <!-- <td>{{ \Auth::user()->dateFormat($holiday->end_date) }}</td> -->
                                     @if (Gate::check('Edit Holiday') || Gate::check('Delete Holiday'))
                                         <td class="Action">
                                             <div class="dt-buttons">
-                                            <span>
-                                                @can('Edit Holiday')
-                                                    <div class="action-btn bg-info me-2">
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
-                                                            data-url="{{ route('holiday.edit', $holiday->id) }}"
-                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
-                                                            title="" data-title="{{ __('Edit Holiday') }}"
-                                                            data-bs-original-title="{{ __('Edit') }}">
-                                                            <span class="text-white"><i class="ti ti-pencil"></i></span>
-                                                        </a>
-                                                    </div>
-                                                @endcan
+                                                <span>
+                                                    @can('Edit Holiday')
+                                                        <div class="action-btn bg-info me-2">
+                                                            <a href="#" class="mx-3 btn btn-sm align-items-center"
+                                                                data-url="{{ route('holiday.edit', $holiday->id) }}"
+                                                                data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                                title="" data-title="{{ __('Edit Holiday') }}"
+                                                                data-bs-original-title="{{ __('Edit') }}">
+                                                                <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                            </a>
+                                                        </div>
+                                                    @endcan
 
-                                                @can('Delete Holiday')
-                                                    <div class="action-btn bg-danger">
-                                                        {!! Form::open([
-                                                            'method' => 'DELETE',
-                                                            'route' => ['holiday.destroy', $holiday->id],
-                                                            'id' => 'delete-form-' . $holiday->id,
-                                                        ]) !!}
-                                                        <a href="#"
-                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para"
-                                                            data-bs-toggle="tooltip" title=""
-                                                            data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
-                                                                class="ti ti-trash"></i></span></a>
-                                                        </form>
-                                                    </div>
-                                                @endcan
-                                            </span>
+                                                    @can('Delete Holiday')
+                                                        <div class="action-btn bg-danger">
+                                                            {!! Form::open(['method' => 'DELETE', 'route' => ['holiday.destroy', $holiday->id], 'id' => 'delete-form-' . $holiday->id]) !!}
+                                                                <a href="#" class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                                                    data-bs-toggle="tooltip" title=""
+                                                                    data-bs-original-title="Delete">
+                                                                    <span class="text-white"><i class="ti ti-trash"></i></span>
+                                                                </a>
+                                                            {!! Form::close() !!}
+                                                        </div>
+                                                    @endcan
+                                                </span>
                                             </div>
                                         </td>
                                     @endif
@@ -161,17 +141,3 @@
         </div>
     </div>
 @endsection
-
-@push('script-page')
-    <script>
-        $(document).ready(function() {
-            var now = new Date();
-            var month = (now.getMonth() + 1);
-            var day = now.getDate();
-            if (month < 10) month = "0" + month;
-            if (day < 10) day = "0" + day;
-            var today = now.getFullYear() + '-' + month + '-' + day;
-            $('.current_date').val(today);
-        });
-    </script>
-@endpush
