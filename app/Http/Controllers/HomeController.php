@@ -363,9 +363,17 @@ class HomeController extends Controller
 
                 
                 /* ******************* Leave calculation end ******************* */
+                $user = \Auth::user();
+                $leaves_cc = LocalLeave::query()
+                                ->where(function ($query) use ($user) {
+                                    $query->whereJsonContains('cc_email', (string) ($user->employee->id ?? 0));
+                                })
+                                ->with(['employees', 'leaveType'])
+                                ->latest()
+                                ->get();
 
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc'));
             }
             else
             {

@@ -590,7 +590,7 @@
         </div>
     </div>
         @can('Manage Leave')
-        <div class="col-xl-8 col-lg-8 col-md-8">
+        <div class="col-xl-5 col-lg-5 col-md-5">
             <div class="card">
                 <div class="card-header card-body table-border-style">
                     <h5>{{ __('Scheduled Leave Overview') }}</h5>
@@ -598,7 +598,7 @@
                 <div class="card-body">
                     {{-- <h5> </h5> --}}
                     <div class="table-responsive">
-                        <table class="table" id="pc-dt-simple">
+                        <table class="table" id="pc-dt-simple-123">
                             <thead>
                                 <tr>
                                     @if (\Auth::user()->type != 'employee')
@@ -607,10 +607,10 @@
                                     <th>{{ __('Leave Type') }}</th>
                                     <th>{{ __('Leave Date') }}</th>
                                     <!-- <th>{{ __('End Date') }}</th> -->
-                                    <th>{{ __('Total Days') }}</th>
+                                    <!-- <th>{{ __('Total Days') }}</th> -->
                                     <!-- <th>{{ __('Leave Reason') }}</th> -->
                                     <th>{{ __('status') }}</th>
-                                    <th>{{ __('Applied On') }}</th>
+                                    <!-- <th>{{ __('Applied On') }}</th> -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -643,7 +643,7 @@
                                         </td>
                                         <!-- <td>{{ \Auth::user()->dateFormat($leave->end_date) }}</td> -->
 
-                                        <td>{{ $leave->total_leave_days }}</td>
+                                        <!-- <td>{{ $leave->total_leave_days }}</td> -->
                                         <!-- <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td> -->
                                         <td>
                                             @if ($leave->status == 'Pending')
@@ -656,7 +656,7 @@
                                                 <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
                                             @endif
                                         </td>
-                                        <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
+                                        <!-- <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td> -->
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -665,6 +665,80 @@
                 </div>
             </div>
         </div>
+
+        @if($leaves_cc)
+        <div class="col-xl-7 col-lg-7 col-md-7">
+            <div class="card">
+                <div class="card-header card-body table-border-style">
+                    <h5>{{ __('Team Members\' CC Leave Overview') }}</h5>
+                </div>
+                <div class="card-body">
+                    {{-- <h5> </h5> --}}
+                    <div class="table-responsive">
+                        <table class="table" id="pc-dt-simple">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('Employee') }}</th>
+                                    <th>{{ __('Leave Type') }}</th>
+                                    <th>{{ __('Leave Date') }}</th>
+                                    <!-- <th>{{ __('End Date') }}</th> -->
+                                    <!-- <th>{{ __('Total Days') }}</th> -->
+                                    <!-- <th>{{ __('Leave Reason') }}</th> -->
+                                    <th>{{ __('status') }}</th>
+                                    <!-- <th>{{ __('Applied On') }}</th> -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($leaves_cc as $leave)
+                                    <tr>
+                                        <td>{{ !empty($leave->employee_id) ? $leave->employees->name : '' }}
+                                            </td>
+                                        <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                            <br />
+                                            @switch($leave->half_day_type)
+                                                @case('morning')
+                                                    <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
+                                                    @break
+                                                @case('afternoon')
+                                                    <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
+                                                    @break
+                                                @default
+                                                    <div></div>
+                                            @endswitch
+                                        </td>
+                                        <td>
+                                            @if($leave->start_date == $leave->end_date)
+                                                {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }}
+                                            @else
+                                                {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }} <b>To</b> {{ \Carbon\Carbon::parse($leave->end_date)->format('d/m/Y') }}
+                                            @endif
+                                            
+                                        </td>
+                                        <!-- <td>{{ \Auth::user()->dateFormat($leave->end_date) }}</td> -->
+
+                                        <!-- <td>{{ $leave->total_leave_days }}</td> -->
+                                        <!-- <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td> -->
+                                        <td>
+                                            @if ($leave->status == 'Pending')
+                                                <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == 'Approved')
+                                                <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == "Reject")
+                                                <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == "Draft")
+                                                <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                            @endif
+                                        </td>
+                                        <!-- <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td> -->
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
         @endcan
 
         <div class="col-xl-12 col-lg-12 col-md-12" style="display:none;">
