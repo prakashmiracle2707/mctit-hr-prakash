@@ -218,7 +218,7 @@ class HomeController extends Controller
                         // Calculate total leave days for each leave if not already calculated
                         foreach ($Todayleaves as $Todayleave) {
                             if ($Todayleave->total_leave_days == 0) {
-                                $Todayleave->total_leave_days = $this->getTotalLeaveDays($Todayleave->start_date, $Todayleave->end_date);
+                                $Todayleave->total_leave_days = $this->getTotalLeaveDays($Todayleave->start_date, $Todayleave->end_date,$Todayleave->leave_type_id,$Todayleave->half_day_type);
                             }
                         }
                     }
@@ -227,7 +227,7 @@ class HomeController extends Controller
                 // Calculate total leave days for each leave if not already calculated
                 foreach ($leaves as $leave) {
                     if ($leave->total_leave_days == 0) {
-                        $leave->total_leave_days = $this->getTotalLeaveDays($leave->start_date, $leave->end_date);
+                        $leave->total_leave_days = $this->getTotalLeaveDays($leave->start_date, $leave->end_date,$leave->leave_type_id,$leave->half_day_type);
                     }
                 }
             }
@@ -372,7 +372,7 @@ class HomeController extends Controller
                                 ->latest()
                                 ->get();
 
-
+                
                 return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc'));
             }
             else
@@ -510,19 +510,34 @@ class HomeController extends Controller
 
 
     // Private function to calculate leave days excluding weekends
-    private function getTotalLeaveDays($startDate, $endDate)
+    private function getTotalLeaveDays($startDate, $endDate,$leave_type_id,$half_day_type)
     {
-        // Parse the start and end dates
         $startDate = \Carbon\Carbon::parse($startDate);
         $endDate = \Carbon\Carbon::parse($endDate);
 
         $totalLeaveDays = 0;
 
-        // Loop from start date to end date
-        for ($date = $startDate; $date <= $endDate; $date->addDay()) {
-            // If the current day is not Saturday or Sunday, increment the total leave days
-            if (!$date->isWeekend()) {
-                $totalLeaveDays++;
+        if($leave_type_id != 5){
+            // Fetch all holidays in the date range
+            $holidays = \App\Models\Holiday::where('is_optional', 0)
+                        ->pluck('start_date')
+                        ->map(fn($date) => \Carbon\Carbon::parse($date)->format('Y-m-d'))
+                        ->toArray();
+
+            // echo "<pre>";print_r($holidays);exit;
+
+            for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
+                $formattedDate = $date->format('Y-m-d');
+
+                // Skip weekends and holidays
+                if (!$date->isWeekend() && !in_array($formattedDate, $holidays)) {
+                    if($leave_type_id == 2 && $half_day_type != 'full_day'){
+                       $totalLeaveDays = $totalLeaveDays + 0.5; 
+                    }else{
+                       $totalLeaveDays++; 
+                    }
+                    
+                }
             }
         }
 

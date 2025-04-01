@@ -35,6 +35,15 @@
 
 @section('content')
 
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 @if(\Auth::user()->type == 'employee')
 <div class="row">
     <div class="col-lg-4 col-md-6">
@@ -187,8 +196,17 @@
                                         <td>{{ !empty($leave->employee_id) ? $leave->employees->name : '' }}
                                         </td>
                                     @endif
-                                    <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                    <td>
+                                        @if (!empty($leave->leave_type_id))
+                                            {{ $leave->leaveType->title }}
+
+                                            @if ($leave->leave_type_id == 5 && !empty($leave->early_time))
+                                                <br>
+                                                <span class="badge bg-primary">{{ $leave->early_time }}</span>
+                                            @endif
+                                        @endif
                                         <br />
+
                                         @switch($leave->half_day_type)
                                             @case('morning')
                                                 <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
@@ -223,6 +241,8 @@
                                             <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
                                         @elseif($leave->status == "Cancelled")
                                             <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                        @elseif($leave->status == 'Pre-Approved')
+                                            <div class="badge bg-success p-2 px-3">{{ $leave->status }}</div>
                                         @endif
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
@@ -359,12 +379,12 @@
 
                     $.each(data, function(key, value) {
 
-                        if (value.total_leave == value.days && value.title != 'Work from home (WFH)') {
+                        if (value.total_leave == value.days && value.title != 'Work from home (WFH)' && value.title != 'Early Leave (EL)') {
                             $('#leave_type_id').append('<option value="' + value.id +
                                 '" disabled>' + value.title + '&nbsp(' + value.total_leave +
                                 '/' + value.days + ')</option>');
                         } else {
-                            if(value.title != 'Work from home (WFH)'){
+                            if(value.title != 'Work from home (WFH)' && value.title != 'Early Leave (EL)'){
                                 $('#leave_type_id').append('<option value="' + value.id + '">' +
                                 value.title + '&nbsp(' + value.total_leave + '/' + value
                                 .days + ')</option>');

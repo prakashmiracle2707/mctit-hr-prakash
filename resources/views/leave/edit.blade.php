@@ -42,7 +42,7 @@
                 </select>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6" id="half_day_type_div">
             <div class="form-group">
                 {{ Form::label('half_day_type', __('Leave(Full/Half Day)'), ['class' => 'col-form-label']) }}
                 <select name="half_day_type" id="half_day_type" class="form-control" required>
@@ -58,16 +58,36 @@
                 </select>
             </div>
         </div>
+
+        <div class="col-md-6" id="leave_time_wrapper" style="display: none;">
+            <div class="form-group">
+                {{ Form::label('early_time', __('Leave Time'), ['class' => 'col-form-label']) }}
+                <select name="leave_time" id="leave_time" class="form-control">
+                    <option value="">{{ __('Select Time') }}</option>
+                    @foreach(['4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM', '5:00 PM', '5:15 PM','5:30 PM','5:45 PM','6:00 PM'] as $time)
+                        <option value="{{ $time }}" {{ old('early_time', $leave->early_time) == $time ? 'selected' : '' }}>{{ $time }}</option>
+                    @endforeach
+                </select>
+                <span style="color:#ff3a6e;font-size: 11px;"><b>Note :</b>Only one Early Leave is allowed per month. Must complete 8 hours. Applying on Same day is restricted.</span>
+            </div>
+        </div>
+
     </div>
 
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-6">
+            <div class="form-group">
+                {{ Form::label('approver', __('To (Approver)'), ['class' => 'col-form-label']) }}
+                <input type="text" class="form-control" id="approver" name="approver" value="Ravi Brahmbhatt" disabled>
+            </div>
+        </div>
+        <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('cc_email', __('CC Email'), ['class' => 'col-form-label']) }}<x-required></x-required>
                 {{ Form::select('cc_email_id[]', 
                     $employeesList->pluck('name', 'id'), 
                     $leave->cc_email,
-                    ['class' => 'form-control select2', 'id' => 'cc_email_id', 'multiple' => 'multiple', 'placeholder' => __('Select Employees for CC Email')]
+                    ['class' => 'form-control select2', 'id' => 'cc_email_id', 'multiple' => 'multiple']
                 ) }}
                 <span style="color:#6f42c1;font-size: 11px;"><b>Note :</b>Nilesh Kalma is added by default to cc.</span>
             </div>
@@ -154,6 +174,29 @@
                 $('#employee_id').trigger('change');
             }
         }, 100);
+
+        // Toggle visibility of Leave Time based on Leave Type
+        function toggleLeaveTimeDropdown() {
+            var leaveType = $('#leave_type_id').val();
+            if (leaveType == "5") {
+                $('#leave_time_wrapper').show();
+                $('#half_day_type_div').css('display','none');
+                $('#end_date').prop('disabled', true);
+            } else {
+                $('#leave_time_wrapper').hide();
+                $('#leave_time').val('');
+                $('#half_day_type_div').css('display','block');
+                $('#end_date').prop('disabled', false);
+            }
+        }
+
+        // Initial toggle on load
+        toggleLeaveTimeDropdown();
+
+        // Handle leave type change
+        $('#leave_type_id').on('change', function () {
+            toggleLeaveTimeDropdown();
+        });
     });
 </script>
 
@@ -180,7 +223,7 @@
                 $('#half_day_type').prop('disabled', false);
             }
 
-            if(selectedValue == "4"){
+            if(selectedValue == "4" || selectedValue == "5"){
                 $('#start_date').val('');
                 $('#end_date').val('');
                 $('#end_date').prop('disabled', true);
@@ -192,7 +235,7 @@
         $('#start_date').on('blur', function () {
             var selectedValue = $('#leave_type_id').val();
             
-            if (selectedValue == "4") {
+            if (selectedValue == "4" || selectedValue == "5") {
                 var startDate = $(this).val();
                 $('#end_date').val(startDate);
             }
@@ -294,5 +337,19 @@
             $('#half_day_type').prop('disabled', false);
             $('#end_date').prop('disabled', false);
         });
+
+        $('#leave_type_id').on('change', function () {
+                var selectedValue = $(this).val();
+
+                if (selectedValue == "5") {
+                    $('#time_dropdown_wrapper').show();
+                    $('#half_day_type_div').css('display','none');
+                } else {
+                    $('#time_dropdown_wrapper').hide();
+                    $('#leave_time').val('');
+                    $('#half_day_type_div').css('display','block');
+                }
+        });
+    
     });
 </script>

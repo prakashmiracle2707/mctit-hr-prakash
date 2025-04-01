@@ -621,6 +621,9 @@
                                             </td>
                                         @endif
                                         <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                            @if ($leave->leave_type_id == 5 && !empty($leave->early_time))
+                                                <br /> <span class="badge bg-primary">{{ $leave->early_time }}</span>
+                                            @endif
                                             <br />
                                             @switch($leave->half_day_type)
                                                 @case('morning')
@@ -654,6 +657,10 @@
                                                 <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
                                             @elseif($leave->status == "Draft")
                                                 <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == "Cancelled")
+                                                <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == 'Pre-Approved')
+                                                <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
                                             @endif
                                         </td>
                                         <!-- <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td> -->
@@ -727,6 +734,10 @@
                                                 <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
                                             @elseif($leave->status == "Draft")
                                                 <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == "Cancelled")
+                                                <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                            @elseif($leave->status == 'Pre-Approved')
+                                                <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
                                             @endif
                                         </td>
                                         <!-- <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td> -->
@@ -1243,6 +1254,10 @@
                                                     </td>
                                                 @endif
                                                 <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                                    @if ($leave->leave_type_id == 5 && !empty($leave->early_time))
+                                                        <br />
+                                                        <span class="badge bg-primary">{{ $leave->early_time }}</span>
+                                                    @endif
                                                     <br />
                                                     @switch($leave->half_day_type)
                                                         @case('morning')
@@ -1276,6 +1291,10 @@
                                                         <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
                                                     @elseif($leave->status == "Draft")
                                                         <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == "Cancelled")
+                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == 'Pre-Approved')
+                                                        <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
                                                     @endif
                                                 </td>
                                                 <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
@@ -1405,6 +1424,9 @@
                                                     </td>
                                                 @endif
                                                 <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                                    @if ($leave->leave_type_id == 5 && !empty($leave->early_time))
+                                                        <span class="badge bg-primary">{{ $leave->early_time }}</span>
+                                                    @endif
                                                     <br />
                                                     @switch($leave->half_day_type)
                                                         @case('morning')
@@ -1438,6 +1460,10 @@
                                                         <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
                                                     @elseif($leave->status == "Draft")
                                                         <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == "Cancelled")
+                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == 'Pre-Approved')
+                                                        <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
                                                     @endif
                                                 </td>
                                                 <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>

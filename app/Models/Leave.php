@@ -20,6 +20,7 @@ class Leave extends Model
         'created_by',
         'half_day_type',
         'cc_email',
+        'early_time',
     ];
 
     protected $casts = [

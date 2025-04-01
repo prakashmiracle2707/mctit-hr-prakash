@@ -28,8 +28,13 @@
                         </tr>
                         <tr>
                             <th>{{ __('Leave Type ') }}</th>
-                            <td><b>{{ !empty($leavetype->title) ? $leavetype->title : '' }}</b></td>
+                            <td><b>{{ !empty($leavetype->title) ? $leavetype->title : '' }}</b>
+                                @if ($leave->leave_type_id == 5 && !empty($leave->early_time))
+                                    <span class="badge bg-primary">{{ $leave->early_time }}</span>
+                                @endif
+                            </td>
                         </tr>
+                        @if ($leave->leave_type_id != 5)
                         <tr>
                             <th>{{ __('Leave(Full/Half Day) ') }}</th>
                             <td>
@@ -48,6 +53,7 @@
                                 @endswitch
                             </td>
                         </tr>
+                        @endif
                         <tr>
                             <th>{{ __('Appplied On') }}</th>
                             <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
@@ -79,6 +85,8 @@
                                     <div class="badge bg-info">{{ $leave->status }}</div>
                                 @elseif($leave->status == "Cancelled")
                                     <div class="badge bg-danger">{{ $leave->status }}</div>
+                                @elseif($leave->status == 'Pre-Approved')
+                                    <div class="badge bg-success">{{ $leave->status }}</div>
                                 @endif
                             </td>
                         </tr>

@@ -45,14 +45,14 @@ class SalarySlipMail extends Mailable
             \Log::error("Salary Slip file not found: " . $filePath);
             return $this->from('hr@miraclecloud-technology.com', 'HR Team')
                         ->replyTo('hr@miraclecloud-technology.com', 'HR Team')
-                        ->cc(['nkalma@miraclecloud-technology.com'])
+                        ->cc(['nkalma@miraclecloud-technology.com','rmb@miraclecloud-technology.com'])
                         ->subject("Salary Slip - {$this->month} {$this->year}")
                         ->view('email.salary_slip');
         }
 
         return $this->from('hr@miraclecloud-technology.com', 'HR Team')
                     ->replyTo('hr@miraclecloud-technology.com', 'HR Team')
-                    ->cc(['nkalma@miraclecloud-technology.com']) // Add multiple CCs as needed
+                    ->cc(['nkalma@miraclecloud-technology.com','rmb@miraclecloud-technology.com']) // Add multiple CCs as needed
                     ->subject("Salary Slip - {$this->month} {$this->year}")
                     ->view('email.salary_slip')
                     ->attach($filePath, [

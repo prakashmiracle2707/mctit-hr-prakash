@@ -17,6 +17,7 @@ use App\Models\FinancialYear;
 use App\Models\Holiday;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class LeaveController extends Controller
 {
@@ -166,25 +167,27 @@ class LeaveController extends Controller
 
         $totalLeaveDays = 0;
 
-        // Fetch all holidays in the date range
-        $holidays = \App\Models\Holiday::where('is_optional', 0)
-                    ->pluck('start_date')
-                    ->map(fn($date) => \Carbon\Carbon::parse($date)->format('Y-m-d'))
-                    ->toArray();
+        if($leave_type_id != 5){
+            // Fetch all holidays in the date range
+            $holidays = \App\Models\Holiday::where('is_optional', 0)
+                        ->pluck('start_date')
+                        ->map(fn($date) => \Carbon\Carbon::parse($date)->format('Y-m-d'))
+                        ->toArray();
 
-        // echo "<pre>";print_r($holidays);exit;
+            // echo "<pre>";print_r($holidays);exit;
 
-        for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
-            $formattedDate = $date->format('Y-m-d');
+            for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
+                $formattedDate = $date->format('Y-m-d');
 
-            // Skip weekends and holidays
-            if (!$date->isWeekend() && !in_array($formattedDate, $holidays)) {
-                if($leave_type_id == 2 && $half_day_type != 'full_day'){
-                   $totalLeaveDays = $totalLeaveDays + 0.5; 
-                }else{
-                   $totalLeaveDays++; 
+                // Skip weekends and holidays
+                if (!$date->isWeekend() && !in_array($formattedDate, $holidays)) {
+                    if($leave_type_id == 2 && $half_day_type != 'full_day'){
+                       $totalLeaveDays = $totalLeaveDays + 0.5; 
+                    }else{
+                       $totalLeaveDays++; 
+                    }
+                    
                 }
-                
             }
         }
 
@@ -320,6 +323,39 @@ class LeaveController extends Controller
                 ]
             );
 
+            if ($request->leave_type_id == 5) {
+                $rules['leave_time'] = 'required';
+            }
+
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+
+
+            if ($request->leave_type_id == 5) {
+
+                $startDate = \Carbon\Carbon::parse($request->start_date)->toDateString();
+                $today = \Carbon\Carbon::today()->toDateString();
+
+                if ($startDate == $today) {
+                    return redirect()->back()->with('error', __('You cannot apply for Early Leave on the same day.'));
+                }
+
+
+                $alreadyAppliedThisMonth = LocalLeave::where('employee_id', $request->employee_id)
+                    ->where('leave_type_id', 5)
+                    ->whereMonth('start_date', '=', \Carbon\Carbon::parse($request->start_date)->month)
+                    ->whereYear('start_date', '=', \Carbon\Carbon::parse($request->start_date)->year)
+                    ->whereNotIn('status', ['Rejected', 'Cancelled'])
+                    ->exists();
+
+                if ($alreadyAppliedThisMonth) {
+                    return redirect()->back()->with('error', __('You have already applied for Early Leave this month.'));
+                }
+            }
+
             
             $leaveTypeDetails=LeaveType::where('id', $request->leave_type_id)->first();
             
@@ -355,10 +391,7 @@ class LeaveController extends Controller
             }
 
 
-            if ($validator->fails()) {
-                $messages = $validator->getMessageBag();
-                return redirect()->back()->with('error', $messages->first());
-            }
+            
 
             $leave_type = LeaveType::find($request->leave_type_id);
 
@@ -436,12 +469,17 @@ class LeaveController extends Controller
                 if ($request->status == 'draft') {
                     $leave->status = 'Draft';  // Set status to 'Draft' if the save as draft button is clicked
                 } else {
-                    $leave->status = 'Pending'; // Default status if not a draft
+                    if($request->leave_type_id == 5){
+                        $leave->status = 'Pre-Approved'; // Default status if not a draft
+                    }else{
+                        $leave->status = 'Pending'; 
+                    }
+                    
                 }
                 $leave->created_by = \Auth::user()->creatorId();
                 $leave->half_day_type = $request->half_day_type; // Store the half_day_type in the database
                 $leave->cc_email = $cc_email_id;
-
+                $leave->early_time = $request->leave_time;
                 $leave->save();
 
                 // Google Calendar sync
@@ -457,7 +495,7 @@ class LeaveController extends Controller
 
                 
 
-                if($leave->status == 'Pending'){
+                if($leave->status == 'Pending' || $leave->status == 'Pre-Approved'){
                     $employee = Employee::where('id', $leave->employee_id)
                                 ->where('created_by', '=', \Auth::user()->creatorId())
                                 ->first();
@@ -502,6 +540,7 @@ class LeaveController extends Controller
                         'fromNameEmail' => $employee->name,
                         'replyTo' => $employee->email,
                         'replyToName' => $employee->name,
+                        'leaveTime' => $leave->early_time,
                     ];
 
                     $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
@@ -509,14 +548,27 @@ class LeaveController extends Controller
                     $emails[] = 'nkalma@miraclecloud-technology.com';
                     $emails[] = $employee->email;
 
-                    Mail::send('email.leave-request-hr', $data, function ($message) use ($data,$emails) {
-                        $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
-                        $message->to($data["toEmail"])  // Manager’s email address
-                                ->subject($subjectTxt)
-                                ->from($data["fromEmail"], $data["fromNameEmail"])
-                                ->replyTo($data["replyTo"], $data["replyToName"])
-                                ->cc($emails);
-                    });
+                    if ($leave->leave_type_id == 5) {
+                        
+                        Mail::send('email.leave-early', $data, function ($message) use ($data,$emails) {
+                            $subjectTxt = $data['leaveType']." on ".$data["leaveDate"];
+                            $message->to($data["toEmail"])  // Manager’s email address
+                                    ->subject($subjectTxt)
+                                    ->from($data["fromEmail"], $data["fromNameEmail"])
+                                    ->replyTo($data["replyTo"], $data["replyToName"])
+                                    ->cc($emails);
+                        });
+                    }else{
+                        Mail::send('email.leave-request-hr', $data, function ($message) use ($data,$emails) {
+                            $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                            $message->to($data["toEmail"])  // Manager’s email address
+                                    ->subject($subjectTxt)
+                                    ->from($data["fromEmail"], $data["fromNameEmail"])
+                                    ->replyTo($data["replyTo"], $data["replyToName"])
+                                    ->cc($emails);
+                        }); 
+                    }
+                    
                 }
 
 
@@ -592,9 +644,71 @@ class LeaveController extends Controller
                     ]
                 );
 
+                if ($request->leave_type_id == 5) {
+                    $rules['leave_time'] = 'required';
+                }
+            
+
                 if ($validator->fails()) {
                     $messages = $validator->getMessageBag();
                     return redirect()->back()->with('error', $messages->first());
+                }
+
+
+                if ($request->leave_type_id == 5) {
+
+                    $startDate = \Carbon\Carbon::parse($request->start_date)->toDateString();
+                    $today = \Carbon\Carbon::today()->toDateString();
+
+                    if ($startDate == $today) {
+                        return redirect()->back()->with('error', __('You cannot apply for Early Leave on the same day.'));
+                    }
+
+                    $alreadyAppliedThisMonth = LocalLeave::where('employee_id', $request->employee_id)
+                        ->where('leave_type_id', 5)
+                        ->whereMonth('start_date', '=', \Carbon\Carbon::parse($request->start_date)->month)
+                        ->whereYear('start_date', '=', \Carbon\Carbon::parse($request->start_date)->year)
+                        ->whereNotIn('status', ['Rejected', 'Cancelled'])
+                        ->exists();
+
+                    if ($alreadyAppliedThisMonth) {
+                        return redirect()->back()->with('error', __('You have already applied for Early Leave this month.'));
+                    }
+
+                }
+
+
+                $leaveTypeDetails=LeaveType::where('id', $request->leave_type_id)->first();
+            
+                // If leave type is "Optional Holiday", validate only optional holiday date
+                if (Str::contains(Str::lower($leaveTypeDetails->title), 'optional holiday')) {
+                    $isOptionalHoliday = Holiday::where('is_optional', 1)
+                        ->whereDate('start_date', $request->start_date)
+                        ->exists();
+
+                    if (!$isOptionalHoliday) {
+                        return redirect()->back()->with('error', __('You can only apply Optional Holiday on declared optional holiday dates.'));
+                    }else{
+                        $leaveDate = \Carbon\Carbon::parse($request->start_date);
+
+                        $financialYear = \App\Models\FinancialYear::where('start_date', '<=', $leaveDate)
+                            ->where('end_date', '>=', $leaveDate)
+                            ->first();
+
+                        if ($financialYear) {
+                            $alreadyTaken = LocalLeave::where('employee_id', $request->employee_id)
+                                ->where('leave_type_id', $request->leave_type_id)
+                                ->whereIn('status', ['Approved'])
+                                ->whereBetween('start_date', [$financialYear->start_date, $financialYear->end_date])
+                                ->exists();
+
+                            if ($alreadyTaken) {
+                                return redirect()->back()->with('error', __('You have already taken an Optional Holiday in financial year ') . $financialYear->year_range . '.');
+                            }
+                        }
+
+                        
+                    }
                 }
 
                 $leave_type = LeaveType::find($request->leave_type_id);
@@ -666,13 +780,17 @@ class LeaveController extends Controller
                     $leave->remark = $request->remark;
                     $leave->half_day_type = $request->half_day_type; // Store the updated half_day_type in the database
                     $leave->cc_email = $cc_email_ids; // Store the CC emails (employee IDs) as an array
-
+                    $leave->early_time = $request->leave_time;
 
                     // Set status based on the button clicked (draft or submit)
                     if ($request->status == 'draft') {
                         $leave->status = 'Draft';  // Set status to 'Draft' if the save as draft button is clicked
                     } else {
-                        $leave->status = 'Pending'; // Default status if not a draft
+                        if($request->leave_type_id == 5){
+                            $leave->status = 'Pre-Approved'; // Default status if not a draft
+                        }else{
+                            $leave->status = 'Pending'; 
+                        }
 
                         /* **********************  Email Send  Start ********************** */
 
@@ -715,6 +833,7 @@ class LeaveController extends Controller
                             'fromNameEmail' => $employee->name,
                             'replyTo' => $employee->email,
                             'replyToName' => $employee->name,
+                            'leaveTime' => $leave->early_time,
                         ];
 
                         $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
@@ -722,15 +841,26 @@ class LeaveController extends Controller
                         $emails[] = 'nkalma@miraclecloud-technology.com';
                         $emails[] = $employee->email;
 
-        
-                        Mail::send('email.leave-request-hr', $data, function ($message) use ($data,$emails) {
-                            $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
-                            $message->to($data["toEmail"])  // Manager’s email address
-                                    ->subject($subjectTxt)
-                                    ->from($data["fromEmail"], $data["fromNameEmail"])
-                                    ->replyTo($data["replyTo"], $data["replyToName"])
-                                    ->cc($emails);
-                        });
+                        if ($leave->leave_type_id == 5) {
+                            Mail::send('email.leave-early', $data, function ($message) use ($data,$emails) {
+                                $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                                $message->to($data["toEmail"])  // Manager’s email address
+                                        ->subject($subjectTxt)
+                                        ->from($data["fromEmail"], $data["fromNameEmail"])
+                                        ->replyTo($data["replyTo"], $data["replyToName"])
+                                        ->cc($emails);
+                            });
+                        }else{
+                            Mail::send('email.leave-request-hr', $data, function ($message) use ($data,$emails) {
+                                $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                                $message->to($data["toEmail"])  // Manager’s email address
+                                        ->subject($subjectTxt)
+                                        ->from($data["fromEmail"], $data["fromNameEmail"])
+                                        ->replyTo($data["replyTo"], $data["replyToName"])
+                                        ->cc($emails);
+                            });
+                        }
+                       
 
                         /* **********************  Email Send  End ********************** */
                     }
