@@ -21,6 +21,8 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Holiday;
 use App\Models\Leave as LocalLeave;
+use App\Models\FinancialYear;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -497,237 +499,370 @@ class ReportController extends Controller
 
     public function monthlyAttendance(Request $request)
     {
-        if (\Auth::user()->can('Manage Report')) {
-            $branch = Branch::where('created_by', \Auth::user()->creatorId())->get()->pluck('name', 'id');
-            $branch->prepend('All', '');
 
-            $department = Department::where('created_by', \Auth::user()->creatorId())->get()->pluck('name', 'id');
-            $department->prepend('All', '');
-
-            $data['branch']     = __('All');
-            $data['department'] = __('All');
-
-            $employees = Employee::select('id', 'name');
-            if (!empty($request->employee_id) && $request->employee_id[0] != 0) {
-                $employees->whereIn('id', $request->employee_id);
-            }
-            $employees = $employees->where('created_by', \Auth::user()->creatorId());
-
-            // $employees = Employee::select('id', 'name')->where('created_by', \Auth::user()->creatorId());
-            if (!empty($request->branch)) {
-                $employees->where('branch_id', $request->branch);
-                $data['branch'] = !empty(Branch::find($request->branch)) ? Branch::find($request->branch)->name : '';
-            }
-
-            if (!empty($request->department)) {
-                $employees->where('department_id', $request->department);
-                $data['department'] = !empty(Department::find($request->department)) ? Department::find($request->department)->name : '';
-            }
-
-            $employees = $employees->orderBy('name', 'asc')->get()->pluck('name', 'id');
-
-
-            if (!empty($request->month)) {
-                $currentdate = strtotime($request->month);
-                $month       = date('m', $currentdate);
-                $year        = date('Y', $currentdate);
-                $curMonth    = date('M-Y', strtotime($request->month));
-            } else {
-                $month    = date('m');
-                $year     = date('Y');
-                $curMonth = date('M-Y', strtotime($year . '-' . $month));
-            }
-
-
-            //            $num_of_days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-            $num_of_days = date('t', mktime(0, 0, 0, $month, 1, $year));
-            for ($i = 1; $i <= $num_of_days; $i++) {
-                $dates[] = str_pad($i, 2, '0', STR_PAD_LEFT);
-            }
-
-            $employeesAttendance = [];
-            $totalPresent        = $totalLeave = $totalEarlyLeave = 0;
-            $ovetimeHours        = $overtimeMins = $earlyleaveHours = $earlyleaveMins = $lateHours = $lateMins = 0;
-            foreach ($employees as $id => $employee) {
-                $attendances['name'] = $employee;
-                $WFH = $isPresentHoliday = $TotalWeekDay = $WeekdayPresent = $cfl = $chl = $Present = $sl = $cl = $l = $h = $a = $lwp = 0; // Initialize counters
-                foreach ($dates as $date) {
-                    $dateFormat = $year . '-' . $month . '-' . $date;
-                    $day = Carbon::parse($dateFormat)->format('l');
-
-                    if ($day == 'Saturday' || $day == 'Sunday') {
-                        $TotalWeekDay++;
-                    }
-
-                    if ($dateFormat <= date('Y-m-d')) {
-                        $employeeAttendance = AttendanceEmployee::where('employee_id', $id)->where('date', $dateFormat)->first();
-                        
-
-                        if (!empty($employeeAttendance) && $employeeAttendance->status == 'Present') {
-                            $attendanceStatus[$date] = 'P';
-
-                            $isLeaveDayHalfDay = LocalLeave::where('employee_id', $id)
-                                        ->where('status', 'Approved')
-                                        ->whereIn('leave_type_id', [2])
-                                        ->whereIn('half_day_type', ['afternoon','morning'])
-                                        ->whereDate('start_date', '<=', $dateFormat)
-                                        ->whereDate('end_date', '>=', $dateFormat)
-                                        ->exists();
-                            $isSickLeaveDay = LocalLeave::where('employee_id', $id)
-                                        ->where('status', 'Approved')
-                                        ->whereIn('leave_type_id', [1])
-                                        ->whereDate('start_date', '<=', $dateFormat)
-                                        ->whereDate('end_date', '>=', $dateFormat)
-                                        ->exists();
-                            if($isSickLeaveDay){
-                                $sl++;
-                            }
-
-                            if($employeeAttendance->work_from_home == 1){
-                                $WFH++;
-                            }
-
-                            $CheckPresentHoliday = Holiday::where('start_date', $dateFormat)->where('is_optional', 0)->exists();
-
-                            if($CheckPresentHoliday){
-                                $h++;
-                            }
-
-                            if ($day == 'Saturday' || $day == 'Sunday') {
-                                $WeekdayPresent++;
-                            }else if($CheckPresentHoliday){
-                                $isPresentHoliday++;
-                            }else{
-                                if($isLeaveDayHalfDay){
-                                    $Present = $Present + 0.5;
-                                    $chl = $chl + 0.5;
-                                    $attendanceStatus[$date] = 'H/F';
-                                }else{
-                                   $Present++; 
-                                }
-                            }
-
-                            $totalPresent            += 1;
-
-                            if ($employeeAttendance->overtime > 0) {
-                                $ovetimeHours += date('h', strtotime($employeeAttendance->overtime));
-                                $overtimeMins += date('i', strtotime($employeeAttendance->overtime));
-                            }
-
-                            if ($employeeAttendance->early_leaving > 0) {
-                                $earlyleaveHours += date('h', strtotime($employeeAttendance->early_leaving));
-                                $earlyleaveMins  += date('i', strtotime($employeeAttendance->early_leaving));
-                            }
-
-                            if ($employeeAttendance->late > 0) {
-                                $lateHours += date('h', strtotime($employeeAttendance->late));
-                                $lateMins  += date('i', strtotime($employeeAttendance->late));
-                            }
-                        } elseif (!empty($employeeAttendance) && $employeeAttendance->status == 'Leave') {
-                            $attendanceStatus[$date] = 'A';
-                            $a++;
-                            $totalLeave              += 1;
-                        } else {
-                            
-                            $isHoliday = Holiday::where('start_date', $dateFormat)->where('is_optional', 0)->exists();
-                            $isSickLeaveDay = LocalLeave::where('employee_id', $id)
-                                        ->where('status', 'Approved')
-                                        ->whereIn('leave_type_id', [1])
-                                        ->whereDate('start_date', '<=', $dateFormat)
-                                        ->whereDate('end_date', '>=', $dateFormat)
-                                        ->exists();
-                            if($isSickLeaveDay){
-                                $sl++;
-                            }
-
-                            $isCasualLeaveFullDay = LocalLeave::where('employee_id', $id)
-                                        ->where('status', 'Approved')
-                                        ->whereIn('leave_type_id', [2])
-                                        ->whereIn('half_day_type', ['full_day'])
-                                        ->whereDate('start_date', '<=', $dateFormat)
-                                        ->whereDate('end_date', '>=', $dateFormat)
-                                        ->exists();
-                            if($isCasualLeaveFullDay){
-                                $cfl++;
-                            }
-
-                            /*$isCasualLeaveHalfDay = LocalLeave::where('employee_id', $id)
-                                        ->where('status', 'Approved')
-                                        ->whereIn('leave_type_id', [2])
-                                        ->whereIn('half_day_type', ['afternoon','morning'])
-                                        ->whereDate('start_date', '<=', $dateFormat)
-                                        ->whereDate('end_date', '>=', $dateFormat)
-                                        ->exists();
-                            if($isCasualLeaveHalfDay){
-                                $chl = $chl + 0.5;
-                            }*/
-
-                            $isPendingLeaveDay = LocalLeave::where('employee_id', $id)
-                                        ->whereIn('status', ['Pending', 'Reject'])
-                                        ->whereIn('leave_type_id', [1,2])
-                                        ->whereDate('start_date', '<=', $dateFormat)
-                                        ->whereDate('end_date', '>=', $dateFormat)
-                                        ->exists();
-
-
-                            if($isSickLeaveDay || $isCasualLeaveFullDay){
-                                $attendanceStatus[$date] = 'L';
-                            }else if($isPendingLeaveDay){
-                                $attendanceStatus[$date] = 'LWP';
-                                $lwp++;
-                            }else if($isHoliday){
-                                $attendanceStatus[$date] = 'H';
-                                $h++;
-                            }else if ($day == 'Saturday' || $day == 'Sunday') {
-                                $attendanceStatus[$date] = '';
-                            } else {
-                                $attendanceStatus[$date] = 'A';
-                                $a++;
-                            }
-                            
-                        }
-                    } else {
-                        $attendanceStatus[$date] = '';
-                    }
-                }
-                $attendances['status'] = $attendanceStatus;
-                $num_of_days = date('t', mktime(0, 0, 0, $month, 1, $year));
-                $totalDays = 0;
-                $attendances['summary'] =   [
-                                                'Present' => $Present,
-                                                'WeekdayPresent' => $WeekdayPresent,
-                                                'SL' => $sl,
-                                                'CFL' => $cfl,
-                                                'CHL' => $chl,
-                                                'WFH' => $WFH,
-                                                'H' => $h,
-                                                'A' => $a,
-                                                'LWP' => $lwp,
-                                                'isPresentHoliday' => $isPresentHoliday,
-                                                'TotalWeekDay' =>$TotalWeekDay,
-                                                'Total' => 0,
-                                                'TotalMonthDays' => $num_of_days,
-                                            ];
-                $employeesAttendance[] = $attendances;
-            }
-
-            $totalOverTime   = $ovetimeHours + ($overtimeMins / 60);
-            $totalEarlyleave = $earlyleaveHours + ($earlyleaveMins / 60);
-            $totalLate       = $lateHours + ($lateMins / 60);
-
-            $data['totalOvertime']   = $totalOverTime;
-            $data['totalEarlyLeave'] = $totalEarlyleave;
-            $data['totalLate']       = $totalLate;
-            $data['totalPresent']    = $totalPresent;
-            $data['totalLeave']      = $totalLeave;
-            $data['curMonth']        = $curMonth;
-
-            // echo "<pre>";print_r($employeesAttendance);exit;
-            return view('report.monthlyAttendance', compact('employeesAttendance', 'branch', 'department', 'dates', 'data'));
-        } else {
+        if (!\Auth::user()->can('Manage Report')) {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
+
+        /* ************************************************************** */
+
+        $employeeQuery = Employee::select('id', 'name')
+            ->where('created_by', \Auth::user()->creatorId());
+
+        $employeeList = $employeeQuery->orderBy('name', 'asc')->pluck('name', 'id');
+
+        if (!empty($request->employee_id)) {
+            $employeeQuery->where('id', $request->employee_id);
+        }
+
+        $employees = $employeeQuery->pluck('name', 'id');
+
+        // Parse the input month
+        $selectedMonth = Carbon::parse($request->month); // 2025-03
+        $monthNumber = (int) $selectedMonth->format('m');
+        $year = (int) $selectedMonth->format('Y');
+
+        // Determine Financial Year start year
+        $fyStartYear = $monthNumber >= 4 ? $year : $year - 1;
+
+        // Get the financial year
+        $financialYear = FinancialYear::whereYear('start_date', $fyStartYear)->first();
+
+        if (!$financialYear) {
+            return redirect()->back()->with('error', 'Financial year not found for the given month.');
+        }
+
+        // Now you have the full Financial Year
+        $startDate = Carbon::parse($financialYear->start_date);
+        $endDate = Carbon::parse($financialYear->end_date);
+
+        if ($endDate->isFuture()) {
+            $endDate = Carbon::now();
+        }
+
+        $totalLeaveList = [
+            'SL' => LeaveType::find(1)->days,
+            'CL' => LeaveType::find(2)->days,
+            'WFH' => LeaveType::find(3)->days,
+            'OH' => LeaveType::find(4)->days,
+        ];
+
+        $months = [];
+        $cursor = $startDate->copy();
+        while ($cursor->startOfMonth() <= $endDate->startOfMonth()) {
+            $months[] = [
+                'label' => $cursor->format('F-Y'),
+                'value' => $cursor->format('Y-m')
+            ];
+            $cursor->addMonth();
+        }
+
+        $leaveUsageTrack = []; // [employeeId => ['SL' => x, 'CL' => y, ...]]
+        $data = [];
+
+        foreach ($months as $monthInfo) {
+            $request->merge(['month' => $monthInfo['value']]);
+
+            // Pass cumulative leave usage to processMonthlyAttendance
+            $monthly = $this->processMonthlyAttendance($request, $employees, $totalLeaveList, $leaveUsageTrack);
+
+            // Save the new end balances to be used as "start" for next month
+            foreach ($monthly as $attendance) {
+                $id = array_search($attendance['name'], $employees->toArray()); // get employee id by name
+                $usedSL = ($totalLeaveList['SL'] ?? 0) - ($attendance['leave_balance']['end']['SL'] ?? 0);
+                $usedCL = ($totalLeaveList['CL'] ?? 0) - ($attendance['leave_balance']['end']['CL'] ?? 0);
+                $usedWFH = ($totalLeaveList['WFH'] ?? 0) - ($attendance['leave_balance']['end']['WFH'] ?? 0);
+                $usedOH = ($totalLeaveList['OH'] ?? 0) - ($attendance['leave_balance']['end']['OH'] ?? 0);
+
+                $leaveUsageTrack[$id] = [
+                    'SL' => $usedSL,
+                    'CL' => $usedCL,
+                    'WFH' => $usedWFH,
+                    'OH' => $usedOH,
+                ];
+            }
+
+            $attendanceData[$monthInfo['label']] = $monthly;
+        }
+
+        $monthKey = Carbon::parse($request->month)->format('F-Y');
+
+        $employeesAttendance = $attendanceData[$monthKey] ?? [];
+
+        // echo "<pre>";print_r($employeesAttendance);exit;
+
+
+        // Determine selected month or default to now
+        $selectedDateArray = !empty($request->month) ? Carbon::parse($request->month) : Carbon::now();
+        $month = $selectedDateArray->format('m');
+        $year = $selectedDateArray->format('Y');
+        $curMonth = $selectedDateArray->format('M-Y');
+
+        // Create dates for calendar display
+        $num_of_days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        $dates = [];
+        for ($i = 1; $i <= $num_of_days; $i++) {
+            $dates[] = str_pad($i, 2, '0', STR_PAD_LEFT);
+        }
+
+        // Calculate totals
+        $data['totalOvertime'] = 0;
+        $data['totalEarlyLeave'] = 0;
+        $data['totalLate'] = 0;
+        $data['totalPresent'] = array_reduce($employeesAttendance, fn($carry, $emp) => $carry + ($emp['summary']['Present'] ?? 0), 0);
+        $data['totalLeave'] = array_reduce($employeesAttendance, fn($carry, $emp) => $carry + ($emp['summary']['A'] ?? 0), 0);
+        $data['curMonth'] = $curMonth;
+
+
+
+        return view('report.monthlyAttendance', compact(
+            'employeesAttendance',
+            'dates',
+            'data',
+            'employeeList'
+        ));
+
+        /* ************************************************************** */
     }
+
+
+
+
+    // Updated financialYearAttendance
+    public function financialYearAttendance(Request $request)
+    {
+        if (!\Auth::user()->can('Manage Report')) {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+
+        $employeeQuery = Employee::select('id', 'name')
+            ->where('created_by', \Auth::user()->creatorId());
+
+        $employeeList = $employeeQuery->orderBy('name', 'asc')->pluck('name', 'id');
+
+        if (!empty($request->employee_id)) {
+            $employeeQuery->where('id', $request->employee_id);
+        }
+
+        $employees = $employeeQuery->pluck('name', 'id');
+
+        $financialYears = FinancialYear::orderBy('start_date', 'desc')
+            ->pluck(DB::raw("CONCAT(YEAR(start_date), '-', YEAR(end_date))"), 'id');
+
+        $selectedFY = $request->financial_year_id ?? FinancialYear::where('is_active', 1)->value('id');
+        $financialYear = FinancialYear::find($selectedFY);
+
+        if (!$financialYear) {
+            return redirect()->back()->with('error', __('Financial year not found.'));
+        }
+
+        $startDate = Carbon::parse($financialYear->start_date);
+        $endDate = Carbon::parse($financialYear->end_date);
+        if ($endDate->isFuture()) {
+            $endDate = Carbon::now();
+        }
+
+        $totalLeaveList = [
+            'SL' => LeaveType::find(1)->days,
+            'CL' => LeaveType::find(2)->days,
+            'WFH' => LeaveType::find(3)->days,
+            'OH' => LeaveType::find(4)->days,
+        ];
+
+        $months = [];
+        $cursor = $startDate->copy();
+        while ($cursor->startOfMonth() <= $endDate->startOfMonth()) {
+            $months[] = [
+                'label' => $cursor->format('F-Y'),
+                'value' => $cursor->format('Y-m')
+            ];
+            $cursor->addMonth();
+        }
+
+        $leaveUsageTrack = []; // [employeeId => ['SL' => x, 'CL' => y, ...]]
+
+        foreach ($months as $monthInfo) {
+            $request->merge(['month' => $monthInfo['value']]);
+
+            // Pass cumulative leave usage to processMonthlyAttendance
+            $monthly = $this->processMonthlyAttendance($request, $employees, $totalLeaveList, $leaveUsageTrack);
+
+            // Save the new end balances to be used as "start" for next month
+            foreach ($monthly as $attendance) {
+                $id = array_search($attendance['name'], $employees->toArray()); // get employee id by name
+                $usedSL = ($totalLeaveList['SL'] ?? 0) - ($attendance['leave_balance']['end']['SL'] ?? 0);
+                $usedCL = ($totalLeaveList['CL'] ?? 0) - ($attendance['leave_balance']['end']['CL'] ?? 0);
+                $usedWFH = ($totalLeaveList['WFH'] ?? 0) - ($attendance['leave_balance']['end']['WFH'] ?? 0);
+                $usedOH = ($totalLeaveList['OH'] ?? 0) - ($attendance['leave_balance']['end']['OH'] ?? 0);
+
+                $leaveUsageTrack[$id] = [
+                    'SL' => $usedSL,
+                    'CL' => $usedCL,
+                    'WFH' => $usedWFH,
+                    'OH' => $usedOH,
+                ];
+            }
+
+            $attendanceData[$monthInfo['label']] = $monthly;
+        }
+
+        // echo "<pre>";print_r($attendanceData);exit;
+
+        return view('report.financialYearAttendance', compact(
+            'attendanceData',
+            'months',
+            'financialYears',
+            'selectedFY',
+            'employeeList'
+        ));
+    }
+
+    public function processMonthlyAttendance($request, $employees, $totalLeaveList, &$leaveUsageTrack)
+    {
+        $month = date('m', strtotime($request->month));
+        $year = date('Y', strtotime($request->month));
+        $num_of_days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+
+        $dates = [];
+        for ($i = 1; $i <= $num_of_days; $i++) {
+            $dates[] = str_pad($i, 2, '0', STR_PAD_LEFT);
+        }
+
+        $employeesAttendance = [];
+        foreach ($employees as $id => $employee) {
+            $sl = $chl = $cfl = $oh = $WFH = $TotalWeekDay = $Present = $lwp = $a = $h = $WeekdayPresent = $isPresentHoliday = 0;
+            $attendanceStatus = [];
+            $daysCount = 0;
+
+            foreach ($dates as $date) {
+                $dateFormat = "$year-$month-$date";
+                $day = Carbon::parse($dateFormat)->format('l');
+
+                if ($dateFormat > now()->format('Y-m-d')) {
+                    $attendanceStatus[$date] = '';
+                    continue;
+                }
+
+                if ($day == 'Saturday' || $day == 'Sunday') {
+                    $TotalWeekDay++;
+                }
+
+                $daysCount++;
+                $employeeAttendance = AttendanceEmployee::where('employee_id', $id)->where('date', $dateFormat)->first();
+
+                $isSickLeaveDay = LocalLeave::where('employee_id', $id)->where('status', 'Approved')->where('leave_type_id', 1)->whereDate('start_date', '<=', $dateFormat)->whereDate('end_date', '>=', $dateFormat)->exists();
+                $isCasualLeave = LocalLeave::where('employee_id', $id)->where('status', 'Approved')->where('leave_type_id', 2)->whereDate('start_date', '<=', $dateFormat)->whereDate('end_date', '>=', $dateFormat)->first();
+                $isOptional = LocalLeave::where('employee_id', $id)->where('status', 'Approved')->where('leave_type_id', 4)->whereDate('start_date', '<=', $dateFormat)->whereDate('end_date', '>=', $dateFormat)->exists();
+                $isHoliday = Holiday::where('start_date', $dateFormat)->where('is_optional', 0)->exists();
+
+                if ($employeeAttendance && $employeeAttendance->status === 'Present') {
+                    $attendanceStatus[$date] = 'P';
+                    if ($day != 'Saturday' && $day != 'Sunday') {
+                        $Present++;
+                    }
+
+                    if ($employeeAttendance->work_from_home == 1) $WFH++;
+                    if ($isSickLeaveDay) $sl++;
+                    if ($isOptional) $oh++;
+
+                    if ($day === 'Saturday' || $day === 'Sunday') {
+                        $WeekdayPresent++;
+                    } elseif ($isHoliday) {
+                        $isPresentHoliday++;
+                    } elseif ($isCasualLeave && in_array($isCasualLeave->half_day_type, ['morning', 'afternoon'])) {
+                        $chl += 0.5;
+                        $Present -= 0.5;
+                        $attendanceStatus[$date] = 'H/F';
+                    }
+                } elseif ($employeeAttendance && $employeeAttendance->status === 'Leave') {
+                    $attendanceStatus[$date] = 'L';
+                    $lwp++;
+                } else {
+                    if ($isSickLeaveDay) {
+                        $attendanceStatus[$date] = 'L';
+                        $sl++;
+                    } elseif ($isCasualLeave && $isCasualLeave->half_day_type === 'full_day') {
+                        $attendanceStatus[$date] = 'L';
+                        $cfl++;
+                    } elseif ($isCasualLeave && in_array($isCasualLeave->half_day_type, ['morning', 'afternoon'])) {
+                        $attendanceStatus[$date] = 'H/F';
+                        $chl += 0.5;
+                    } elseif ($isOptional) {
+                        $attendanceStatus[$date] = 'OL';
+                        $oh++;
+                    } elseif ($isHoliday) {
+                        $attendanceStatus[$date] = 'H';
+                        if ($day != 'Saturday' && $day != 'Sunday') {
+                            $h++;
+                        }
+                    } elseif ($day === 'Saturday' || $day === 'Sunday') {
+                        $attendanceStatus[$date] = '';
+                    } else {
+                        $attendanceStatus[$date] = 'A';
+                        $a++;
+                    }
+                }
+            }
+
+            $used = [
+                'SL' => $sl,
+                'CL' => $cfl + $chl,
+                'WFH' => $WFH,
+                'OH' => $oh,
+            ];
+
+            $prevUsage = $leaveUsageTrack[$id] ?? ['SL' => 0, 'CL' => 0, 'WFH' => 0, 'OH' => 0];
+
+            $attendances = [
+                'name' => $employee,
+                'status' => $attendanceStatus,
+                'summary' => [
+                    'SL' => $sl,
+                    'CFL' => $cfl,
+                    'CHL' => $chl,
+                    'OH' => $oh,
+                    'WFH' => $WFH,
+                    'A' => $a,
+                    'LWP' => $lwp,
+                    'H' => $h,
+                    'Present' => $Present,
+                    'WeekdayPresent' => $WeekdayPresent,
+                    'isPresentHoliday' => $isPresentHoliday,
+                    'TotalMonthDays' => $daysCount,
+                    'TotalWeekDay' => $TotalWeekDay,
+                ],
+                'leave_balance' => [
+                    'start' => [
+                        'SL' => $totalLeaveList['SL'] - $prevUsage['SL'],
+                        'CL' => $totalLeaveList['CL'] - $prevUsage['CL'],
+                        'WFH' => $totalLeaveList['WFH'] - $prevUsage['WFH'],
+                        'OH' => $totalLeaveList['OH'] - $prevUsage['OH'],
+                    ],
+                    'end' => [
+                        'SL' => $totalLeaveList['SL'] - ($prevUsage['SL'] + $used['SL']),
+                        'CL' => $totalLeaveList['CL'] - ($prevUsage['CL'] + $used['CL']),
+                        'WFH' => $totalLeaveList['WFH'] - ($prevUsage['WFH'] + $used['WFH']),
+                        'OH' => $totalLeaveList['OH'] - ($prevUsage['OH'] + $used['OH']),
+                    ]
+                ]
+            ];
+
+            $leaveUsageTrack[$id] = [
+                'SL' => $prevUsage['SL'] + $used['SL'],
+                'CL' => $prevUsage['CL'] + $used['CL'],
+                'WFH' => $prevUsage['WFH'] + $used['WFH'],
+                'OH' => $prevUsage['OH'] + $used['OH'],
+            ];
+
+            $employeesAttendance[] = $attendances;
+        }
+
+        return $employeesAttendance;
+    }
+
+
+
+
 
     public function timesheet(Request $request)
     {
