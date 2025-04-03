@@ -139,7 +139,7 @@ class ReimbursementController extends Controller
     public function action($id)
     {
         $reimbursement = Reimbursement::findOrFail($id);
-        $employee = Employee::findOrFail($reimbursement->employee_id); // Assuming 'User' is the employee model
+        $employee = User::findOrFail($reimbursement->employee_id); // Assuming 'User' is the employee model
 
         return view('reimbursements.action', compact('employee', 'reimbursement'));
     }

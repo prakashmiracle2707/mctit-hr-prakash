@@ -47,9 +47,9 @@
                                                 <i class="ti ti-users"></i>
                                             </div>
                                             <div class="ms-3">
-                                                <small class="text-muted">{{ __('Total') }}</small>
+                                                <small class="text-muted">{{ __('This Month') }}</small>
                                                 <h6 class="m-0"><a
-                                                    href="#">{{ __('This Month Attandance') }}</a></h6>
+                                                    href="#">{{ __('Attandance') }}</a></h6>
                                             </div>
                                         </div>
                                     </div>
@@ -72,9 +72,9 @@
                                                 <i class="ti ti-ticket"></i>
                                             </div>
                                             <div class="ms-3">
-                                                <small class="text-muted">{{ __('Total') }}</small>
+                                                <small class="text-muted">{{ __('Last Month') }}</small>
                                                 <h6 class="m-0"><a
-                                                    href="#">{{ __('Last Month Attandance') }}</a></h6>
+                                                    href="#">{{ __('Attandance') }}</a></h6>
                                             </div>
                                         </div>
                                     </div>
@@ -97,9 +97,9 @@
                                                 <i class="ti ti-clock"></i>
                                             </div>
                                             <div class="ms-3">
-                                                <small class="text-muted">{{ __('Total') }}</small>
+                                                <small class="text-muted">{{ __('This Month') }}</small>
                                                 <h6 class="m-0"><a
-                                                    href="#">{{ __("This Month Holiday ") }}</a></h6>
+                                                    href="#">{{ __("Holiday ") }}</a></h6>
                                             </div>
                                         </div>
                                     </div>

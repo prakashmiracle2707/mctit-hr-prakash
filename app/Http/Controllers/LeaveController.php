@@ -309,28 +309,41 @@ class LeaveController extends Controller
     public function store(Request $request)
     {
         if (\Auth::user()->can('Create Leave')) {
-            $validator = \Validator::make(
-                $request->all(),
-                [
-                    'employee_id' => 'required',
-                    'leave_type_id' => 'required',
-                    'start_date' => 'required',
-                    'end_date' => 'required',
-                    'leave_reason' => 'required',
-                    'half_day_type' => 'nullable|in:full_day,morning,afternoon', 
-                    'cc_email_id' => 'required|array',
-                    'cc_email_id.*' => 'exists:employees,id',
-                ]
-            );
-
             if ($request->leave_type_id == 5) {
-                $rules['leave_time'] = 'required';
+                $validator = \Validator::make(
+                    $request->all(),
+                    [
+                        'employee_id' => 'required',
+                        'leave_type_id' => 'required',
+                        'start_date' => 'required',
+                        'end_date' => 'required',
+                        'leave_reason' => 'required',
+                        'half_day_type' => 'nullable|in:full_day,morning,afternoon', 
+                        'cc_email_id' => 'required|array',
+                        'cc_email_id.*' => 'exists:employees,id',
+                        'leave_time' => 'required',
+                    ]
+                );
+            }else{
+                $validator = \Validator::make(
+                    $request->all(),
+                    [
+                        'employee_id' => 'required',
+                        'leave_type_id' => 'required',
+                        'start_date' => 'required',
+                        'end_date' => 'required',
+                        'leave_reason' => 'required',
+                        'half_day_type' => 'nullable|in:full_day,morning,afternoon', 
+                        'cc_email_id' => 'required|array',
+                        'cc_email_id.*' => 'exists:employees,id',
+                    ]
+                ); 
             }
-
-            $validator = Validator::make($request->all(), $rules);
-
+            
+            
             if ($validator->fails()) {
-                return redirect()->back()->withErrors($validator)->withInput();
+                $messages = $validator->getMessageBag();
+                return redirect()->back()->with('error', $messages->first());
             }
 
 
@@ -630,23 +643,39 @@ class LeaveController extends Controller
         if (\Auth::user()->can('Edit Leave') || 
                 (Auth::user()->type == 'employee' && ($leave->status === 'Draft' || $leave->status === 'Pending'))) {
             if ($leave->created_by == Auth::user()->creatorId()) {
-                $validator = \Validator::make(
-                    $request->all(),
-                    [
-                        'employee_id' => 'required',
-                        'leave_type_id' => 'required',
-                        'start_date' => 'required',
-                        'end_date' => 'required',
-                        'leave_reason' => 'required',
-                        'half_day_type' => 'nullable|in:full_day,morning,afternoon', // Validate half_day_type
-                        'cc_email_id' => 'nullable|array', // Allow cc_email_id as an array of IDs
-                        'cc_email_id.*' => 'exists:employees,id', // Ensure each value is a valid employee ID
-                    ]
-                );
-
                 if ($request->leave_type_id == 5) {
-                    $rules['leave_time'] = 'required';
+                    $validator = \Validator::make(
+                        $request->all(),
+                        [
+                            'employee_id' => 'required',
+                            'leave_type_id' => 'required',
+                            'start_date' => 'required',
+                            'end_date' => 'required',
+                            'leave_reason' => 'required',
+                            'half_day_type' => 'nullable|in:full_day,morning,afternoon', // Validate half_day_type
+                            'cc_email_id' => 'nullable|array', // Allow cc_email_id as an array of IDs
+                            'cc_email_id.*' => 'exists:employees,id', // Ensure each value is a valid employee ID
+                            'leave_time' => 'required',
+                        ]
+                    );
+                }else{
+                    $validator = \Validator::make(
+                        $request->all(),
+                        [
+                            'employee_id' => 'required',
+                            'leave_type_id' => 'required',
+                            'start_date' => 'required',
+                            'end_date' => 'required',
+                            'leave_reason' => 'required',
+                            'half_day_type' => 'nullable|in:full_day,morning,afternoon', // Validate half_day_type
+                            'cc_email_id' => 'nullable|array', // Allow cc_email_id as an array of IDs
+                            'cc_email_id.*' => 'exists:employees,id', // Ensure each value is a valid employee ID
+                        ]
+                    );
                 }
+                
+
+                
             
 
                 if ($validator->fails()) {

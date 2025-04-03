@@ -18,6 +18,9 @@ use App\Models\LeaveType;
 use App\Models\PaySlip;
 use App\Models\TimeSheet;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use App\Models\Holiday;
+use App\Models\Leave as LocalLeave;
 
 class ReportController extends Controller
 {
@@ -521,7 +524,7 @@ class ReportController extends Controller
                 $data['department'] = !empty(Department::find($request->department)) ? Department::find($request->department)->name : '';
             }
 
-            $employees = $employees->get()->pluck('name', 'id');
+            $employees = $employees->orderBy('name', 'asc')->get()->pluck('name', 'id');
 
 
             if (!empty($request->month)) {
@@ -547,15 +550,63 @@ class ReportController extends Controller
             $ovetimeHours        = $overtimeMins = $earlyleaveHours = $earlyleaveMins = $lateHours = $lateMins = 0;
             foreach ($employees as $id => $employee) {
                 $attendances['name'] = $employee;
-
+                $WFH = $isPresentHoliday = $TotalWeekDay = $WeekdayPresent = $cfl = $chl = $Present = $sl = $cl = $l = $h = $a = $lwp = 0; // Initialize counters
                 foreach ($dates as $date) {
                     $dateFormat = $year . '-' . $month . '-' . $date;
+                    $day = Carbon::parse($dateFormat)->format('l');
+
+                    if ($day == 'Saturday' || $day == 'Sunday') {
+                        $TotalWeekDay++;
+                    }
 
                     if ($dateFormat <= date('Y-m-d')) {
                         $employeeAttendance = AttendanceEmployee::where('employee_id', $id)->where('date', $dateFormat)->first();
+                        
 
                         if (!empty($employeeAttendance) && $employeeAttendance->status == 'Present') {
                             $attendanceStatus[$date] = 'P';
+
+                            $isLeaveDayHalfDay = LocalLeave::where('employee_id', $id)
+                                        ->where('status', 'Approved')
+                                        ->whereIn('leave_type_id', [2])
+                                        ->whereIn('half_day_type', ['afternoon','morning'])
+                                        ->whereDate('start_date', '<=', $dateFormat)
+                                        ->whereDate('end_date', '>=', $dateFormat)
+                                        ->exists();
+                            $isSickLeaveDay = LocalLeave::where('employee_id', $id)
+                                        ->where('status', 'Approved')
+                                        ->whereIn('leave_type_id', [1])
+                                        ->whereDate('start_date', '<=', $dateFormat)
+                                        ->whereDate('end_date', '>=', $dateFormat)
+                                        ->exists();
+                            if($isSickLeaveDay){
+                                $sl++;
+                            }
+
+                            if($employeeAttendance->work_from_home == 1){
+                                $WFH++;
+                            }
+
+                            $CheckPresentHoliday = Holiday::where('start_date', $dateFormat)->where('is_optional', 0)->exists();
+
+                            if($CheckPresentHoliday){
+                                $h++;
+                            }
+
+                            if ($day == 'Saturday' || $day == 'Sunday') {
+                                $WeekdayPresent++;
+                            }else if($CheckPresentHoliday){
+                                $isPresentHoliday++;
+                            }else{
+                                if($isLeaveDayHalfDay){
+                                    $Present = $Present + 0.5;
+                                    $chl = $chl + 0.5;
+                                    $attendanceStatus[$date] = 'H/F';
+                                }else{
+                                   $Present++; 
+                                }
+                            }
+
                             $totalPresent            += 1;
 
                             if ($employeeAttendance->overtime > 0) {
@@ -574,15 +625,89 @@ class ReportController extends Controller
                             }
                         } elseif (!empty($employeeAttendance) && $employeeAttendance->status == 'Leave') {
                             $attendanceStatus[$date] = 'A';
+                            $a++;
                             $totalLeave              += 1;
                         } else {
-                            $attendanceStatus[$date] = '';
+                            
+                            $isHoliday = Holiday::where('start_date', $dateFormat)->where('is_optional', 0)->exists();
+                            $isSickLeaveDay = LocalLeave::where('employee_id', $id)
+                                        ->where('status', 'Approved')
+                                        ->whereIn('leave_type_id', [1])
+                                        ->whereDate('start_date', '<=', $dateFormat)
+                                        ->whereDate('end_date', '>=', $dateFormat)
+                                        ->exists();
+                            if($isSickLeaveDay){
+                                $sl++;
+                            }
+
+                            $isCasualLeaveFullDay = LocalLeave::where('employee_id', $id)
+                                        ->where('status', 'Approved')
+                                        ->whereIn('leave_type_id', [2])
+                                        ->whereIn('half_day_type', ['full_day'])
+                                        ->whereDate('start_date', '<=', $dateFormat)
+                                        ->whereDate('end_date', '>=', $dateFormat)
+                                        ->exists();
+                            if($isCasualLeaveFullDay){
+                                $cfl++;
+                            }
+
+                            /*$isCasualLeaveHalfDay = LocalLeave::where('employee_id', $id)
+                                        ->where('status', 'Approved')
+                                        ->whereIn('leave_type_id', [2])
+                                        ->whereIn('half_day_type', ['afternoon','morning'])
+                                        ->whereDate('start_date', '<=', $dateFormat)
+                                        ->whereDate('end_date', '>=', $dateFormat)
+                                        ->exists();
+                            if($isCasualLeaveHalfDay){
+                                $chl = $chl + 0.5;
+                            }*/
+
+                            $isPendingLeaveDay = LocalLeave::where('employee_id', $id)
+                                        ->whereIn('status', ['Pending', 'Reject'])
+                                        ->whereIn('leave_type_id', [1,2])
+                                        ->whereDate('start_date', '<=', $dateFormat)
+                                        ->whereDate('end_date', '>=', $dateFormat)
+                                        ->exists();
+
+
+                            if($isSickLeaveDay || $isCasualLeaveFullDay){
+                                $attendanceStatus[$date] = 'L';
+                            }else if($isPendingLeaveDay){
+                                $attendanceStatus[$date] = 'LWP';
+                                $lwp++;
+                            }else if($isHoliday){
+                                $attendanceStatus[$date] = 'H';
+                                $h++;
+                            }else if ($day == 'Saturday' || $day == 'Sunday') {
+                                $attendanceStatus[$date] = '';
+                            } else {
+                                $attendanceStatus[$date] = 'A';
+                                $a++;
+                            }
+                            
                         }
                     } else {
                         $attendanceStatus[$date] = '';
                     }
                 }
                 $attendances['status'] = $attendanceStatus;
+                $num_of_days = date('t', mktime(0, 0, 0, $month, 1, $year));
+                $totalDays = 0;
+                $attendances['summary'] =   [
+                                                'Present' => $Present,
+                                                'WeekdayPresent' => $WeekdayPresent,
+                                                'SL' => $sl,
+                                                'CFL' => $cfl,
+                                                'CHL' => $chl,
+                                                'WFH' => $WFH,
+                                                'H' => $h,
+                                                'A' => $a,
+                                                'LWP' => $lwp,
+                                                'isPresentHoliday' => $isPresentHoliday,
+                                                'TotalWeekDay' =>$TotalWeekDay,
+                                                'Total' => 0,
+                                                'TotalMonthDays' => $num_of_days,
+                                            ];
                 $employeesAttendance[] = $attendances;
             }
 
@@ -597,6 +722,7 @@ class ReportController extends Controller
             $data['totalLeave']      = $totalLeave;
             $data['curMonth']        = $curMonth;
 
+            // echo "<pre>";print_r($employeesAttendance);exit;
             return view('report.monthlyAttendance', compact('employeesAttendance', 'branch', 'department', 'dates', 'data'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
