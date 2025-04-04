@@ -326,6 +326,11 @@
                     <a href="{{ route('attendanceemployee.index') }}" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-map"></i></span><span class="dash-mtext">{{ __('Attendance') }}</span></a>
                 </li>
+
+                <li class="dash-item">
+                    <a href="{{ route('report.employeeFinancialYear.attendance') }}" class="dash-link"><span class="dash-micon"><i
+                                class="ti ti-device-floppy"></i></span><span class="dash-mtext">{{ __('Attendance Report') }}</span></a>
+                </li>
                 
             @endif
             <!-- Attendance Not company-->

@@ -1047,6 +1047,13 @@ Route::post('leave/{id}/cancel', [LeaveController::class, 'cancelStore'])->name(
         ]
     );
 
+    Route::get('report/employee-financialYear/attendance', [ReportController::class, 'employeeFinancialYearAttendance'])->name('report.employeeFinancialYear.attendance')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
     Route::post('monthly/getdepartment', [ReportController::class, 'getdepartment'])->name('monthly.getdepartment')->middleware(
         [
             'auth',

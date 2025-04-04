@@ -154,17 +154,40 @@
 
                                 <!-- Daily Attendance Tab -->
                                 <div class="tab-pane fade" id="daily-{{ $loop->index }}" role="tabpanel">
+
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <div class="d-flex flex-wrap align-items-center">
+                                                <div class="me-3"><span class="badge bg-success p-2">P</span> = Present</div>
+                                                <div class="me-3"><span class="badge bg-danger p-2">L</span> = Leave</div>
+                                                <div class="me-3"><span class="badge bg-warning p-2">A</span> = Absent</div>
+                                                <div class="me-3"><span class="badge bg-primary p-2">H</span> = Holiday</div>
+                                                <div class="me-3"><span class="badge bg-black p-2">LWP</span> = Leave Without Pay</div>
+                                                <div class="me-3"><span class="badge bg-indigo-500 p-2">H/F</span> = Half-Day</div>
+                                                <div class="me-3"><span class="badge bg-danger p-2">OL</span> = Optional Leave</div>
+                                                <!-- <div class="me-3"><span class="text-muted">X</span> = Not Applicable</div>
+                                                <div class="me-3"><span class="text-muted">-</span> = Weekend / No Data</div> -->
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <br />
                                     <div class="table-responsive py-4 attendance-table-responsive">
                                         <table class="table">
                                             <thead>
                                                 <tr>
-                                                    <th class="active">{{ __('Name') }}</th>
+                                                    <th>{{ __('Name') }}</th>
                                                     @php
                                                         $firstEmployee = collect($monthData)->first();
                                                         $dates = isset($firstEmployee['status']) ? array_keys($firstEmployee['status']) : [];
+                                                        $monthYear = \Carbon\Carbon::createFromFormat('F-Y', $label); // $label = "March-2025" etc.
                                                     @endphp
                                                     @foreach ($dates as $date)
-                                                        <th>{{ (int)$date }}</th>
+                                                        @php
+                                                            $fullDate = \Carbon\Carbon::createFromDate($monthYear->year, $monthYear->month, (int)$date);
+                                                            $isWeekend = $fullDate->isSaturday() || $fullDate->isSunday();
+                                                        @endphp
+                                                        <th class="{{ $isWeekend ? 'text-danger' : '' }}">{{ (int)$date }}</th>
                                                     @endforeach
                                                 </tr>
                                             </thead>

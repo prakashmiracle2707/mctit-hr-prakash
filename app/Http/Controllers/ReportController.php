@@ -717,6 +717,98 @@ class ReportController extends Controller
         ));
     }
 
+
+    public function employeeFinancialYearAttendance(Request $request)
+    {
+        if (\Auth::user()->type != 'employee') {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+
+        $user     = \Auth::user();
+        $employee_id = $user->id;
+
+        $employeeQuery = Employee::select('id', 'name')
+            ->where('created_by', \Auth::user()->creatorId());
+
+        $employeeList = $employeeQuery->orderBy('name', 'asc')->pluck('name', 'id');
+        
+        if (!empty($employee_id)) {
+            $employeeQuery->where('user_id', $employee_id);
+        }
+
+        $employees = $employeeQuery->pluck('name', 'id');
+
+        $financialYears = FinancialYear::orderBy('start_date', 'desc')
+            ->pluck(DB::raw("CONCAT(YEAR(start_date), '-', YEAR(end_date))"), 'id');
+
+        $selectedFY = $request->financial_year_id ?? FinancialYear::where('is_active', 1)->value('id');
+        $financialYear = FinancialYear::find($selectedFY);
+
+        if (!$financialYear) {
+            return redirect()->back()->with('error', __('Financial year not found.'));
+        }
+
+        $startDate = Carbon::parse($financialYear->start_date);
+        $endDate = Carbon::parse($financialYear->end_date);
+        if ($endDate->isFuture()) {
+            $endDate = Carbon::now();
+        }
+
+        $totalLeaveList = [
+            'SL' => LeaveType::find(1)->days,
+            'CL' => LeaveType::find(2)->days,
+            'WFH' => LeaveType::find(3)->days,
+            'OH' => LeaveType::find(4)->days,
+        ];
+
+        $months = [];
+        $cursor = $startDate->copy();
+        while ($cursor->startOfMonth() <= $endDate->startOfMonth()) {
+            $months[] = [
+                'label' => $cursor->format('F-Y'),
+                'value' => $cursor->format('Y-m')
+            ];
+            $cursor->addMonth();
+        }
+
+        $leaveUsageTrack = []; // [employeeId => ['SL' => x, 'CL' => y, ...]]
+
+        foreach ($months as $monthInfo) {
+            $request->merge(['month' => $monthInfo['value']]);
+
+            // Pass cumulative leave usage to processMonthlyAttendance
+            $monthly = $this->processMonthlyAttendance($request, $employees, $totalLeaveList, $leaveUsageTrack);
+
+            // Save the new end balances to be used as "start" for next month
+            foreach ($monthly as $attendance) {
+                $id = array_search($attendance['name'], $employees->toArray()); // get employee id by name
+                $usedSL = ($totalLeaveList['SL'] ?? 0) - ($attendance['leave_balance']['end']['SL'] ?? 0);
+                $usedCL = ($totalLeaveList['CL'] ?? 0) - ($attendance['leave_balance']['end']['CL'] ?? 0);
+                $usedWFH = ($totalLeaveList['WFH'] ?? 0) - ($attendance['leave_balance']['end']['WFH'] ?? 0);
+                $usedOH = ($totalLeaveList['OH'] ?? 0) - ($attendance['leave_balance']['end']['OH'] ?? 0);
+
+                $leaveUsageTrack[$id] = [
+                    'SL' => $usedSL,
+                    'CL' => $usedCL,
+                    'WFH' => $usedWFH,
+                    'OH' => $usedOH,
+                ];
+            }
+
+            $attendanceData[$monthInfo['label']] = $monthly;
+        }
+
+        // echo "<pre>";print_r($attendanceData);exit;
+
+        return view('report.employeeFinancialYearAttendance', compact(
+            'attendanceData',
+            'months',
+            'financialYears',
+            'selectedFY',
+            'employeeList'
+        ));
+    }
+
     public function processMonthlyAttendance($request, $employees, $totalLeaveList, &$leaveUsageTrack)
     {
         $month = date('m', strtotime($request->month));

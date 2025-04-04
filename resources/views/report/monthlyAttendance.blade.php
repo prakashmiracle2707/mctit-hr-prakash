@@ -227,13 +227,39 @@
                 <div class="tab-content" id="attendanceTabContent">
                     <!-- Daily Attendance Tab -->
                     <div class="tab-pane fade show active" id="daily" role="tabpanel" aria-labelledby="daily-tab">
+
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="d-flex flex-wrap align-items-center">
+                                    <div class="me-3"><span class="badge bg-success p-2">P</span> = Present</div>
+                                    <div class="me-3"><span class="badge bg-danger p-2">L</span> = Leave</div>
+                                    <div class="me-3"><span class="badge bg-warning p-2">A</span> = Absent</div>
+                                    <div class="me-3"><span class="badge bg-primary p-2">H</span> = Holiday</div>
+                                    <div class="me-3"><span class="badge bg-black p-2">LWP</span> = Leave Without Pay</div>
+                                    <div class="me-3"><span class="badge bg-indigo-500 p-2">H/F</span> = Half-Day</div>
+                                    <div class="me-3"><span class="badge bg-danger p-2">OL</span> = Optional Leave</div>
+                                    <!-- <div class="me-3"><span class="text-muted">X</span> = Not Applicable</div>
+                                    <div class="me-3"><span class="text-muted">-</span> = Weekend / No Data</div> -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <br />
+                        
                         <div class="table-responsive py-4 attendance-table-responsive">
                             <table class="table ">
+                                @php
+                                    $monthYear = \Carbon\Carbon::createFromFormat('M-Y', $data['curMonth']); // 'Apr-2025'
+                                @endphp
                                 <thead>
                                     <tr>
                                         <th class="active">{{ __('Name') }}</th>
                                         @foreach ($dates as $date)
-                                            <th>{{ $date }}</th>
+                                            @php
+                                                $fullDate = \Carbon\Carbon::createFromDate($monthYear->year, $monthYear->month, (int)$date);
+                                                $isWeekend = $fullDate->isSaturday() || $fullDate->isSunday();
+                                            @endphp
+                                            <th class="{{ $isWeekend ? 'text-danger' : '' }}">{{ (int)$date }}</th>
                                         @endforeach
                                     </tr>
                                 </thead>
@@ -271,6 +297,7 @@
                     <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
                         <div class="card">
                             <div class="card-body table-border-style">
+
                                 <div class="table-responsive py-4 attendance-table-responsive">
                                     <table class="table">
                                         <thead>

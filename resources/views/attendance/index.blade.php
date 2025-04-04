@@ -224,8 +224,15 @@
                         <tbody>
 
                             @foreach ($attendanceEmployee as $attendance)
+                                @php
+                                    $carbonDate = \Carbon\Carbon::parse($attendance->date);
+                                    $dayName = strtolower($carbonDate->format('D')); // 'sat', 'sun', etc.
+                                @endphp
                                 <tr>
                                     <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}
+                                        @if($dayName == 'sat' || $dayName == 'sun')
+                                            <span class="badge bg-danger px-1">{{$dayName}}</span>
+                                        @endif
                                         @if($attendance->work_from_home)
                                             <span class="badge bg-secondary p-1 px-1">WFH</span>
                                         @endif
