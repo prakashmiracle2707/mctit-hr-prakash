@@ -2,32 +2,78 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\SalarySlip;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
+use App\Models\FinancialYear;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SalarySlipMail;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\File;
+use Carbon\Carbon;
 
 
 class SalarySlipController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-    
-        if (\Auth::user()->type == 'company' || \Auth::user()->type == 'CEO' || \Auth::user()->type == 'management') {
-            $salarySlips = SalarySlip::with('employees')->latest()->get();
-        } else {
-            $salarySlips = SalarySlip::where('employee_id', \Auth::user()->employee->id)->latest()->get();
-            
+        $employeeQuery = Employee::select('id', 'name')->where('created_by', \Auth::user()->creatorId());
+        $employeeList = $employeeQuery->orderBy('name', 'asc')->pluck('name', 'id');
+
+        $financialYears = FinancialYear::orderBy('start_date', 'desc')
+            ->pluck(DB::raw("CONCAT(YEAR(start_date), '-', YEAR(end_date))"), 'id');
+
+        // ✅ Get selected financial year
+        $selectedFY = $request->financial_year_id ?? FinancialYear::where('is_active', 1)->value('id');
+        $financialYear = FinancialYear::find($selectedFY);
+
+        if (!$financialYear) {
+            return redirect()->back()->with('error', __('Financial Year not found.'));
         }
 
-        return view('salary_slips.index', compact('salarySlips'));
+        $start = Carbon::parse($financialYear->start_date);
+        $end = Carbon::parse($financialYear->end_date);
+
+        // Build month-year filter array (e.g. April 2025 to March 2026)
+        $months = [];
+        $cursor = $start->copy();
+        while ($cursor <= $end) {
+            $months[] = [
+                'month' => $cursor->format('F'),      // e.g. 'April'
+                'year' => $cursor->format('Y'),       // e.g. '2025'
+            ];
+            $cursor->addMonth();
+        }
+
+        $salarySlipsQuery = SalarySlip::with('employees');
+
+        // 👤 Filter by employee if selected
+        if ($request->filled('employee_id')) {
+            $salarySlipsQuery->where('employee_id', $request->employee_id);
+        } elseif (\Auth::user()->type == 'employee') {
+            $salarySlipsQuery->where('employee_id', \Auth::user()->employee->id);
+        }
+
+        // 🗓️ Filter by financial year (month + year combinations)
+        $salarySlipsQuery->where(function ($query) use ($months) {
+            foreach ($months as $pair) {
+                $query->orWhere(function ($subQuery) use ($pair) {
+                    $subQuery->where('month', $pair['month'])
+                             ->where('year', $pair['year']);
+                });
+            }
+        });
+
+        $salarySlips = $salarySlipsQuery->orderBy('year')->orderByRaw("FIELD(month, 'January','February','March','April','May','June','July','August','September','October','November','December')")
+            ->get();
+
+        return view('salary_slips.index', compact('salarySlips', 'employeeList', 'financialYears', 'selectedFY'));
     }
+
 
     public function create()
     {

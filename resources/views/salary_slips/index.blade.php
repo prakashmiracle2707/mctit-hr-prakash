@@ -27,7 +27,40 @@
     @endif
 @endsection
 
+
+
 @section('content')
+
+    {{ Form::open(['route' => ['salary_slips.index'], 'method' => 'get', 'id' => 'salary_slips_form']) }}
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-end">
+                        <div class="col-md-3">
+                            {{ Form::label('financial_year_id', __('Financial Year'), ['class' => 'form-label']) }}
+                            {{ Form::select('financial_year_id', $financialYears, $selectedFY, ['class' => 'form-control select']) }}
+                        </div>
+                        @if(\Auth::user()->type != 'employee')
+                        <div class="col-md-3">
+                            {{ Form::label('employee_id', __('Employee'), ['class' => 'form-label']) }}
+                            {{ Form::select('employee_id', ['' => 'All'] + $employeeList->toArray(), request('employee_id'), ['class' => 'form-control select']) }}
+                        </div>
+                        @endif
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="ti ti-search"></i> {{ __('Apply') }}
+                            </button>
+                            <a href="{{ route('salary_slips.index') }}" class="btn btn-sm btn-danger">
+                                <i class="ti ti-refresh"></i> {{ __('Reset') }}
+                            </a>
+                        </div>
+                    </div> 
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ Form::close() }}
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header card-body table-border-style">
@@ -38,8 +71,8 @@
                                 @if(\Auth::user()->type != 'employee')
                                     <th>{{ __('Employee') }}</th>
                                 @endif
-                                <th>{{ __('Month') }}</th>
-                                <th>{{ __('Year') }}</th>
+                                <th>{{ __('Month') }}-{{ __('Year') }}</th>
+                                <!-- <th>{{ __('Year') }}</th> -->
                                 <th>{{ __('Salary Slip') }}</th>
                                 @if(\Auth::user()->type == 'management')
                                     @if (Gate::check('Edit Pay Slip') || Gate::check('Delete Pay Slip'))
@@ -54,8 +87,8 @@
                                     @if(\Auth::user()->type != 'employee')
                                         <td>{{ $slip->employees->name }}</td>
                                     @endif
-                                    <td>{{ $slip->month }}</td>
-                                    <td>{{ $slip->year }}</td>
+                                    <td>{{ $slip->month }}-{{ $slip->year }}</td>
+                                    <!-- <td>{{ $slip->year }}</td> -->
                                     @if(file_exists(public_path('uploads/salary-slips/' . $slip->file_path)))
                                         <td>
                                             <!-- View Button -->
