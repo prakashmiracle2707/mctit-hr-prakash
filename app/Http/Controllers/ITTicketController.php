@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Utility;
 use App\Models\Employee;
+use App\Models\User;
 
 class ITTicketController extends Controller
 {
@@ -180,7 +181,7 @@ class ITTicketController extends Controller
         $ITTicket = ITTicket::findOrFail($id);
         $isReadOnly = $isReviewer && $ITTicket->employee_id !== $user->id;
 
-        $employee = Employee::findOrFail($ITTicket->employee_id); // Assuming 'User' is the employee model
+        $employee = User::findOrFail($ITTicket->employee_id); // Assuming 'User' is the employee model
 
         return view('it_tickets.action', compact('employee', 'ITTicket','isReadOnly'));
     }

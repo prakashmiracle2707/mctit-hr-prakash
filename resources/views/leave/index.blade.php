@@ -155,22 +155,44 @@
 </div>
 @endif
 <div class="row">
+
+    {{ Form::open(['route' => ['leave.index'], 'method' => 'get', 'id' => 'leave_form']) }}
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-end">
+                            <div class="col-md-3">
+                                {{ Form::label('financial_year_id', __('Financial Year'), ['class' => 'form-label']) }}
+                                {{ Form::select('financial_year_id', $financialYears, $selectedFinancialYearId ?? $activeYearId, ['class' => 'form-control select']) }}
+                            </div>
+
+                            @if(\Auth::user()->type != 'employee')
+                            <div class="col-md-3">
+                                {{ Form::label('employee_id', __('Employee'), ['class' => 'form-label']) }}
+                                {{ Form::select('employee_id', ['' => 'All'] + $employeeList->toArray(), request('employee_id'), ['class' => 'form-control select']) }}
+                            </div>
+                            @endif
+
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="ti ti-search"></i> {{ __('Apply') }}
+                                </button>
+                                <a href="{{ route('leave.index') }}" class="btn btn-sm btn-danger">
+                                    <i class="ti ti-refresh"></i> {{ __('Reset') }}
+                                </a>
+                            </div>
+                        </div> 
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{ Form::close() }}
+
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header card-body table-border-style">
 
-                <div class="col-xl-12">
-                    <!-- Financial Year Dropdown -->
-                    <div class="col-xl-2 col-lg-2 col-md-2 col-sm-12 col-12">
-                        <div class="btn-box">
-                            {{ Form::select('financial_year_id', $financialYears, request()->get('financial_year_id', $activeYearId), [
-                                'class' => 'form-control',
-                                'id' => 'financial_year_id',
-                            ]) }}
-                        </div>
-                    </div>
-                </div>
-                <br />
                 {{-- <h5> </h5> --}}
                 <div class="table-responsive">
                     <table class="table" id="pc-dt-simple">
@@ -406,13 +428,5 @@
         });
     </script>
 
-    <script>
-        document.getElementById('financial_year_id').addEventListener('change', function () {
-            let selectedYearId = this.value;
-            let url = new URL(window.location.href);
-            url.searchParams.set('financial_year_id', selectedYearId);
-            window.location.href = url.toString();
-        });
-    </script>
 @endpush
 

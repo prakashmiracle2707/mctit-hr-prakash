@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Utility;
 use App\Models\Employee;
+use App\Models\User;
 
 class ComplaintsController extends Controller
 {
@@ -145,7 +146,7 @@ class ComplaintsController extends Controller
         $complaint = Complaints::findOrFail($id);
         $isReadOnly = $isReviewer && $complaint->employee_id !== $user->id;
 
-        $employee = Employee::findOrFail($complaint->employee_id); // Assuming 'User' is the employee model
+        $employee = User::findOrFail($complaint->employee_id); // Assuming 'User' is the employee model
 
         return view('complaints.action', compact('employee', 'complaint','isReadOnly'));
     }
