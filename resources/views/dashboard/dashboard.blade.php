@@ -1048,10 +1048,13 @@
                                             </tr>
                                         </thead>
                                         <tbody class="list">
-                                            @foreach ($notClockIns as $notClockIn)
+                                            @foreach ($notClockInDetails as $notClockIn)
                                                 <tr>
-                                                    <td>{{ $notClockIn->name }}</td>
-                                                    <td><span class="absent-btn">{{ __('Absent') }}</span></td>
+                                                    <td>{{ $notClockIn['employee_name'] }}</td>
+                                                    <td><span class="absent-btn {{ $notClockIn['leave_type'] != 'Absent' ? 'text-danger' : '' }}">
+                                                            {{ $notClockIn['leave_type'] }}
+                                                        </span>
+                                                    </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>

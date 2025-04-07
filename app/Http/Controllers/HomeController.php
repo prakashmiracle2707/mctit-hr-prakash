@@ -413,6 +413,38 @@ class HomeController extends Controller
                 $notClockIn    = AttendanceEmployee::where('date', '=', $currentDate)->get()->pluck('employee_id');
 
                 $notClockIns    = Employee::where('created_by', '=', \Auth::user()->creatorId())->whereNotIn('id', $notClockIn)->get();
+
+
+                /* ****************************************************************** */
+
+
+                // notClockIns
+
+
+
+                $today = Carbon::today()->toDateString();
+                $notClockInDetails = [];
+
+                foreach ($notClockIns as $employee) {
+                    // Check if employee is on leave today
+                    $leave = LocalLeave::where('employee_id', $employee->id)
+                        ->where('status', 'Approved')
+                        ->whereDate('start_date', '<=', $today)
+                        ->whereDate('end_date', '>=', $today)
+                        ->whereIn('leave_type_id', [1, 2])
+                        ->with('leaveType') // assumes relation is defined
+                        ->first();
+
+                    $notClockInDetails[] = [
+                        'employee_id' => $employee->id,
+                        'employee_name' => $employee->name,
+                        'is_on_leave' => $leave ? true : false,
+                        'leave_type' => $leave ? ($leave->leaveType->title ?? 'N/A') : 'Absent',
+                    ];
+                }
+
+
+                /* ****************************************************************** */
                 $accountBalance = AccountList::where('created_by', '=', \Auth::user()->creatorId())->sum('initial_balance');
                 
                 $activeJob   = Job::where('status', 'active')->where('created_by', '=', \Auth::user()->creatorId())->count();
@@ -481,7 +513,7 @@ class HomeController extends Controller
                 
                 /* *************** New Add End ****************************/
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails'));
             }
         }
         else

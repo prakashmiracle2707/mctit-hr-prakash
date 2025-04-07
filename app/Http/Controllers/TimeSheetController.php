@@ -21,7 +21,7 @@ class TimeSheetController extends Controller
     {
         $employeesFind = Employee::where('user_id', \Auth::user()->id)->first();
         $employeeId = $employeesFind ? $employeesFind->id : null;
-        $userId = auth()->id();
+        $userId = Employee::where('user_id', auth()->id())->value('id');
 
 
 
@@ -136,10 +136,14 @@ class TimeSheetController extends Controller
                     $groupedTimeSheets[$projectName][$employeeName] = 0;
                 }
 
-                $groupedTimeSheets[$projectName][$employeeName] += $sheet->hours;
+                // Split hours and decimal part
+                $hours = floor($sheet->hours); // Get the hour part
+                $minutes = ($sheet->hours - $hours) * 100; // Convert decimal to minutes
+
+                $groupedTimeSheets[$projectName][$employeeName] += ($hours * 60) + $minutes;
             }
 
-            //echo "<pre>";print_r($groupedTimeSheets);exit;
+            // echo "<pre>";print_r($groupedTimeSheets);exit;
 
             return view('timeSheet.index', compact('timeSheets', 'employeesList', 'projects','groupedTimeSheets'));
         } else {

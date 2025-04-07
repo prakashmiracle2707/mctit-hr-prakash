@@ -35,6 +35,16 @@
     @endcan
 @endsection
 
+
+<style>
+    table th.task-column,
+    table td.task-column {
+        max-width: 300px; /* You can adjust this value */
+        word-wrap: break-word;
+        white-space: normal;
+        overflow-wrap: break-word;
+    }
+</style>
 @section('content')
     {{-- <div class="col-sm-12 col-lg-12 col-xl-12 col-md-12">
         <div class=" mt-2 " id="multiCollapseExample1" style="">
@@ -177,13 +187,18 @@
                             @foreach($groupedTimeSheets as $project => $employees)
                                 @php $rowCount = count($employees); $first = true; @endphp
                                 @foreach($employees as $employee => $hours)
+                                    @php
+                                        // Convert total minutes to hours and minutes
+                                        $totalHours = floor($hours / 60);
+                                        $remainingMinutes = $hours % 60;
+                                    @endphp
                                     <tr>
                                         @if($first)
                                             <td rowspan="{{ $rowCount }}" style="padding-left:25px;border-left: 1px solid #f1f1f1;">{{ $project }}</td>
                                             @php $first = false; @endphp
                                         @endif
                                         <td style="padding-left:25px;border-left: 1px solid #f1f1f1;">{{ ucfirst($employee) }}</td>
-                                        <td style="padding-left:25px;border-left: 1px solid #f1f1f1;border-right: 1px solid #f1f1f1;">{{ $hours }}</td>
+                                        <td style="padding-left:25px;border-left: 1px solid #f1f1f1;border-right: 1px solid #f1f1f1;">{{ $totalHours . ":" . $remainingMinutes}}</td>
                                     </tr>
                                 @endforeach
                             @endforeach
@@ -211,7 +226,7 @@
                                     @endif
                                     <th>{{ __('Project') }}</th>
                                     <th>{{ __('Milestone') }}</th>
-                                    <th>{{ __('Task') }}</th>
+                                    <th class="task-column">{{ __('Task') }}</th>
                                     <th>{{ __('Hours') }}</th>
                                     <!-- <th>{{ __('Remark') }}</th> -->
                                     <th width="200ox">{{ __('Action') }}</th>
@@ -230,7 +245,7 @@
                                         @endif
                                         <td>{{ !empty($timeSheet->project) ? $timeSheet->project->name : '-' }}</td>
                                         <td>{{ !empty($timeSheet->milestone) ? $timeSheet->milestone->name : '-' }}</td>
-                                        <td>{{ $timeSheet->task_name ?? '-' }}</td>
+                                        <td class="task-column">{{ $timeSheet->task_name ?? '-' }}</td>
                                         
                                         <td>{{ $timeSheet->hours }}</td>
                                         <!-- <td>{{ $timeSheet->remark }}</td> -->
@@ -250,7 +265,7 @@
                                                 @endcan
 
                                                 @can('Delete TimeSheet')
-                                                    <div class="action-btn bg-danger ">
+                                                    <div class="action-btn">
                                                         {!! Form::open([
                                                             'method' => 'DELETE',
                                                             'route' => ['timesheet.destroy', $timeSheet->id],
