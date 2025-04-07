@@ -132,8 +132,8 @@ class ProjectController extends Controller
 
     public function getManagerEmployeesByProject($id)
     {
-        $userId = auth()->id();
-
+        $userId = Employee::where('user_id', auth()->id())->value('id');
+        
         // Fetch the project
         $project = Project::find($id);
 
