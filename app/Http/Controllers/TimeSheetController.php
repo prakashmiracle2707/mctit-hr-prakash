@@ -7,35 +7,54 @@ use App\Imports\EmployeeImport;
 use App\Imports\TimesheetImport;
 use App\Models\Employee;
 use App\Models\TimeSheet;
+use App\Models\User;
+use App\Models\Project;
+use App\Models\ProjectEmployee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 
 class TimeSheetController extends Controller
 {
     public function index(Request $request)
     {
-        
         $employeesFind = Employee::where('user_id', \Auth::user()->id)->first();
         $employeeId = $employeesFind ? $employeesFind->id : null;
+        $userId = auth()->id();
+
+
 
         if (\Auth::user()->can('Manage TimeSheet')) {
             $employeesList = [];
             $projects = [];
 
-            if (\Auth::user()->type == 'employee') {
-                $timeSheets = TimeSheet::where('employee_id', \Auth::user()->id)->get();
+            // Parse selected month
+            
+            $selectedMonth = $request->month ?? now()->format('Y-m');
+            $startOfMonth = $selectedMonth ? Carbon::parse($selectedMonth)->startOfMonth()->toDateString() : null;
+            $endOfMonth = $selectedMonth ? Carbon::parse($selectedMonth)->endOfMonth()->toDateString() : null;
 
-                $employeesList = Employee::where('created_by', \Auth::user()->creatorId())->first();
+            if (\Auth::user()->type == 'employee') {
+                $employeesDetails = Employee::where('created_by', \Auth::user()->creatorId())->first();
 
                 $timesheets = TimeSheet::where('created_by', \Auth::user()->creatorId());
 
-                if (!empty($request->start_date) && !empty($request->end_date)) {
-                    $timesheets->whereBetween('date', [$request->start_date, $request->end_date]);
+                if ($startOfMonth && $endOfMonth) {
+                    $timesheets->whereBetween('date', [$startOfMonth, $endOfMonth]);
                 }
 
-                if (!empty($employeesList->user_id)) {
-                    $timesheets->where('employee_id', \Auth::user()->id);
+                if (!empty($employeesDetails->user_id)) {
+
+                    if (!empty($request->employee) && $request->employee == 'all') {
+                        
+                    }else if (!empty($request->employee) && $request->employee != 'all') {
+                        $timesheets->where('employee_id', $request->employee);
+                    }else{
+                        $timesheets->where('employee_id', \Auth::user()->id);
+                    }
+
+                    
                 }
 
                 if (!empty($request->project_id)) {
@@ -44,31 +63,54 @@ class TimeSheetController extends Controller
 
                 $timeSheets = $timesheets->orderBy('created_at', 'desc')->get();
 
-
-                
-                // Check if employeeId is not null before querying
-                $projects = \App\Models\Project::whereHas('employees', function ($query) use ($employeeId) {
+                $projects = Project::whereHas('employees', function ($query) use ($employeeId) {
                     $query->where('project_employee.employee_id', $employeeId);
                 })->pluck('name', 'id');
 
-            } else {
-                // **Condition for "company" role**: Show all projects
-                if (\Auth::user()->type != 'employee') {
-                    $projects = \App\Models\Project::pluck('name', 'id');
+                if (!empty($request->project_id)) {
+                    // Show only employees related to the selected project
+
+                    // Fetch the project
+                    $project = Project::find($request->project_id);
+
+                    // If current user is in the project_manager_ids array
+                    if ($project && in_array($userId, ($project->project_manager_ids ? $project->project_manager_ids : []))) {
+                        $employeeIds = \App\Models\ProjectEmployee::where('project_id', $request->project_id)->pluck('employee_id')->toArray();
+
+                        $employeesList = Employee::whereIn('id', $employeeIds)->pluck('name', 'user_id')->prepend('All', 'all');
+                    }
+
+
+                    
                 } else {
-                    // **Condition for Assigned Employees**: Show only projects they are assigned to
-                    $projects = \App\Models\Project::whereHas('employees', function ($query) {
-                        $query->where('employee_id', $employeeId);
-                    })->pluck('name', 'id');
+                    // Show all employees
+                    $employeesList = [];
                 }
 
-                $employeesList = Employee::where('created_by', \Auth::user()->creatorId())->get()->pluck('name', 'user_id');
-                $employeesList->prepend('All', '');
+            } else {
+                $projects = Project::pluck('name', 'id');
+                // $employeesList = Employee::where('created_by', \Auth::user()->creatorId())->pluck('name', 'user_id')->prepend('All', '');
+
+                if (!empty($request->project_id)) {
+                    // Show only employees related to the selected project
+                    $employeeIds = \App\Models\ProjectEmployee::where('project_id', $request->project_id)
+                        ->pluck('employee_id')
+                        ->toArray();
+
+                    $employeesList = Employee::whereIn('id', $employeeIds)
+                        ->pluck('name', 'user_id')
+                        ->prepend('All', '');
+                } else {
+                    // Show all employees
+                    $employeesList = Employee::where('created_by', \Auth::user()->creatorId())
+                        ->pluck('name', 'user_id')
+                        ->prepend('All', '');
+                }
 
                 $timesheets = TimeSheet::where('created_by', \Auth::user()->creatorId());
 
-                if (!empty($request->start_date) && !empty($request->end_date)) {
-                    $timesheets->whereBetween('date', [$request->start_date, $request->end_date]);
+                if ($startOfMonth && $endOfMonth) {
+                    $timesheets->whereBetween('date', [$startOfMonth, $endOfMonth]);
                 }
 
                 if (!empty($request->employee)) {
@@ -82,11 +124,44 @@ class TimeSheetController extends Controller
                 $timeSheets = $timesheets->orderBy('created_at', 'desc')->get();
             }
 
-            return view('timeSheet.index', compact('timeSheets', 'employeesList', 'projects'));
+
+            // Grouped summary
+            $groupedTimeSheets = [];
+
+            foreach ($timeSheets as $sheet) {
+                $projectName = $sheet->project->name ?? 'N/A';
+                $employeeName = $sheet->employee->name ?? 'N/A';
+
+                if (!isset($groupedTimeSheets[$projectName][$employeeName])) {
+                    $groupedTimeSheets[$projectName][$employeeName] = 0;
+                }
+
+                $groupedTimeSheets[$projectName][$employeeName] += $sheet->hours;
+            }
+
+            //echo "<pre>";print_r($groupedTimeSheets);exit;
+
+            return view('timeSheet.index', compact('timeSheets', 'employeesList', 'projects','groupedTimeSheets'));
         } else {
             return redirect()->back()->with('error', 'Permission denied.');
         }
     }
+
+    public function getEmployees(Request $request)
+    {
+        $projectId = $request->get('project_id');
+
+        if (!$projectId) {
+            return response()->json([]);
+        }
+
+        $employeeIds = ProjectEmployee::where('project_id', $projectId)->pluck('employee_id');
+
+        $employees = Employee::whereIn('id', $employeeIds)->pluck('name', 'id');
+
+        return response()->json($employees);
+    }
+
 
 
     public function createOld()

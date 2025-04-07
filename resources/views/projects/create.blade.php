@@ -17,7 +17,7 @@
     @endif
 
     <div class="row">
-        <div class="form-group col-md-12">
+        <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('name', __('Project Name'), ['class' => 'col-form-label']) }} <x-required></x-required>
             {{ Form::text('name', null, ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Project Name')]) }}
         </div>
@@ -29,6 +29,17 @@
                 $employees->whereIn('id', [2, 19])->pluck('id')->toArray(), 
                 ['class' => 'form-control select2' , 'multiple' => 'multiple', 'required' => 'required']) }}
         </div> -->
+
+
+        <div class="form-group col-lg-6 col-md-6">
+            {{ Form::label('project_manager_id', __('Project Manager'), ['class' => 'col-form-label']) }} <x-required></x-required>
+            {{ Form::select('project_manager_id[]', 
+                $employees, 
+                 $employees->whereIn('id', [2, 19])->pluck('id')->toArray(), 
+                ['class' => 'form-control select2', 'id' => 'project_manager', 'multiple' => 'multiple', 'placeholder' => __('Select Project Manager')]
+            ) }}
+        </div>
+
     </div>
 
     <div class="row">
@@ -60,6 +71,23 @@ $(document).ready(function() {
     // Check if Select2 is loaded
     if ($.fn.select2) {
         $('#employees').select2({
+            placeholder: "Search and select employees",
+            allowClear: true,
+            ajax: {
+                url: "{{ route('employees.search') }}",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { search: params.term };
+                },
+                processResults: function (data) {
+                    return { results: data.map(item => ({ id: item.id, text: item.name })) };
+                },
+                cache: true
+            }
+        });
+
+        $('#project_manager').select2({
             placeholder: "Search and select employees",
             allowClear: true,
             ajax: {

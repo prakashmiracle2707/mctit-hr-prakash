@@ -82,69 +82,118 @@
         </div>
     </div> --}}
 
-        <div class="col-sm-12">
-            <div class="mt-2" id="multiCollapseExample1">
-                <div class="card">
-                    <div class="card-body">
-                        {{ Form::open(['route' => ['timesheet.index'], 'method' => 'get', 'id' => 'timesheet_filter']) }}
-                        <div class="row align-items-center justify-content-end">
-                            <div class="col-xl-10">
-                                <div class="row">
-                                    <!-- <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                        <div class="btn-box"></div>
-                                    </div> -->
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                        <div class="btn-box">
-                                            {{ Form::label('project_id', __('Project'), ['class' => 'form-label']) }}
-                                            {{ Form::select('project_id', $projects, isset($_GET['project_id']) ? $_GET['project_id'] : '', ['class' => 'form-control select', 'id' => 'project_id', 'placeholder' => 'Select Project']) }}
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                        <div class="btn-box">
-                                            {{ Form::label('start_date', __('Start Date'), ['class' => 'form-label']) }}
-                                            {{ Form::date('start_date', isset($_GET['start_date']) ? $_GET['start_date'] : '', ['class' => 'month-btn form-control  current_date', 'autocomplete' => 'off', 'id' => 'current_date']) }}
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                        <div class="btn-box">
-                                            {{ Form::label('end_date', __('End Date'), ['class' => 'form-label']) }}
-                                            {{ Form::date('end_date', isset($_GET['end_date']) ? $_GET['end_date'] : '', ['class' => 'month-btn form-control current_date', 'autocomplete' => 'off', 'id' => 'current_date']) }}
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                        <div class="btn-box">
-                                            @if (\Auth::user()->type == 'employee')
-                                                {!! Form::hidden('employee', !empty($employeesList) ? $employeesList->id : 0, ['id' => 'employee_id']) !!}
-                                            @else
-                                                {{ Form::label('employee', __('Employee'), ['class' => 'form-label']) }}
-                                                {{ Form::select('employee', $employeesList, isset($_GET['employee']) ? $_GET['employee'] : '', ['class' => 'form-control select ', 'id' => 'employee_id']) }}
-                                            @endif
-                                        </div>
+    <div class="col-sm-12">
+        <div class="mt-2" id="multiCollapseExample1">
+            <div class="card">
+                <div class="card-body">
+                    {{ Form::open(['route' => ['timesheet.index'], 'method' => 'get', 'id' => 'timesheet_filter']) }}
+                    <div class="row align-items-center justify-content-end">
+                        <div class="col-xl-10">
+                            <div class="row">
+                                <!-- <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box"></div>
+                                </div> -->
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box">
+                                        {{ Form::label('project_id', __('Project'), ['class' => 'form-label']) }}
+                                        {{ Form::select('project_id', $projects, isset($_GET['project_id']) ? $_GET['project_id'] : '', ['class' => 'form-control select', 'id' => 'project_id', 'placeholder' => 'Select Project']) }}
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-auto">
-                                <div class="row">
-                                    <div class="col-auto mt-4">
-                                        <a href="#" class="btn btn-sm btn-primary"
-                                            onclick="document.getElementById('timesheet_filter').submit(); return false;"
-                                            data-bs-toggle="tooltip" title="" data-bs-original-title="apply">
-                                            <span class="btn-inner--icon"><i class="ti ti-search"></i></span>
-                                        </a>
-                                        <a href="{{ route('timesheet.index') }}" class="btn btn-sm btn-danger"
-                                            data-bs-toggle="tooltip" title="" data-bs-original-title="Reset">
-                                            <span class="btn-inner--icon"><i
-                                                    class="ti ti-refresh text-white-off "></i></span>
-                                        </a>
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box">
+                                        {{ Form::label('month', __('Month'), ['class' => 'form-label']) }}
+                                        {{ Form::month('month', request('month', now()->format('Y-m')), ['class' => 'month-btn form-control', 'autocomplete' => 'off']) }}
                                     </div>
+                                </div>
+                                <!-- <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box">
+                                        {{ Form::label('start_date', __('Start Date'), ['class' => 'form-label']) }}
+                                        {{ Form::date('start_date', isset($_GET['start_date']) ? $_GET['start_date'] : '', ['class' => 'month-btn form-control  current_date', 'autocomplete' => 'off', 'id' => 'current_date']) }}
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box">
+                                        {{ Form::label('end_date', __('End Date'), ['class' => 'form-label']) }}
+                                        {{ Form::date('end_date', isset($_GET['end_date']) ? $_GET['end_date'] : '', ['class' => 'month-btn form-control current_date', 'autocomplete' => 'off', 'id' => 'current_date']) }}
+                                    </div>
+                                </div> -->
+                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                    @if (\Auth::user()->type == 'employee')
+                                        <div class="btn-box" id="employee_div">
+                                        {{ Form::label('employee', __('Employee'), ['class' => 'form-label']) }}
+                                        {{ Form::select('employee', $employeesList, isset($_GET['employee']) ? $_GET['employee'] : '', ['class' => 'form-control select ', 'id' => 'employee_id']) }}
+                                        </div>
+                                    @else
+                                        <div class="btn-box">
+                                        {{ Form::label('employee', __('Employee'), ['class' => 'form-label']) }}
+                                        {{ Form::select('employee', $employeesList, isset($_GET['employee']) ? $_GET['employee'] : '', ['class' => 'form-control select ', 'id' => 'employee_id']) }}
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-                        {{ Form::close() }}
+                        <div class="col-auto">
+                            <div class="row">
+                                <div class="col-auto mt-4">
+                                    <a href="#" class="btn btn-sm btn-primary"
+                                        onclick="document.getElementById('timesheet_filter').submit(); return false;"
+                                        data-bs-toggle="tooltip" title="" data-bs-original-title="apply">
+                                        <span class="btn-inner--icon"><i class="ti ti-search"></i></span>
+                                    </a>
+                                    <a href="{{ route('timesheet.index') }}" class="btn btn-sm btn-danger"
+                                        data-bs-toggle="tooltip" title="" data-bs-original-title="Reset">
+                                        <span class="btn-inner--icon"><i
+                                                class="ti ti-refresh text-white-off "></i></span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    {{ Form::close() }}
                 </div>
             </div>
         </div>
+    </div>
+
+    @if($groupedTimeSheets)
+    <h5 class="mt-4">{{ __('Summary of Hours by Project & Employee') }}</h5>
+
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-header card-body table-border-style">
+                <div class="card-body py-0">
+                    <div class="table-responsive">
+                        <br />
+                        <br />
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="padding-left:25px;border-left: 1px solid #f1f1f1;">{{ __('Project') }}</th>
+                                    <th  style="padding-left:25px;border-left: 1px solid #f1f1f1;">{{ __('Employee') }}</th>
+                                    <th style="padding-left:25px;border-left: 1px solid #f1f1f1;border-right: 1px solid #f1f1f1;">{{ __('Hours') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($groupedTimeSheets as $project => $employees)
+                                @php $rowCount = count($employees); $first = true; @endphp
+                                @foreach($employees as $employee => $hours)
+                                    <tr>
+                                        @if($first)
+                                            <td rowspan="{{ $rowCount }}" style="padding-left:25px;border-left: 1px solid #f1f1f1;">{{ $project }}</td>
+                                            @php $first = false; @endphp
+                                        @endif
+                                        <td style="padding-left:25px;border-left: 1px solid #f1f1f1;">{{ ucfirst($employee) }}</td>
+                                        <td style="padding-left:25px;border-left: 1px solid #f1f1f1;border-right: 1px solid #f1f1f1;">{{ $hours }}</td>
+                                    </tr>
+                                @endforeach
+                            @endforeach
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <div class="col-xl-12">
         <div class="card">
@@ -157,6 +206,8 @@
                                     <th>{{ __('Date') }}</th>
                                     @if (\Auth::user()->type != 'employee')
                                         <th>{{ __('Employee') }}</th>
+                                    @else
+                                        <th class="employee_cls">{{ __('Employee') }}</th>
                                     @endif
                                     <th>{{ __('Project') }}</th>
                                     <th>{{ __('Milestone') }}</th>
@@ -174,6 +225,8 @@
                                         <td>{{ \Carbon\Carbon::parse($timeSheet->date)->format('d/m/Y') }}</td>
                                         @if (\Auth::user()->type != 'employee')
                                             <td>{{ !empty($timeSheet->employee) ? $timeSheet->employee->name : '' }}</td>
+                                        @else
+                                            <td class="employee_cls">{{ !empty($timeSheet->employee) ? $timeSheet->employee->name : '' }}</td>
                                         @endif
                                         <td>{{ !empty($timeSheet->project) ? $timeSheet->project->name : '-' }}</td>
                                         <td>{{ !empty($timeSheet->milestone) ? $timeSheet->milestone->name : '-' }}</td>
@@ -238,4 +291,82 @@
                 $('.current_date').val(today);
             });
         </script>
+
+        {{-- 🔁 AJAX Script --}}
+        
+        @if (\Auth::user()->type == 'employee')
+            <script>
+                @if(count($employeesList) == 0)
+                    $('#employee_div').css('display','none');
+                    $('.employee_cls').css('display','none');
+                @endif  
+                $(document).ready(function () {
+                    $('#project_id').on('change', function () {
+                        const projectId = $(this).val();
+                        $('#employee_div').css('display','block');
+                        const $employee = $('#employee_id');
+
+                        if (projectId) {
+
+                            const url = '{{ route("projects.manager.employees.by.project", ":id") }}'.replace(':id', projectId);
+                            $.ajax({
+                                url: url,
+                                type: 'GET',
+                                success: function (response) {
+                                    $employee.empty();
+                                    $employee.append(`<option value="all">All</option>`);
+                                    $.each(response, function (id, name) {
+                                        $employee.append(`<option value="${id}">${name}</option>`);
+                                    });
+
+                                },
+                                error: function (xhr) {
+                                    $employee.empty();
+                                    $employee.append(`<option value="">No access / No employees</option>`);
+                                    console.error('Error:', xhr.responseText);
+                                    $('#employee_div').css('display','none');
+                                }
+                            });
+                        } else {
+                            $employee.empty().append(`<option value="">All</option>`);
+                        }
+                    });
+                });
+            </script>
+        @else
+            <script>
+                $(document).ready(function () {
+                    $('#project_id').on('change', function () {
+                        const projectId = $(this).val();
+                        const $employee = $('#employee_id');
+
+                        if (projectId) {
+                            $.ajax({
+                                url: '{{ route("timesheet.project.employees") }}',
+                                type: 'GET',
+                                data: { project_id: projectId },
+                                success: function (response) {
+                                    console.log("Response:", response);
+                                    $employee.empty();
+                                    $employee.append('<option value="">All</option>');
+                                    $.each(response, function (id, name) {
+                                        $employee.append(`<option value="${id}">${name}</option>`);
+                                    });
+                                },
+                                error: function () {
+                                    alert('Could not load employees for selected project.');
+                                }
+                            });
+                        } else {
+                            // Reset dropdown to original full list if project is unselected
+                            // $employee.empty().append('<option value="">All</option>');
+                            @foreach($employeesList as $id => $name)
+                                $employee.append('<option value="{{ $id }}">{{ $name }}</option>');
+                            @endforeach
+                        }
+                    });
+                });
+            </script>
+        @endif
+        
     @endpush

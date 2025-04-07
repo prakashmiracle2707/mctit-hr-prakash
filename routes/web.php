@@ -833,6 +833,8 @@ Route::post('leave/{id}/cancel', [LeaveController::class, 'cancelStore'])->name(
         ]
     );
 
+    Route::get('/get-project-employees', [TimeSheetController::class, 'getEmployees'])->name('timesheet.project.employees');
+
 
     Route::resource('expensetype', ExpenseTypeController::class)->middleware(
         [
@@ -1462,6 +1464,9 @@ Route::post('leave/{id}/cancel', [LeaveController::class, 'cancelStore'])->name(
             'XSS',
         ]
     );
+
+    Route::get('/projects/{id}/manager-employees', [ProjectController::class, 'getManagerEmployeesByProject'])
+    ->name('projects.manager.employees.by.project');
 
     // IT Ticket Routes
     Route::resource('it-tickets', ITTicketController::class)->middleware([

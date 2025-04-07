@@ -28,6 +28,7 @@
                             <tr>
                                 <th>{{ __('Project Name') }}</th>
                                 <!-- <th>{{ __('Created By') }}</th> -->
+                                <th>{{ __('Project Managers') }}</th>
                                 <th>{{ __('Assigned Employees') }}</th>
                                 <th>{{ __('Created At') }}</th>
                                 @if (Gate::check('Edit Project') || Gate::check('Delete Project'))
@@ -41,10 +42,19 @@
                                     <td>{{ $project->name }}</td>
                                     <!-- <td>{{ $project->creator ? $project->creator->name : 'Unknown' }}</td> -->
                                     <td>
-                                        @if($project->employees->count() > 0)
-                                            @foreach($project->employees as $employee)
-                                                <span class="badge bg-primary">{{ $employee->name }}</span>
+                                        <div class="d-flex flex-wrap">
+                                            @foreach ($project->managers as $managerName)
+                                                <span class="badge bg-info m-1">{{ $managerName }}</span>
                                             @endforeach
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if($project->employees->count() > 0)
+                                            <div class="d-flex flex-wrap">
+                                                @foreach($project->employees as $employee)
+                                                    <span class="badge bg-primary m-1">{{ $employee->name }}</span>
+                                                @endforeach
+                                            </div>
                                         @else
                                             <span class="text-muted">No employees assigned</span>
                                         @endif
