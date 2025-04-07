@@ -726,7 +726,7 @@ class LeaveController extends Controller
                 }
 
                 $leave_type = LeaveType::find($request->leave_type_id);
-                $employee = Employee::where('employee_id', '=', \Auth::user()->creatorId())->first();
+                $employee = Employee::where('employee_id', '=', $leave->employee_id)->first();
 
                 
                 $total_leave_days = $this->getTotalLeaveDays($request->start_date, $request->end_date,$request->leave_type_id,$request->half_day_type);
