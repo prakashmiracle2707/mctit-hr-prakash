@@ -52,6 +52,7 @@ class TimesheetExport implements FromCollection,WithHeadings
         // Get Data
         $data = $query->get();
         // echo "<pre>";print_r($this->project);
+        // echo "<pre>";print_r($this->employee);
         // echo "<pre>";print_r(count($data));exit;
 
         $totalMinutes = 0;
@@ -67,15 +68,12 @@ class TimesheetExport implements FromCollection,WithHeadings
                 "milestone_name" => !empty($timesheet->milestone) ? $timesheet->milestone->name : '',
                 "task_name" => $timesheet->task_name,
                 "remark" => $timesheet->remark,
-                "hours" => $timesheet->hours,
+                "hours" => str_pad($timesheet->workhours, 2, '0', STR_PAD_LEFT).":".str_pad($timesheet->workminutes, 2, '0', STR_PAD_LEFT),
             ];
 
-            // Split hours and decimal part
-            $hours = floor($timesheet->hours); // Get the hour part
-            $minutes = ($timesheet->hours - $hours) * 100; // Convert decimal to minutes
 
             // Total minutes calculation
-            $totalMinutes += ($hours * 60) + $minutes;
+            $totalMinutes += ($timesheet->workhours * 60) + $timesheet->workminutes;
         }
 
         // Convert total minutes to hours and minutes
@@ -91,7 +89,7 @@ class TimesheetExport implements FromCollection,WithHeadings
             "milestone_name" => '',
             "task_name" => '',
             "remark" => 'Total',
-            "hours" => $totalHours . "h " . $remainingMinutes . "m",
+            "hours" => $totalHours . ":" . $remainingMinutes,
         ];
 
         return collect($formattedData);

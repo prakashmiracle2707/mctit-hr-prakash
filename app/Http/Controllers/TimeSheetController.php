@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\TimesheetExport;
+use App\Exports\TimesheetMultiSheetExport;
 use App\Imports\EmployeeImport;
 use App\Imports\TimesheetImport;
 use App\Models\Employee;
@@ -37,7 +38,6 @@ class TimeSheetController extends Controller
 
             if (\Auth::user()->type == 'employee') {
                 $employeesDetails = Employee::where('created_by', \Auth::user()->creatorId())->first();
-
                 $timesheets = TimeSheet::where('created_by', \Auth::user()->creatorId());
 
                 if ($startOfMonth && $endOfMonth) {
@@ -50,10 +50,9 @@ class TimeSheetController extends Controller
                         
                     }else if (!empty($request->employee) && $request->employee != 'all') {
                         $timesheets->where('employee_id', $request->employee);
-                    }else{
+                    }else {
                         $timesheets->where('employee_id', \Auth::user()->id);
                     }
-
                     
                 }
 
@@ -137,8 +136,8 @@ class TimeSheetController extends Controller
                 }
 
                 // Split hours and decimal part
-                $hours = floor($sheet->hours); // Get the hour part
-                $minutes = ($sheet->hours - $hours) * 100; // Convert decimal to minutes
+                $hours = $sheet->workhours; 
+                $minutes = $sheet->workminutes;
 
                 $groupedTimeSheets[$projectName][$employeeName] += ($hours * 60) + $minutes;
             }
@@ -234,7 +233,9 @@ class TimeSheetController extends Controller
             */
 
             $timeSheet->date       = $request->date;
-            $timeSheet->hours      = $request->hours;
+            $timeSheet->hours      = 0.0;
+            $timeSheet->workhours      = $request->workhours;
+            $timeSheet->workminutes      = $request->workminutes;
             $timeSheet->remark     = $request->remark;
             $timeSheet->project_id = $request->project_id;
             $timeSheet->milestone_id = $request->milestone_id;
@@ -387,7 +388,9 @@ class TimeSheetController extends Controller
             $timeSheet->milestone_id = $request->milestone_id;
             $timeSheet->task_name = $request->task_name;
             $timeSheet->date = $request->date;
-            $timeSheet->hours = $request->hours;
+            $timeSheet->hours = 0.0;
+            $timeSheet->workhours      = $request->workhours;
+            $timeSheet->workminutes      = $request->workminutes;
             $timeSheet->remark = $request->remark;
 
             $timeSheetCheck = Timesheet::where('date', $request->date)
@@ -423,7 +426,20 @@ class TimeSheetController extends Controller
         $name = 'Timesheet_' . date('Y-m-d i:h:s');
         // $data = Excel::download(new TimesheetExport(), $name . '.xlsx');
         // return $data;
-        return Excel::download(new TimesheetExport($request->start_date, $request->end_date, $request->employee_id, $request->project_id), $name . '.xlsx');
+
+        $selectedMonth = $request->month ?? now()->format('Y-m');
+        $startOfMonth = $selectedMonth ? Carbon::parse($selectedMonth)->startOfMonth()->toDateString() : null;
+        $endOfMonth = $selectedMonth ? Carbon::parse($selectedMonth)->endOfMonth()->toDateString() : null;
+
+
+        if($request->project_id == "" && $request->employee != "" && $request->employee != "all"){
+            return Excel::download(new TimesheetExport($startOfMonth, $endOfMonth, $request->employee, $request->project_id), $name . '.xlsx');
+        }else{
+             return Excel::download(new TimesheetMultiSheetExport($startOfMonth,$endOfMonth,$request->employee,$request->project_id),$name. '.xlsx');
+        }
+        
+
+       
     }
     public function importFile(Request $request)
     {

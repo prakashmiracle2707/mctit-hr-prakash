@@ -27,9 +27,31 @@
             {{ Form::label('date', __('Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
             {{ Form::text('date', '', ['class' => 'form-control d_week current_date', 'autocomplete' => 'off', 'required' => 'required' ,'placeholder'=>'Select date']) }}
         </div>
-        <div class="form-group col-md-6">
+        <!-- <div class="form-group col-md-6">
             {{ Form::label('hours', __('Hours'), ['class' => 'col-form-label']) }}<x-required></x-required>
             {{ Form::number('hours', '', ['class' => 'form-control','autocomplete' => 'off' ,'required' => 'required', 'step' => '0.01' ,'placeholder'=>__('Enter hours')]) }}
+        </div> -->
+
+        <div class="form-group col-md-3">
+            {{ Form::label('workhours', __('Hours'), ['class' => 'col-form-label']) }}<x-required></x-required>
+            {{ Form::select('workhours', array_combine(range(0, 8), range(0, 8)), null, ['class' => 'form-control select2', 'required' => 'required', 'placeholder' => 'Select']) }}
+        </div>
+
+        <div class="form-group col-md-3">
+            @php
+                $minuteOptions = [];
+                foreach (range(0, 59) as $i) {
+                    $formatted = str_pad($i, 2, '0', STR_PAD_LEFT);
+                    $minuteOptions[$formatted] = $formatted;
+                }
+            @endphp
+
+            {{  Form::label('workminutes', __('Minutes'), ['class' => 'col-form-label']) }}<x-required></x-required>
+            {{  Form::select('workminutes', $minuteOptions, null, [
+                    'class' => 'form-control select2',
+                    'required' => 'required',
+                    'placeholder' => 'Select'
+                ]) }}
         </div>
         <div class="form-group col-md-6">
             {{ Form::label('project_id', __('Project'), ['class' => 'col-form-label']) }}<x-required></x-required>

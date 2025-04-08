@@ -12,6 +12,8 @@ class TimeSheet extends Model
         'date',
         'hours',
         'remark',
+        'workhours',    
+        'workminutes', 
         'created_by',
     ];
 

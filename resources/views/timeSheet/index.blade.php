@@ -13,7 +13,8 @@
         'start_date' => request('start_date'),
         'end_date' => request('end_date'),
         'employee' => request('employee'),
-        'project_id' => request('project_id')
+        'project_id' => request('project_id'),
+        'month' => request('month'),
     ]) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
         data-bs-original-title="{{ __('Export') }}">
         <i class="ti ti-file-export"></i>
@@ -198,7 +199,7 @@
                                             @php $first = false; @endphp
                                         @endif
                                         <td style="padding-left:25px;border-left: 1px solid #f1f1f1;">{{ ucfirst($employee) }}</td>
-                                        <td style="padding-left:25px;border-left: 1px solid #f1f1f1;border-right: 1px solid #f1f1f1;">{{ $totalHours . ":" . $remainingMinutes}}</td>
+                                        <td style="padding-left:25px;border-left: 1px solid #f1f1f1;border-right: 1px solid #f1f1f1;">{{ str_pad($totalHours, 2, '0', STR_PAD_LEFT) . ":" . str_pad($remainingMinutes, 2, '0', STR_PAD_LEFT)}}</td>
                                     </tr>
                                 @endforeach
                             @endforeach
@@ -227,6 +228,7 @@
                                     <th>{{ __('Project') }}</th>
                                     <th>{{ __('Milestone') }}</th>
                                     <th class="task-column">{{ __('Task') }}</th>
+                                    <th>{{ __('OLD Hours') }}</th>
                                     <th>{{ __('Hours') }}</th>
                                     <!-- <th>{{ __('Remark') }}</th> -->
                                     <th width="200ox">{{ __('Action') }}</th>
@@ -246,8 +248,8 @@
                                         <td>{{ !empty($timeSheet->project) ? $timeSheet->project->name : '-' }}</td>
                                         <td>{{ !empty($timeSheet->milestone) ? $timeSheet->milestone->name : '-' }}</td>
                                         <td class="task-column">{{ $timeSheet->task_name ?? '-' }}</td>
-                                        
-                                        <td>{{ $timeSheet->hours }}</td>
+                                        <td >{{ $timeSheet->hours ?? '-' }}</td>
+                                        <td>{{ str_pad($timeSheet->workhours, 2, '0', STR_PAD_LEFT).":".str_pad($timeSheet->workminutes, 2, '0', STR_PAD_LEFT) }}</td>
                                         <!-- <td>{{ $timeSheet->remark }}</td> -->
                                         <td class="Action">
                                             <div class="dt-buttons">

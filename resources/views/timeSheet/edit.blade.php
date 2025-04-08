@@ -26,10 +26,32 @@
             {{ Form::label('date', __('Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
             {{ Form::text('date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off', 'required' => 'required']) }}
         </div>
-        <div class="form-group col-md-6">
+        <!-- <div class="form-group col-md-6">
             {{ Form::label('hours', __('Hours'), ['class' => 'col-form-label']) }}<x-required></x-required>
             {{ Form::number('hours', null, ['class' => 'form-control', 'required' => 'required', 'step' => '0.01']) }}
+        </div> -->
+
+        <div class="form-group col-md-3">
+            {{ Form::label('workhours', __('Work Hours'), ['class' => 'col-form-label']) }}<x-required></x-required>
+            {{ Form::select('workhours', array_combine(range(0, 8), range(0, 8)), $timeSheet->workhours ?? null, ['class' => 'form-control select2', 'required' => 'required', 'placeholder' => 'Select']) }}
         </div>
+
+        <div class="form-group col-md-3">
+            @php
+                $minutes = [];
+                foreach (range(0, 59) as $i) {
+                    $formatted = str_pad($i, 2, '0', STR_PAD_LEFT);
+                    $minutes[$formatted] = $formatted;
+                }
+            @endphp
+            {{ Form::label('workminutes', __('Work Minutes'), ['class' => 'col-form-label']) }}<x-required></x-required>
+            {{ Form::select('workminutes', $minutes, $timeSheet->workminutes ?? null, [
+                'class' => 'form-control select2',
+                'required' => 'required',
+                'placeholder' => 'Select'
+            ]) }}
+            </div>
+
         <div class="form-group col-md-6">
             {{ Form::label('project_id', __('Project'), ['class' => 'col-form-label']) }}<x-required></x-required>
             {!! Form::select('project_id', $projects, $timeSheet->project_id, ['class' => 'form-control select2', 'required' => 'required', 'placeholder' => 'Select Project']) !!}
