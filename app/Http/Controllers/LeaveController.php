@@ -59,7 +59,7 @@ class LeaveController extends Controller
                     // echo "<pre>";print_r($leaves);exit;
 
                 $leaveTypes = LeaveType::where(function ($query) {
-                    $query->where('title', 'like', '%SL%')->orWhere('title', 'like', '%CL%');
+                    $query->where('code', 'like', '%SL%')->orWhere('code', 'like', '%CL%');
                 })->pluck('title', 'id','code');
 
                 foreach ($leaveTypes as $id => $title) {
@@ -95,7 +95,7 @@ class LeaveController extends Controller
 
                 $leaveTypes = LeaveType::pluck('title', 'id','code');
                 $leaveTypesAll = LeaveType::where(function ($query) {
-                    $query->where('title', 'like', '%SL%')->orWhere('title', 'like', '%CL%');
+                    $query->where('code', 'like', '%SL%')->orWhere('code', 'like', '%CL%');
                 })->get()->keyBy('id');
             } else {
                 // Admin / CEO / Manager
@@ -1083,17 +1083,31 @@ class LeaveController extends Controller
 
     public function jsoncount(Request $request)
     {
-        $date = Utility::AnnualLeaveCycle();
-        $leave_counts = LeaveType::select(\DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_leave, leave_types.title, leave_types.code, leave_types.days,leave_types.id'))
-            ->leftjoin(
-                'leaves',
-                function ($join) use ($request, $date) {
-                    $join->on('leaves.leave_type_id', '=', 'leave_types.id');
-                    $join->where('leaves.employee_id', '=', $request->employee_id);
-                    $join->where('leaves.status', '=', 'Approved');
-                    $join->whereBetween('leaves.created_at', [$date['start_date'],$date['end_date']]);
-                }
-                )->where('leave_types.created_by', '=', \Auth::user()->creatorId())->groupBy('leave_types.id')->get();
+        // Get active financial year
+        $financialYear = \DB::table('financial_years')
+            ->where('is_active', 1)
+            ->first();
+
+        // If no active year, fallback to default cycle
+        $startDate = $financialYear->start_date ?? Utility::AnnualLeaveCycle()['start_date'];
+        $endDate   = $financialYear->end_date ?? Utility::AnnualLeaveCycle()['end_date'];
+
+        $leave_counts = LeaveType::select(
+                \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_leave'),
+                'leave_types.title',
+                'leave_types.code',
+                'leave_types.days',
+                'leave_types.id'
+            )
+            ->leftJoin('leaves', function ($join) use ($request, $startDate, $endDate) {
+                $join->on('leaves.leave_type_id', '=', 'leave_types.id')
+                    ->where('leaves.employee_id', '=', $request->employee_id)
+                    ->where('leaves.status', '=', 'Approved')
+                    ->whereBetween('leaves.created_at', [$startDate, $endDate]);
+            })
+            ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
+            ->groupBy('leave_types.id')
+            ->get();
 
         return $leave_counts;
     }
