@@ -22,6 +22,7 @@ class Reimbursement extends Model
         'expense_date',
         'payment_type',
         'paid_receipt',
+        'follow_up_email',
     ];
 
     protected $casts = [

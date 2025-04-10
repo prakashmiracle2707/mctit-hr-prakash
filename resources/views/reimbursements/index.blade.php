@@ -40,6 +40,7 @@
                                 <th>{{ __('Paid By') }}</th>
                                 <!-- <th>{{ __('Paid At') }}</th> -->
                                 <th>{{ __('Receipt') }}</th>
+                                <th>{{ __('Created At') }}</th>
                                 <th>{{ __('Action') }}</th>
                             </tr>
                         </thead>
@@ -65,6 +66,10 @@
                                             <div class="badge bg-info p-2 px-3 ">{{ $reimbursement->status }}</div>
                                         @elseif($reimbursement->status == "Paid")
                                             <div class="badge p-2 px-3" style="background: green;">{{ $reimbursement->status }}</div>
+                                        @elseif($reimbursement->status == "Not_Received")
+                                            <div class="badge bg-danger p-2 px-3 ">Not Received</div>
+                                        @elseif($reimbursement->status == "Received")
+                                            <div class="badge bg-success p-2 px-3 ">Received</div>
                                         @endif
                                     </td>
                                     <td>
@@ -94,6 +99,7 @@
                                             </a>
                                         @endif
                                     </td>
+                                    <td>{{ $reimbursement->created_at ? \Carbon\Carbon::parse($reimbursement->created_at)->format('d/m/Y') : '-' }}</td>
                                     <td>
                                         <div class="dt-buttons">
                                         <span>

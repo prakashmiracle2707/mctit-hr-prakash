@@ -68,7 +68,21 @@
                     <td>{{ \Carbon\Carbon::parse($reimbursement->expense_date)->format('d/m/Y') }}</td>
                     <th>{{ __('Status') }}</th>
                     <td>
-                        <span class="badge-status status-paid">{{ $reimbursement->status }}</span>
+                        @if ($reimbursement->status == 'Pending')
+                            <div class="badge bg-warning p-2 px-3 ">{{ $reimbursement->status }}</div>
+                        @elseif($reimbursement->status == 'Approved')
+                            <div class="badge bg-success p-2 px-3 ">{{ $reimbursement->status }}</div>
+                        @elseif($reimbursement->status == "Reject")
+                            <div class="badge bg-danger p-2 px-3 ">{{ $reimbursement->status }}</div>
+                        @elseif($reimbursement->status == "Draft")
+                            <div class="badge bg-info p-2 px-3 ">{{ $reimbursement->status }}</div>
+                        @elseif($reimbursement->status == "Paid")
+                            <div class="badge p-2 px-3" style="background: green;">{{ $reimbursement->status }}</div>
+                        @elseif($reimbursement->status == "Not_Received")
+                            <div class="badge bg-danger p-2 px-3 ">Not Received</div>
+                        @elseif($reimbursement->status == "Received")
+                            <div class="badge bg-success p-2 px-3 ">Received</div>
+                        @endif
                     </td>
                 </tr>
 
@@ -93,8 +107,6 @@
                             <a href="{{ asset('public/uploads/reimbursements/' . $reimbursement->file_path) }}" target="_blank" class="btn-view">
                                 <i class="ti ti-eye"></i> {{ __('View') }}
                             </a>
-                        @else
-                            <span class="text-danger">{{ __('File not found') }}</span>
                         @endif
                     </td>
                     <th>{{ __('Created On') }}</th>
@@ -150,16 +162,18 @@
                             {{$reimbursement->payment_type}}
                         </td>
                     </tr>
-                    @if ($reimbursement->paid_receipt)
+                    
                     <tr>
                         <th>{{ __('Paid Receipt') }}</th>
                         <td colspan="3">
-                                <a href="{{ asset('public/uploads/reimbursements/' . $reimbursement->paid_receipt) }}" target="_blank" class="btn-view">
-                                    <i class="ti ti-eye"></i> {{ __('View Paid Receipt') }}
-                                </a>
+                                @if ($reimbursement->paid_receipt)
+                                    <a href="{{ asset('public/uploads/reimbursements/' . $reimbursement->paid_receipt) }}" target="_blank" class="btn-view">
+                                        <i class="ti ti-eye"></i> {{ __('View Paid Receipt') }}
+                                    </a>
+                                @endif
                         </td>
                     </tr>
-                    @endif
+                    
                 @endif
 
                 <input type="hidden" name="reimbursement_id" value="{{ $reimbursement->id }}">
@@ -175,8 +189,22 @@
         <input type="submit" value="{{ __('Reject') }}" class="btn btn-danger rounded" name="status">
     @endif
 
-    @if (Auth::user()->type == 'management' && $reimbursement->status == 'Approved')
+    @if (Auth::user()->type == 'management' && ($reimbursement->status == 'Approved' || $reimbursement->status == 'Not_Received'))
         <input type="submit" value="{{ __('Mark as Paid') }}" class="btn btn-info rounded" name="status">
+    @endif
+
+    @if (Auth::user()->type == 'employee' && $reimbursement->status == 'Paid')
+    <input type="submit" value="{{ __('Yes Received') }}" class="btn btn-success rounded" name="status">
+        <input type="submit" value="{{ __('Not Received') }}" class="btn btn-danger rounded" name="status">
+    @endif
+
+    @php
+        $createdDate = \Carbon\Carbon::parse($reimbursement->created_at);
+        $fifteenDaysPassed = $createdDate->diffInDays(now()) >= 15;
+    @endphp
+
+    @if (Auth::user()->type == 'employee' && $reimbursement->status == 'Pending' && $reimbursement->follow_up_email == 0 && $fifteenDaysPassed)
+        <input type="submit" value="{{ __('Send Follow Up Email') }}" class="btn btn-danger rounded" name="status">
     @endif
 </div>
 

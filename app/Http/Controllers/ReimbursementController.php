@@ -15,6 +15,10 @@ use App\Mail\ReimbursementApprovedMail;
 use App\Mail\ReimbursementNotApprovedMail;
 use App\Mail\ReimbursementRequestMail;
 use App\Mail\ReimbursementPaidMail;
+use App\Mail\ReimbursementNotReceivedMail;
+use App\Mail\ReimbursementYesReceivedMail;
+use App\Mail\ReimbursementReminderApprovalMail;
+
 
 class ReimbursementController extends Controller
 {
@@ -200,6 +204,54 @@ class ReimbursementController extends Controller
         // echo "<pre>";print_r($request->status);exit;
 
         $Reimbursement = Reimbursement::find($request->reimbursement_id);
+
+        if ($request->status == 'Send Follow Up Email') {
+            
+            $Reimbursement->follow_up_email = 1;
+            $Reimbursement->save();
+            
+            $toEmail='rmb@miraclecloud-technology.com';
+            
+            Mail::to($toEmail)->send(new ReimbursementReminderApprovalMail($Reimbursement));
+
+            return redirect()->route('reimbursements.index')->with('success', __('Follow-up email sent successfully!') . 
+                ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
+                '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+            
+        }
+
+        if ($request->status == 'Not Received') {
+            
+            $Reimbursement->status = 'Not_Received';
+            $Reimbursement->save();
+            
+            $toEmail='nkalma@miraclecloud-technology.com';
+            
+            
+            Mail::to($toEmail)->send(new ReimbursementNotReceivedMail($Reimbursement));
+
+            return redirect()->route('reimbursements.index')->with('success', __('Reimbursement status successfully updated.') . 
+                ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
+                '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+            
+        }
+
+        if ($request->status == 'Yes Received') {
+            
+            $Reimbursement->status = 'Received';
+            $Reimbursement->save();
+            
+            $toEmail='nkalma@miraclecloud-technology.com';
+            
+            Mail::to($toEmail)->send(new ReimbursementYesReceivedMail($Reimbursement));
+
+            return redirect()->route('reimbursements.index')->with('success', __('Reimbursement status successfully updated.') . 
+                ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
+                '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+            
+        }
+
+
         if ($request->status == 'Approved') {
             $Reimbursement->approved_at = Carbon::now();
             $Reimbursement->assign_to = Auth::id();
