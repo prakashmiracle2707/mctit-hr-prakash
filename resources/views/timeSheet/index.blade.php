@@ -223,12 +223,14 @@
                                     @if (\Auth::user()->type != 'employee')
                                         <th>{{ __('Employee') }}</th>
                                     @else
-                                        <th class="employee_cls">{{ __('Employee') }}</th>
+                                        @if(count($employeesList) == 0)
+                                            <th class="">{{ __('Employee') }}</th>
+                                        @endif
                                     @endif
                                     <th>{{ __('Project') }}</th>
                                     <th>{{ __('Milestone') }}</th>
                                     <th class="task-column">{{ __('Task') }}</th>
-                                    <th>{{ __('OLD Hours') }}</th>
+                                    <!-- <th>{{ __('OLD Hours') }}</th> -->
                                     <th>{{ __('Hours') }}</th>
                                     <!-- <th>{{ __('Remark') }}</th> -->
                                     <th width="200ox">{{ __('Action') }}</th>
@@ -243,12 +245,14 @@
                                         @if (\Auth::user()->type != 'employee')
                                             <td>{{ !empty($timeSheet->employee) ? $timeSheet->employee->name : '' }}</td>
                                         @else
-                                            <td class="employee_cls">{{ !empty($timeSheet->employee) ? $timeSheet->employee->name : '' }}</td>
+                                            @if(count($employeesList) == 0)
+                                                <td class="">{{ !empty($timeSheet->employee) ? $timeSheet->employee->name : '' }}</td>
+                                            @endif
                                         @endif
                                         <td>{{ !empty($timeSheet->project) ? $timeSheet->project->name : '-' }}</td>
                                         <td>{{ !empty($timeSheet->milestone) ? $timeSheet->milestone->name : '-' }}</td>
                                         <td class="task-column">{{ $timeSheet->task_name ?? '-' }}</td>
-                                        <td >{{ $timeSheet->hours ?? '-' }}</td>
+                                        <!-- <td >{{ $timeSheet->hours ?? '-' }}</td> -->
                                         <td>{{ str_pad($timeSheet->workhours, 2, '0', STR_PAD_LEFT).":".str_pad($timeSheet->workminutes, 2, '0', STR_PAD_LEFT) }}</td>
                                         <!-- <td>{{ $timeSheet->remark }}</td> -->
                                         <td class="Action">
@@ -320,7 +324,7 @@
                 $(document).ready(function () {
                     $('#project_id').on('change', function () {
                         const projectId = $(this).val();
-                        $('#employee_div').css('display','block');
+                        
                         const $employee = $('#employee_id');
 
                         if (projectId) {
@@ -330,6 +334,7 @@
                                 url: url,
                                 type: 'GET',
                                 success: function (response) {
+                                    $('#employee_div').css('display','block');
                                     $employee.empty();
                                     $employee.append(`<option value="all">All</option>`);
                                     $.each(response, function (id, name) {

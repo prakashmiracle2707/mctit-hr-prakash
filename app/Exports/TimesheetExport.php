@@ -1,18 +1,19 @@
 <?php
-
 namespace App\Exports;
 
-use App\Models\Employee;
 use App\Models\TimeSheet;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-class TimesheetExport implements FromCollection,WithHeadings
+class TimesheetExport implements FromCollection, WithHeadings, WithStyles, WithColumnWidths
 {
-    /**
-    * @return \Illuminate\Support\Collection
-    */
     public $start_date, $end_date, $employee, $project;
+    protected $rowCount = 0;
 
     public function __construct($start_date = null, $end_date = null, $employee = null, $project = null)
     {
@@ -24,88 +25,114 @@ class TimesheetExport implements FromCollection,WithHeadings
 
     public function collection()
     {
-        // Base Query
         $query = TimeSheet::query();
-        
-        // Filter by Employee
+
         if (!empty($this->employee)) {
             $query->where('employee_id', $this->employee);
         }
 
-        // Filter by Project
         if (!empty($this->project)) {
             $query->where('project_id', $this->project);
         }
 
-        // Filter by Date Range
         if (!empty($this->start_date) && !empty($this->end_date)) {
             $query->whereBetween('date', [$this->start_date, $this->end_date]);
         }
 
-        // Apply permissions
         if (\Auth::user()->type == 'employee') {
             $query->where('employee_id', \Auth::user()->id);
         } else {
             $query->where('created_by', \Auth::user()->creatorId());
         }
 
-        // Get Data
         $data = $query->get();
-        // echo "<pre>";print_r($this->project);
-        // echo "<pre>";print_r($this->employee);
-        // echo "<pre>";print_r(count($data));exit;
-
         $totalMinutes = 0;
         $formattedData = [];
 
-        // Format Data and Calculate Total Minutes
-        foreach ($data as $k => $timesheet) {
+        foreach ($data as $timesheet) {
             $formattedData[] = [
-                //"id" => $timesheet->id,
                 "date" => \Carbon\Carbon::parse($timesheet->date)->format('d/m/Y'),
-                "employee_name" => !empty($timesheet->employee) ? $timesheet->employee->name : '',
-                "project_name" => !empty($timesheet->project) ? $timesheet->project->name : '',
-                "milestone_name" => !empty($timesheet->milestone) ? $timesheet->milestone->name : '',
+                "employee_name" => optional($timesheet->employee)->name,
+                "project_name" => optional($timesheet->project)->name,
+                "milestone_name" => optional($timesheet->milestone)->name,
                 "task_name" => $timesheet->task_name,
                 "remark" => $timesheet->remark,
-                "hours" => str_pad($timesheet->workhours, 2, '0', STR_PAD_LEFT).":".str_pad($timesheet->workminutes, 2, '0', STR_PAD_LEFT),
+                "hours" => str_pad($timesheet->workhours, 2, '0', STR_PAD_LEFT) . ":" . str_pad($timesheet->workminutes, 2, '0', STR_PAD_LEFT),
             ];
-
-
-            // Total minutes calculation
             $totalMinutes += ($timesheet->workhours * 60) + $timesheet->workminutes;
         }
 
-        // Convert total minutes to hours and minutes
         $totalHours = floor($totalMinutes / 60);
         $remainingMinutes = $totalMinutes % 60;
 
-        // Add Total Hours Row
         $formattedData[] = [
-            //"id" => '',
             "date" => '',
             "employee_name" => '',
             "project_name" => '',
             "milestone_name" => '',
             "task_name" => '',
             "remark" => 'Total',
-            "hours" => $totalHours . ":" . $remainingMinutes,
+            "hours" => str_pad($totalHours, 2, '0', STR_PAD_LEFT) . ":" . str_pad($remainingMinutes, 2, '0', STR_PAD_LEFT),
         ];
 
+        $this->rowCount = count($formattedData) + 1; // include header row
         return collect($formattedData);
     }
+
     public function headings(): array
     {
         return [
-            //"ID",
             "Date",
             "Name",
             "Project",
             "Milestone",
             "Task",
-            "Work Description",
+            "Description",
             "Hour",
-            // "Created By"
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        $lastRow = $this->rowCount;
+
+        return [
+            // Apply border and wrap to entire data range
+            'A1:G' . $lastRow => [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['argb' => '000000'],
+                    ],
+                ],
+                'alignment' => [
+                    'wrapText' => true,
+                    'vertical' => Alignment::VERTICAL_TOP,
+                ],
+            ],
+            'A1:G1' => [
+                'font' => ['bold' => true],
+            ],
+            'F' . $lastRow => [
+                'font' => ['bold' => true],
+            ],
+            'G' . $lastRow => [
+                'font' => ['bold' => true],
+            ],
+        ];
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 14, // Date
+            'B' => 22, // Name
+            'C' => 25, // Project
+            'D' => 25, // Milestone
+            'E' => 25, // Task
+            'F' => 60, // Description
+            'G' => 10, // Hours
         ];
     }
 }
+

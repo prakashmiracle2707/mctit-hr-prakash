@@ -60,7 +60,7 @@ class LeaveController extends Controller
 
                 $leaveTypes = LeaveType::where(function ($query) {
                     $query->where('title', 'like', '%SL%')->orWhere('title', 'like', '%CL%');
-                })->pluck('title', 'id');
+                })->pluck('title', 'id','code');
 
                 foreach ($leaveTypes as $id => $title) {
                     $leaveCounts[$id] = [
@@ -93,7 +93,7 @@ class LeaveController extends Controller
                     }
                 }
 
-                $leaveTypes = LeaveType::pluck('title', 'id');
+                $leaveTypes = LeaveType::pluck('title', 'id','code');
                 $leaveTypesAll = LeaveType::where(function ($query) {
                     $query->where('title', 'like', '%SL%')->orWhere('title', 'like', '%CL%');
                 })->get()->keyBy('id');
@@ -1084,7 +1084,7 @@ class LeaveController extends Controller
     public function jsoncount(Request $request)
     {
         $date = Utility::AnnualLeaveCycle();
-        $leave_counts = LeaveType::select(\DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_leave, leave_types.title, leave_types.days,leave_types.id'))
+        $leave_counts = LeaveType::select(\DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_leave, leave_types.title, leave_types.code, leave_types.days,leave_types.id'))
             ->leftjoin(
                 'leaves',
                 function ($join) use ($request, $date) {

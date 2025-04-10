@@ -33,6 +33,7 @@
                         <thead>
                             <tr>
                                 <th>{{ __('Leave Type') }}</th>
+                                <th>{{ __('Leave Code') }}</th>
                                 <th>{{ __('Days / Year') }}</th>
                                 <th width="200px">{{ __('Action') }}</th>
                             </tr>
@@ -41,6 +42,7 @@
                             @foreach ($leavetypes as $leavetype)
                                 <tr>
                                     <td>{{ $leavetype->title }}</td>
+                                    <td>{{ $leavetype->code }}</td>
                                     <td>{{ $leavetype->days }}</td>
                                     <td class="Action">
                                         <div class="dt-buttons">

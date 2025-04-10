@@ -401,18 +401,18 @@
 
                     $.each(data, function(key, value) {
 
-                        if (value.total_leave == value.days && value.title != 'Work from home (WFH)' && value.title != 'Early Leave (EL)') {
+                        if (value.total_leave == value.days && value.code != 'WFH' && value.code != 'EL' && value.code != 'LWP') {
                             $('#leave_type_id').append('<option value="' + value.id +
-                                '" disabled>' + value.title + '&nbsp(' + value.total_leave +
+                                '" disabled>' + value.title + '&nbsp(' +value.code + ')' + '&nbsp(' + value.total_leave +
                                 '/' + value.days + ')</option>');
                         } else {
-                            if(value.title != 'Work from home (WFH)' && value.title != 'Early Leave (EL)'){
+                            if(value.code != 'WFH' && value.code != 'EL' && value.code != 'LWP'){
                                 $('#leave_type_id').append('<option value="' + value.id + '">' +
-                                value.title + '&nbsp(' + value.total_leave + '/' + value
+                                value.title + '&nbsp(' +value.code + ')' + '&nbsp(' + value.total_leave + '/' + value
                                 .days + ')</option>');
                             }else{
                                 $('#leave_type_id').append('<option value="' + value.id + '">' +
-                                value.title + '</option>');
+                                value.title + '&nbsp(' +value.code + ')' + '</option>');
                             }
                         }
                         if (oldval) {

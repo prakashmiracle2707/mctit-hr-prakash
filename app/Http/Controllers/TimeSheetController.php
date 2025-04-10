@@ -97,11 +97,13 @@ class TimeSheetController extends Controller
                         ->toArray();
 
                     $employeesList = Employee::whereIn('id', $employeeIds)
+                        ->orderBy('name', 'asc')
                         ->pluck('name', 'user_id')
                         ->prepend('All', '');
                 } else {
                     // Show all employees
                     $employeesList = Employee::where('created_by', \Auth::user()->creatorId())
+                         ->orderBy('name', 'asc')
                         ->pluck('name', 'user_id')
                         ->prepend('All', '');
                 }
@@ -160,7 +162,9 @@ class TimeSheetController extends Controller
 
         $employeeIds = ProjectEmployee::where('project_id', $projectId)->pluck('employee_id');
 
-        $employees = Employee::whereIn('id', $employeeIds)->pluck('name', 'id');
+        $employees = Employee::whereIn('id', $employeeIds)->orderBy('name', 'asc')->pluck('name', 'id');
+
+        // echo "<pre>";print_r($employees);exit;
 
         return response()->json($employees);
     }
@@ -423,6 +427,7 @@ class TimeSheetController extends Controller
 
     public function export(Request $request)
     {
+
         $name = 'Timesheet_' . date('Y-m-d i:h:s');
         // $data = Excel::download(new TimesheetExport(), $name . '.xlsx');
         // return $data;
@@ -431,11 +436,47 @@ class TimeSheetController extends Controller
         $startOfMonth = $selectedMonth ? Carbon::parse($selectedMonth)->startOfMonth()->toDateString() : null;
         $endOfMonth = $selectedMonth ? Carbon::parse($selectedMonth)->endOfMonth()->toDateString() : null;
 
+        // Format the month as "March, 2025"
+        $formattedMonth = Carbon::parse($selectedMonth)->format('F, Y');
 
-        if($request->project_id == "" && $request->employee != "" && $request->employee != "all"){
-            return Excel::download(new TimesheetExport($startOfMonth, $endOfMonth, $request->employee, $request->project_id), $name . '.xlsx');
+        $employeeId='';
+        if(\Auth::user()->type == 'employee'){
+            if($request->employee == ''){
+                $employeeId=Auth::user()->id;
+            }else{
+                $employeeId=$request->employee;
+            }
         }else{
-             return Excel::download(new TimesheetMultiSheetExport($startOfMonth,$endOfMonth,$request->employee,$request->project_id),$name. '.xlsx');
+            $employeeId=$request->employee;
+        }
+
+        
+        // ✅ When both Project & Employee selected
+        if (!empty($request->project_id) && !empty($employeeId) && $employeeId !== 'all') {
+            $projectName = Project::find($request->project_id)->name ?? 'Project';
+            $employeeName = Employee::where('user_id', $employeeId)->value('name') ?? 'Employee';
+            $name = $formattedMonth . ' - ' . $projectName . ' - ' . $employeeName;
+        }
+
+        // ✅ When only Project selected
+        elseif (!empty($request->project_id)) {
+            $projectName = Project::find($request->project_id)->name ?? 'Project';
+            $name = $formattedMonth . ' - ' . $projectName;
+        }
+
+        // ✅ When only Employee selected
+        elseif (empty($request->project_id) && !empty($employeeId) && $employeeId !== 'all') {
+            $employeeName = Employee::where('user_id', $employeeId)->value('name') ?? 'Employee';
+            $name = $formattedMonth . ' - ' . $employeeName;
+        }
+
+        
+
+
+        if($request->project_id == "" && $employeeId != "" && $employeeId != "all"){
+            return Excel::download(new TimesheetExport($startOfMonth, $endOfMonth, $employeeId, $request->project_id), $name . '.xlsx');
+        }else{
+             return Excel::download(new TimesheetMultiSheetExport($startOfMonth,$endOfMonth,$employeeId,$request->project_id),$name. '.xlsx');
         }
         
 

@@ -45,6 +45,7 @@ class LeaveTypeController extends Controller
                 $request->all(), [
                 'title' => 'required',
                 'days' => 'required|gt:0',
+                'code'  => 'required|unique:leave_types,code',
             ]
             );
 
@@ -58,6 +59,7 @@ class LeaveTypeController extends Controller
             $leavetype             = new LeaveType();
             $leavetype->title      = $request->title;
             $leavetype->days       = $request->days;
+            $leavetype->code       = $request->code;
             $leavetype->created_by = \Auth::user()->creatorId();
             $leavetype->save();
 
@@ -96,40 +98,34 @@ class LeaveTypeController extends Controller
 
     public function update(Request $request, LeaveType $leavetype)
     {
-        if(\Auth::user()->can('Edit Leave Type'))
-        {
-            if($leavetype->created_by == \Auth::user()->creatorId())
-            {
-                $validator = \Validator::make(
-                    $request->all(), [
+        if (\Auth::user()->can('Edit Leave Type')) {
+            if ($leavetype->created_by == \Auth::user()->creatorId()) {
+
+                $validator = \Validator::make($request->all(), [
                     'title' => 'required',
-                    'days' => 'required',
-                ]
-                );
+                    'code'  => 'required|unique:leave_types,code,' . $leavetype->id,
+                    'days'  => 'required|gt:0',
+                ]);
 
-                if($validator->fails())
-                {
+                if ($validator->fails()) {
                     $messages = $validator->getMessageBag();
-
                     return redirect()->back()->with('error', $messages->first());
                 }
 
                 $leavetype->title = $request->title;
+                $leavetype->code  = $request->code;
                 $leavetype->days  = $request->days;
                 $leavetype->save();
 
-                return redirect()->route('leavetype.index')->with('success', __('LeaveType successfully updated.'));
-            }
-            else
-            {
+                return redirect()->route('leavetype.index')->with('success', __('Leave Type successfully updated.'));
+            } else {
                 return redirect()->back()->with('error', __('Permission denied.'));
             }
-        }
-        else
-        {
+        } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
+
 
     public function destroy(LeaveType $leavetype)
     {

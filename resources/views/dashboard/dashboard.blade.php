@@ -324,7 +324,11 @@
                                 </div>
                             </div>
                         </div>
-                       <!--  <div class="col-xxl-6 col-md-12">
+                        @if (!$hasOngoingBreak)
+                            <div class="col-xxl-6 col-md-12" id="total-break-widget" style="display: none;">
+                        @else
+                            <div class="col-xxl-6 col-md-12" id="total-break-widget">
+                        @endif
                             <div class="card">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -342,7 +346,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div> -->
+                        </div>
 
                         <script>
                             function updateBreakTime() {
@@ -419,68 +423,75 @@
                     <!-- Break Time Management -->
                     <!-- Show Break Buttons Only if Employee is Clocked In -->
                     @if ($isClockedIn)
-                        <br />
-                        <hr />
-                        <div class="row mt-3" style="display: none;">
-                            <div class="col-6">
-                                <button id="start_break" class="btn btn-warning w-100"
-                                    onclick="startBreak()" 
-                                    {{ !empty($employeeAttendance) && $employeeAttendance->breaks()->whereNull('break_end')->exists() ? 'disabled' : '' }}>
-                                    {{ __('Start Break') }}
-                                </button>
+                        
+                        @if (!$hasOngoingBreak)
+                            <div id="break-log-card" style="display: none;">
+                        @else
+                            <div id="break-log-card">
+                        @endif
+                            <br />
+                            <hr />
+                            <div class="row mt-3">
+                                <div class="col-6">
+                                    <button id="start_break" class="btn btn-warning w-100"
+                                        onclick="startBreak()" 
+                                        {{ !empty($employeeAttendance) && $employeeAttendance->breaks()->whereNull('break_end')->exists() ? 'disabled' : '' }}>
+                                        {{ __('Start Break') }}
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button id="end_break" class="btn btn-success w-100"
+                                        onclick="endBreak()"
+                                        {{ empty($employeeAttendance) || !$employeeAttendance->breaks()->whereNull('break_end')->exists() ? 'disabled' : '' }}>
+                                        {{ __('End Break') }}
+                                    </button>
+                                </div>
                             </div>
-                            <div class="col-6">
-                                <button id="end_break" class="btn btn-success w-100"
-                                    onclick="endBreak()"
-                                    {{ empty($employeeAttendance) || !$employeeAttendance->breaks()->whereNull('break_end')->exists() ? 'disabled' : '' }}>
-                                    {{ __('End Break') }}
-                                </button>
-                            </div>
-                        </div>
 
 
-                        <!-- Break Log -->
-                        <div class="card mt-3" style="display: none;">
-                            <div class="card-header">
-                                <h5>{{ __('Break Log') }}</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>{{ __('Break Start') }}</th>
-                                                <th>{{ __('Break End') }}</th>
-                                                <th>{{ __('Duration') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="break-log">
-                                            @foreach ($breakLogs as $break)
+                            <!-- Break Log -->
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h5>{{ __('Break Log') }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
                                                 <tr>
-                                                    <td>{{ \Carbon\Carbon::parse($break->break_start)->format('h:i A') }}</td>
-                                                    <td>
-                                                        @if ($break->break_end)
-                                                            {{\Carbon\Carbon::parse($break->break_end)->format('h:i A')}}
-                                                        @else
-                                                            <span class="badge bg-danger p-1 px-1">In Progress</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if ($break->break_end)
-                                                            @php
-                                                                $start = \Carbon\Carbon::parse($break->break_start);
-                                                                $end = \Carbon\Carbon::parse($break->break_end);
-                                                                $diff = $start->diff($end);
-                                                                echo sprintf('%02d:%02d:%02d', $diff->h, $diff->i, $diff->s);
-                                                            @endphp
-                                                        @else
-                                                            --
-                                                        @endif
-                                                    </td>
+                                                    <th>{{ __('Break Start') }}</th>
+                                                    <th>{{ __('Break End') }}</th>
+                                                    <th>{{ __('Duration') }}</th>
                                                 </tr>
-                                            @endforeach
-                                        </tbody> 
-                                    </table>
+                                            </thead>
+                                            <tbody id="break-log">
+                                                @foreach ($breakLogs as $break)
+                                                    <tr>
+                                                        <td>{{ \Carbon\Carbon::parse($break->break_start)->format('h:i A') }}</td>
+                                                        <td>
+                                                            @if ($break->break_end)
+                                                                {{\Carbon\Carbon::parse($break->break_end)->format('h:i A')}}
+                                                            @else
+                                                                <span class="badge bg-danger p-1 px-1">In Progress</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if ($break->break_end)
+                                                                @php
+                                                                    $start = \Carbon\Carbon::parse($break->break_start);
+                                                                    $end = \Carbon\Carbon::parse($break->break_end);
+                                                                    $diff = $start->diff($end);
+                                                                    echo sprintf('%02d:%02d:%02d', $diff->h, $diff->i, $diff->s);
+                                                                @endphp
+                                                            @else
+                                                                --
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody> 
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -555,7 +566,7 @@
                                     <th>{{ __('CLOCK IN') }}</th>
                                     <th>{{ __('CLOCK OUT') }}</th>
                                     <th>{{ __('TOTAL HOURS') }}</th>
-                                    <!-- <th>{{ __('Break Log') }}</th>  -->
+                                    <th>{{ __('Break Log') }}</th> 
                                 </tr>
                             </thead>
                             <tbody class="list">
@@ -579,7 +590,7 @@
                                             @endif
                                         </td>
                                         <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
-                                        <!-- <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td> -->
+                                        <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -1083,7 +1094,7 @@
                                                 <th>{{ __('Early Leaving') }}</th>
                                                 <th>{{ __('Overtime') }}</th> -->
                                                 <th>{{ __('Total Hours') }}</th>
-                                                <!-- <th>{{ __('Total Break Log') }}</th> -->
+                                                <th>{{ __('Total Break Log') }}</th>
                                                 <!-- @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
                                                     <th width="200px">{{ __('Action') }}</th>
                                                 @endif -->
@@ -1101,7 +1112,7 @@
                                                             @endif
 
                                                             @if ($attendance->isInBreak)
-                                                                <br /><span class="badge bg-danger p-1 px-1">In Break</span>
+                                                                <br /><span class="badge bg-danger p-1 px-1">On Break</span>
                                                             @endif
                                                         </td>
                                                     @endif
@@ -1121,7 +1132,7 @@
                                                     <td>{{ $attendance->early_leaving }}</td>
                                                     <td>{{ $attendance->overtime }}</td> -->
                                                     <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
-                                                    <!-- <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td> -->
+                                                    <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td>
                                                    <!--  @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
                                                     <td class="Action">
                                                         
@@ -1747,6 +1758,29 @@
                         console.error('Error:', error);
                     });
                 });
+            }
+        });
+    </script>
+
+    <script>
+        function toggleBreakLog() {
+            let workFromHome = document.getElementById('work_from_home_in');
+            let breakLogCard = document.getElementById('break-log-card');
+            let breakWidgetCard = document.getElementById('break-widget-card');
+            let totalBreakWidget = document.getElementById('total-break-widget');
+            const show = workFromHome && workFromHome.checked;
+
+            if (breakLogCard) breakLogCard.style.display = show ? 'block' : 'none';
+            if (breakWidgetCard) breakWidgetCard.style.display = show ? 'block' : 'none';
+            if (totalBreakWidget) totalBreakWidget.style.display = show ? 'block' : 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const workFromHomeCheckbox = document.getElementById('work_from_home_in');
+
+            if (workFromHomeCheckbox) {
+                toggleBreakLog(); // On page load
+                workFromHomeCheckbox.addEventListener('change', toggleBreakLog); // On change
             }
         });
     </script>
