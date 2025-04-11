@@ -272,7 +272,7 @@
                                     <td class="Action">
                                         <div class="dt-buttons">
                                         <span>
-                                            @if ($leave->status != 'Draft' && $leave->status != 'Cancelled' && \Auth::user()->type == 'employee')
+                                            @if ($leave->status != 'Draft' && $leave->status != 'Cancelled' && \Auth::user()->type == 'employee'  && \Carbon\Carbon::parse($leave->end_date)->diffInDays(now(), false) <= 5)
                                                 <div class="action-btn bg-danger me-2">
                                                     <a href="#" class="mx-3 btn btn-sm align-items-center"
                                                         data-url="{{ route('leave.cancel.view', $leave->id) }}"
