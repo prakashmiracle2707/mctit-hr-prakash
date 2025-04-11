@@ -372,8 +372,70 @@ class HomeController extends Controller
                                 ->latest()
                                 ->get();
 
+                /* *************** New Add Start ****************************/
+                $employeeCheck = Employee::select('id')->where('created_by', \Auth::user()->creatorId())->where('id', '!=', \Auth::user()->employee->id);
+
+                if (!empty($request->branch)) {
+                    $employeeCheck->where('branch_id', $request->branch);
+                }
+
+                if (!empty($request->department)) {
+                    $employeeCheck->where('department_id', $request->department);
+                }
+
+                $employeeCheck = $employeeCheck->get()->pluck('id');
+
+                // echo "<pre>";print_r($employeeCheck);exit;
+
+                // Get only today's attendance
+                $today = Carbon::today()->toDateString();
+
+                $FindOnBreakEmployee = AttendanceEmployee::whereIn('employee_id', $employeeCheck)
+                    ->whereDate('date', $today)
+                    ->orderByRaw('work_from_home DESC')
+                    ->orderBy('updated_at', 'desc')
+                    ->get()
+                    ->map(function ($attendance) {
+                        $breakLogs = $attendance->breaks()->get();
+                        $totalSeconds = 0;
+                        $isInBreak = false;
+
+                        foreach ($breakLogs as $break) {
+                            if (!empty($break->break_start)) {
+                                try {
+                                    $start = Carbon::parse($break->break_start);
+
+                                    if (empty($break->break_end)) {
+                                        $isInBreak = true; // currently on break
+                                    } else {
+                                        $end = Carbon::parse($break->break_end);
+                                        if ($end->greaterThan($start)) {
+                                            $duration = $start->diffInSeconds($end);
+                                            $totalSeconds += (int) round($duration);
+                                        }
+                                    }
+                                } catch (\Exception $e) {
+                                    \Log::error("Error calculating break duration for attendance ID: " . $attendance->id . " - " . $e->getMessage());
+                                }
+                            }
+                        }
+
+                        $attendance->totalBreakDuration = sprintf('%02d:%02d:%02d', intdiv($totalSeconds, 3600), intdiv($totalSeconds % 3600, 60), $totalSeconds % 60);
+                        $attendance->isInBreak = $isInBreak;
+
+                        return $attendance;
+                    })
+                    ->filter(function ($attendance) {
+                        return $attendance->isInBreak === true; // only return those currently on break
+                    })
+                    ->values();
+
+
+                // attendanceEmployee
+                /* *************** New Add End ****************************/
+
                 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc','FindOnBreakEmployee'));
             }
             else
             {
@@ -510,7 +572,7 @@ class HomeController extends Controller
                     return $attendance;
                 });
 
-                
+                // attendanceEmployee
                 /* *************** New Add End ****************************/
 
                 return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails'));

@@ -221,6 +221,7 @@
                 </div>
             </div>
         </div>
+       
         <div class="row">
         <div class="col-xxl-6 col-md-6" >
             <div class="card">
@@ -497,6 +498,30 @@
                         </div>
                     @endif
 
+
+                    @if(count($FindOnBreakEmployee) > 0)
+                        <br />
+                        <hr />
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>{{ __('ON-BREAK') }}</h5>
+                            </div>
+                            <div class="card-body">
+                                @php
+                                    $badgeClasses = ['bg-warning', 'bg-success', 'bg-danger', 'bg-info'];
+                                @endphp
+
+                                @foreach ($FindOnBreakEmployee as $OnBreakattendance)
+                                    @php
+                                        $randomClass = $badgeClasses[array_rand($badgeClasses)];
+                                    @endphp
+                                    <div class="badge {{ $randomClass }} p-2 px-3">
+                                        {{ !empty($OnBreakattendance->employee) ? $OnBreakattendance->employee->name : '' }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
 
                 </div>
             </div>

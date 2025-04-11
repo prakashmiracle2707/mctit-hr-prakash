@@ -131,7 +131,7 @@
                     </tr>
                 @endif
 
-                @if (Auth::user()->type == 'management' && in_array($reimbursement->status, ['Approved']))
+                @if (Auth::user()->type == 'management' && in_array($reimbursement->status, ['Approved','Not_Received']))
                     <tr>
                         <th>{{ __('Payment Type') }}</th>
                         <td colspan="3">
@@ -155,7 +155,7 @@
                     </tr>
                 @endif
 
-                @if (in_array($reimbursement->status, ['Paid']))
+                @if (in_array($reimbursement->status, ['Paid','Received','Not_Received']))
                     <tr>
                         <th>{{ __('Payment Type') }}</th>
                         <td colspan="3">
