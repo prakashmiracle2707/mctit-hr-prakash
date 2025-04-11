@@ -299,8 +299,8 @@ class HomeController extends Controller
 
                 // All leave types
                 $leaveTypes = LeaveType::where(function ($query) {
-                                    $query->where('title', 'like', '%SL%')
-                                          ->orWhere('title', 'like', '%CL%');
+                                    $query->where('code', 'like', '%SL%')
+                                          ->orWhere('code', 'like', '%CL%');
                                 })->pluck('title', 'id');
                 $leaveCounts = [];
 
@@ -357,8 +357,8 @@ class HomeController extends Controller
 
 
                 $leaveTypesAll = LeaveType::where(function ($query) {
-                                    $query->where('title', 'like', '%SL%')
-                                          ->orWhere('title', 'like', '%CL%');
+                                    $query->where('code', 'like', '%SL%')
+                                          ->orWhere('code', 'like', '%CL%');
                                 })->get()->keyBy('id');
 
                 
