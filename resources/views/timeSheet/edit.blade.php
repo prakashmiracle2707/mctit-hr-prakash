@@ -36,21 +36,24 @@
             {{ Form::select('workhours', array_combine(range(0, 8), range(0, 8)), $timeSheet->workhours ?? null, ['class' => 'form-control select2', 'required' => 'required', 'placeholder' => 'Select']) }}
         </div>
 
+        @php
+            $minutes = [];
+            foreach (range(0, 59) as $i) {
+                $formatted = str_pad($i, 2, '0', STR_PAD_LEFT);
+                $minutes[$formatted] = $formatted;
+            }
+
+            $selectedMinutes = isset($timeSheet->workminutes) ? str_pad($timeSheet->workminutes, 2, '0', STR_PAD_LEFT) : null;
+        @endphp
+
         <div class="form-group col-md-3">
-            @php
-                $minutes = [];
-                foreach (range(0, 59) as $i) {
-                    $formatted = str_pad($i, 2, '0', STR_PAD_LEFT);
-                    $minutes[$formatted] = $formatted;
-                }
-            @endphp
             {{ Form::label('workminutes', __('Work Minutes'), ['class' => 'col-form-label']) }}<x-required></x-required>
-            {{ Form::select('workminutes', $minutes, $timeSheet->workminutes ?? null, [
+            {{ Form::select('workminutes', $minutes, $selectedMinutes, [
                 'class' => 'form-control select2',
                 'required' => 'required',
                 'placeholder' => 'Select'
             ]) }}
-            </div>
+        </div>
 
         <div class="form-group col-md-6">
             {{ Form::label('project_id', __('Project'), ['class' => 'col-form-label']) }}<x-required></x-required>
