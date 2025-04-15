@@ -1,4 +1,4 @@
-{{ Form::open(['route' => 'reimbursements.store', 'method' => 'POST', 'class' => 'needs-validation', 'novalidate', 'enctype' => 'multipart/form-data']) }}
+{{ Form::open(['route' => 'reimbursements.store', 'method' => 'POST', 'class' => 'needs-validation', 'novalidate', 'enctype' => 'multipart/form-data', 'id' => 'reimbursement-create-form']) }}
     <div class="modal-body">
         <div class="row">
             <!-- Title -->
@@ -29,12 +29,15 @@
                 <div class="invalid-feedback">{{ __('Please enter a description.') }}</div>
             </div>
 
-
             <!-- Receipt Upload -->
             <div class="form-group col-lg-6 col-md-6">
                 {{ Form::label('file', __('Upload Receipt'), ['class' => 'col-form-label']) }}
                 {{ Form::file('file', ['class' => 'form-control', 'accept' => 'image/*,application/pdf']) }}
                 <small class="text-muted">{{ __('Accepted formats: PDF, JPG, PNG (Max: 2MB)') }}</small>
+                 <!-- Self Receipt Checkbox -->
+                <br />
+                {{ Form::checkbox('self_receipt', 1, false, ['class' => 'form-check-input', 'id' => 'self_receipt']) }}
+                    <label class="form-check-label" for="self_receipt">{{ __('Self-Generated Receipt') }}</label>
             </div>
         </div>
     </div>
@@ -53,4 +56,25 @@
         <!-- Submit Request Button -->
         <button type="submit" class="btn btn-primary">{{ __('Apply Request') }}</button>
     </div>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // On form submit
+        $('#reimbursement-create-form').on('submit', function (e) {
+            const status = $('#status').val(); // Will be 'Draft' or 'Pending'
+            const file = $('input[name="file"]').val();
+
+            // If NOT saving as draft and no file + not self receipt
+            if (status !== 'Draft' && !file) {
+                e.preventDefault();
+                toastr.error('Please upload a receipt.');
+                return false;
+            }
+        });
+    });
+</script>
 {{ Form::close() }}

@@ -1,4 +1,4 @@
-{{ Form::open(['url' => 'reimbursements/changeaction', 'method' => 'post', 'enctype' => 'multipart/form-data']) }}
+{{ Form::open(['url' => 'reimbursements/changeaction', 'method' => 'post',  'enctype' => 'multipart/form-data', 'id' => 'reimbursement-action-form']) }}
 
 <style>
     .custom-table {
@@ -82,6 +82,10 @@
                             <div class="badge bg-danger p-2 px-3 ">Not Received</div>
                         @elseif($reimbursement->status == "Received")
                             <div class="badge bg-success p-2 px-3 ">Received</div>
+                        @elseif($reimbursement->status == "Query_Raised")
+                            <div class="badge bg-warning p-2 px-3 ">Query Raised</div>
+                        @elseif($reimbursement->status == "Submitted")
+                            <div class="badge bg-success p-2 px-3 ">Submitted</div>
                         @endif
                     </td>
                 </tr>
@@ -101,7 +105,7 @@
                 </tr>
 
                 <tr>
-                    <th>{{ __('Receipt') }}</th>
+                    <th>{{ __('Receipt') }}  @if($reimbursement->self_receipt) <span style="color: #ff3a6e;"> (Self)</span> @endif</th>
                     <td>
                         @if ($reimbursement->file_path)
                             <a href="{{ asset('public/uploads/reimbursements/' . $reimbursement->file_path) }}" target="_blank" class="btn-view">
@@ -131,49 +135,90 @@
                     </tr>
                 @endif
 
-                @if (Auth::user()->type == 'management' && in_array($reimbursement->status, ['Approved','Not_Received']))
+                @if($reimbursement->accountant_comment != '')
                     <tr>
-                        <th>{{ __('Payment Type') }}</th>
+                        <th>{{ __('Accountant\'s Query') }}</th>
                         <td colspan="3">
-                            {{ Form::select('payment_type', ['Cash' => 'Cash', 'Online' => 'Online'], $reimbursement->payment_type ?? null, ['class' => 'form-control', 'placeholder' => 'Select Payment Type', 'required']) }}
+                            <span style="color:red;">{{ $reimbursement->accountant_comment ?? '' }}</span>
                         </td>
                     </tr>
+                @endif
+
+                @if (Auth::user()->type == 'management' && in_array($reimbursement->status, ['Approved','Not_Received','Submitted']))
+
                     <tr>
+                        <th>{{ __('Status') }}</th>
+                        <td colspan="3">
+                            {{ Form::select('status', ['Query Raised' => 'Query Raised', 'Mark as Paid' => 'Mark as Paid'], null, [
+                                'class' => 'form-control',
+                                'placeholder' => 'Select Status',
+                                'id' => 'status_selector',
+                                'required'
+                            ]) }}
+                        </td>
+                    </tr>
+
+                    {{-- Payment Type & Receipt Upload (only for Mark as Paid) --}}
+                    <tr id="payment_type_row" style="display: none;">
+                        <th>{{ __('Payment Type') }}</th>
+                        <td colspan="3">
+                            {{ Form::select('payment_type', ['Cash' => 'Cash', 'Online' => 'Online'], $reimbursement->payment_type ?? null, [
+                                'class' => 'form-control',
+                                'id' => 'payment_type',
+                                'placeholder' => 'Select Payment Type'
+                            ]) }}
+                        </td>
+                    </tr>
+
+                    <tr id="receipt_upload_row" style="display: none;">
                         <th>{{ __('Upload Paid Receipt') }}</th>
                         <td colspan="3">
-                            {{ Form::file('paid_receipt', ['class' => 'form-control', 'accept' => 'image/*,application/pdf']) }}
+                            {{ Form::file('paid_receipt', ['class' => 'form-control', 'id' => 'paid_receipt_input', 'accept' => 'image/*,application/pdf']) }}
                             <small class="text-muted">{{ __('Accepted formats: PDF, JPG, PNG (Max: 2MB)') }}</small>
-
                             @if ($reimbursement->paid_receipt)
-                                <br />
-                                <br />
+                                <br><br>
                                 <a href="{{ asset('public/uploads/reimbursements/' . $reimbursement->paid_receipt) }}" target="_blank" class="btn-view">
                                     <i class="ti ti-eye"></i> {{ __('View Uploaded Receipt') }}
                                 </a>
                             @endif
                         </td>
                     </tr>
+                    {{-- Accountant Query (only for Query Raised) --}}
+                    <tr id="accountant_query_row" style="display: none;">
+                        <th>{{ __('Accountant\'s Query') }}</th>
+                        <td colspan="3">
+                            {{ Form::textarea('accountant_comment', $reimbursement->accountant_comment ?? null, [
+                                'class' => 'form-control',
+                                'rows' => 3,
+                                'id' => 'accountant_comment',
+                                'placeholder' => 'Enter any comments or query from the accountant'
+                            ]) }}
+                        </td>
+                    </tr>
                 @endif
 
                 @if (in_array($reimbursement->status, ['Paid','Received','Not_Received']))
-                    <tr>
-                        <th>{{ __('Payment Type') }}</th>
-                        <td colspan="3">
-                            {{$reimbursement->payment_type}}
-                        </td>
-                    </tr>
+                    @if($reimbursement->payment_type)
+                        <tr>
+                            <th>{{ __('Payment Type') }}</th>
+                            <td colspan="3">
+                                {{$reimbursement->payment_type}}
+                            </td>
+                        </tr>
+                    @endif
                     
-                    <tr>
-                        <th>{{ __('Paid Receipt') }}</th>
-                        <td colspan="3">
-                                @if ($reimbursement->paid_receipt)
-                                    <a href="{{ asset('public/uploads/reimbursements/' . $reimbursement->paid_receipt) }}" target="_blank" class="btn-view">
-                                        <i class="ti ti-eye"></i> {{ __('View Paid Receipt') }}
-                                    </a>
-                                @endif
-                        </td>
-                    </tr>
-                    
+                    @if($reimbursement->paid_receipt)
+                        <tr>
+                            <th>{{ __('Paid Receipt') }}</th>
+                            <td colspan="3">
+                                    @if ($reimbursement->paid_receipt)
+                                        <a href="{{ asset('public/uploads/reimbursements/' . $reimbursement->paid_receipt) }}" target="_blank" class="btn-view">
+                                            <i class="ti ti-eye"></i> {{ __('View Paid Receipt') }}
+                                        </a>
+                                    @endif
+                            </td>
+                        </tr>
+                    @endif 
                 @endif
 
                 <input type="hidden" name="reimbursement_id" value="{{ $reimbursement->id }}">
@@ -189,13 +234,14 @@
         <input type="submit" value="{{ __('Reject') }}" class="btn btn-danger rounded" name="status">
     @endif
 
-    @if (Auth::user()->type == 'management' && ($reimbursement->status == 'Approved' || $reimbursement->status == 'Not_Received'))
-        <input type="submit" value="{{ __('Mark as Paid') }}" class="btn btn-info rounded" name="status">
+    @if (Auth::user()->type == 'management' && ($reimbursement->status == 'Approved' || $reimbursement->status == 'Not_Received' || $reimbursement->status == 'Submitted'))
+        <input type="submit" value="{{ __('Query Raised') }}" class="btn btn-danger rounded" name="status" id="btn_query_raised" style="display: none;">
+        <input type="submit" value="{{ __('Mark as Paid') }}" class="btn btn-info rounded" name="status" id="btn_mark_paid" style="display: none;">
     @endif
 
     @if (Auth::user()->type == 'employee' && $reimbursement->status == 'Paid')
     <input type="submit" value="{{ __('Yes Received') }}" class="btn btn-success rounded" name="status">
-        <input type="submit" value="{{ __('Not Received') }}" class="btn btn-danger rounded" name="status">
+    <input type="submit" value="{{ __('Not Received') }}" class="btn btn-danger rounded" name="status">
     @endif
 
     @php
@@ -207,5 +253,75 @@
         <input type="submit" value="{{ __('Send Follow Up Email') }}" class="btn btn-danger rounded" name="status">
     @endif
 </div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        function toggleFieldsAndButtons() {
+            let selectedStatus = $('#status_selector').val();
+
+            // Hide everything first
+            $('#accountant_query_row').hide();
+            $('#payment_type_row').hide();
+            $('#receipt_upload_row').hide();
+            $('#btn_query_raised').hide();
+            $('#btn_mark_paid').hide();
+
+            if (selectedStatus === 'Query Raised') {
+                $('#accountant_query_row').show();
+                $('#btn_query_raised').show();
+            } else if (selectedStatus === 'Mark as Paid') {
+                $('#payment_type_row').show();
+                $('#receipt_upload_row').show();
+                $('#btn_mark_paid').show();
+                $('#accountant_query_row').show();
+            }
+        }
+
+        // Run on change
+        $('#status_selector').on('change', toggleFieldsAndButtons);
+
+        // Run on page load
+        toggleFieldsAndButtons();
+
+
+        // Form submit validation (optional double-check)
+        $('#reimbursement-action-form').on('submit', function (e) {
+            const paymentType = $('#payment_type').val();
+            const fileInput = $('#paid_receipt_input').val();
+            const status_selector = $('#status_selector').val();
+            const comment = $('#accountant_comment').val();
+            
+            if(status_selector === 'Mark as Paid'){
+
+                // Check if both fields are empty
+                if ((paymentType === '' || paymentType === null) && fileInput === '') {
+                    toastr.error('Please select Payment Type and upload Paid Receipt.');
+                    e.preventDefault();
+                    return false;
+                }
+
+                @if ($reimbursement->paid_receipt == '' || $reimbursement->paid_receipt == null)
+                    if (paymentType === 'Online' && fileInput === '') {
+                        toastr.error('Please upload the Paid Receipt when payment type is Online.');
+                        e.preventDefault();
+                        return false;
+                    }
+                @endif
+            }
+
+
+            if (status_selector === 'Query Raised' && comment.trim() === '') {
+                toastr.error('Please enter the accountant\'s query comment.');
+                e.preventDefault();
+                return false;
+            }
+
+            
+        });
+    });
+</script>
 
 {{ Form::close() }}

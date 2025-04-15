@@ -70,6 +70,10 @@
                                             <div class="badge bg-danger p-2 px-3 ">Not Received</div>
                                         @elseif($reimbursement->status == "Received")
                                             <div class="badge bg-success p-2 px-3 ">Received</div>
+                                        @elseif($reimbursement->status == "Query_Raised")
+                                            <div class="badge bg-warning p-2 px-3 ">Query Raised</div>
+                                        @elseif($reimbursement->status == "Submitted")
+                                            <div class="badge bg-success p-2 px-3 ">Submitted</div>
                                         @endif
                                     </td>
                                     <td>
@@ -159,7 +163,7 @@
                                                 </div>
                                             @endif
 
-                                            @if ($reimbursement->status == "Draft")
+                                            @if ($reimbursement->status == "Draft" || (\Auth::user()->type == 'employee' && $reimbursement->status == "Query_Raised"))
                                                 <div class="action-btn bg-info me-2">
                                                     <a href="#" class="mx-3 btn btn-sm align-items-center"
                                                         data-size="lg"
@@ -170,7 +174,7 @@
                                                         <span class="text-white"><i class="ti ti-pencil"></i></span>
                                                     </a>
                                                 </div>
-                                                @if (\Auth::user()->type != 'CEO')
+                                                @if (\Auth::user()->type != 'CEO' && $reimbursement->status == "Draft")
                                                     <div class="action-btn bg-danger">
                                                         {!! Form::open([
                                                             'method' => 'DELETE',

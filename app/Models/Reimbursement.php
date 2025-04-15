@@ -23,6 +23,8 @@ class Reimbursement extends Model
         'payment_type',
         'paid_receipt',
         'follow_up_email',
+        'accountant_comment',
+        'self_receipt',
     ];
 
     protected $casts = [

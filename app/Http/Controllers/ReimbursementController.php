@@ -11,13 +11,15 @@ use App\Models\User;
 use Carbon\Carbon;
 use App\Models\Utility;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\ReimbursementApprovedMail;
-use App\Mail\ReimbursementNotApprovedMail;
-use App\Mail\ReimbursementRequestMail;
-use App\Mail\ReimbursementPaidMail;
-use App\Mail\ReimbursementNotReceivedMail;
-use App\Mail\ReimbursementYesReceivedMail;
-use App\Mail\ReimbursementReminderApprovalMail;
+use App\Mail\Reimbursement\ReimbursementApprovedMail;
+use App\Mail\Reimbursement\ReimbursementNotApprovedMail;
+use App\Mail\Reimbursement\ReimbursementRequestMail;
+use App\Mail\Reimbursement\ReimbursementPaidMail;
+use App\Mail\Reimbursement\ReimbursementNotReceivedMail;
+use App\Mail\Reimbursement\ReimbursementYesReceivedMail;
+use App\Mail\Reimbursement\ReimbursementReminderApprovalMail;
+use App\Mail\Reimbursement\ReimbursementResubmittingtMail;
+use App\Mail\Reimbursement\ReimbursementQueryRaisedMail;
 
 
 class ReimbursementController extends Controller
@@ -57,12 +59,14 @@ class ReimbursementController extends Controller
 
     public function store(Request $request)
     {
+        $settings = Utility::settings();
         $request->validate([
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
             'description' => 'required|string',
             'expense_date' => 'required|date',
             'file' => 'nullable|mimes:jpg,png,pdf,doc,docx|max:2048',
+            'self_receipt' => 'nullable|boolean',
         ]);
 
         
@@ -91,11 +95,14 @@ class ReimbursementController extends Controller
                 'file_path' => $fileName, 
                 'status' => $request->status,
                 'expense_date' => $request->expense_date,
+                'self_receipt' => $request->has('self_receipt') ? 1 : 0,
             ]);
 
-            $toEmail = 'rmb@miraclecloud-technology.com';
-            //$toEmail = 'mctsource@miraclecloud-technology.com';
-            Mail::to($toEmail)->send(new ReimbursementRequestMail($reimbursement));
+            if($settings['is_email_trigger'] === 'on'){
+                $toEmail = 'rmb@miraclecloud-technology.com';
+                //$toEmail = 'mctsource@miraclecloud-technology.com';
+                Mail::to($toEmail)->send(new ReimbursementRequestMail($reimbursement));
+            }
         }else{
             Reimbursement::create([
                 'employee_id' => Auth::id(),
@@ -106,6 +113,7 @@ class ReimbursementController extends Controller
                 'file_path' => $fileName, 
                 'status' => $request->status,
                 'expense_date' => $request->expense_date,
+                'self_receipt' => $request->has('self_receipt') ? 1 : 0,
             ]);
         }
         
@@ -150,6 +158,8 @@ class ReimbursementController extends Controller
 
     public function update(Request $request, $id)
     {
+        $settings = Utility::settings();
+
         $request->validate([
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
@@ -159,38 +169,56 @@ class ReimbursementController extends Controller
         ]);
 
         $reimbursement = Reimbursement::findOrFail($id);
+        $status = $request->status ?? 'Pending';
 
-        // Handle File Upload
+        
+
+        if($status == "Submitted"){
+            $updateData = [
+                'title' => $request->title,
+                'amount' => $request->amount,
+                'description' => $request->description,
+                'expense_date' => $request->expense_date,
+                'status' => $status,
+                'accountant_comment' => '',
+                'self_receipt' => $request->has('self_receipt') ? 1 : 0,
+            ];
+        }else{
+            // Prepare update data
+            $updateData = [
+                'title' => $request->title,
+                'amount' => $request->amount,
+                'description' => $request->description,
+                'expense_date' => $request->expense_date,
+                'status' => $status,
+                'self_receipt' => $request->has('self_receipt') ? 1 : 0,
+            ]; 
+        }
+        
+
+        // Handle file upload
         if ($request->hasFile('file_path')) {
             $file = $request->file('file_path');
             $fileName = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads/reimbursements'), $fileName);
-            $reimbursement->file_path = $fileName;
+            $updateData['file_path'] = $fileName;
         }
 
-        // Update reimbursement record
-        if($request->status == 'Pending'){
-            $reimbursement->update([
-                'title' => $request->title,
-                'amount' => $request->amount,
-                'description' => $request->description,
-                'expense_date' => $request->expense_date,
-                'status' => $request->status ?? 'Pending',
-            ]);
-            
-            $toEmail = 'rmb@miraclecloud-technology.com';
-            // $toEmail = 'mctsource@miraclecloud-technology.com';
-            Mail::to($toEmail)->send(new ReimbursementRequestMail($reimbursement));
-        }else{
-            $reimbursement->update([
-                'title' => $request->title,
-                'amount' => $request->amount,
-                'description' => $request->description,
-                'expense_date' => $request->expense_date,
-                'status' => $request->status ?? 'Pending'
-            ]);
+        $reimbursement->update($updateData);
+
+        if($settings['is_email_trigger'] === 'on'){
+            if($status == 'Pending'){
+                $toEmail = 'rmb@miraclecloud-technology.com';
+                // $toEmail = 'mctsource@miraclecloud-technology.com';
+                Mail::to($toEmail)->send(new ReimbursementRequestMail($reimbursement));
+            }
+
+            if($status == 'Submitted'){
+                $toEmail = 'nkalma@miraclecloud-technology.com';
+                // $toEmail = 'mctsource@miraclecloud-technology.com';
+                Mail::to($toEmail)->send(new ReimbursementResubmittingtMail($reimbursement));
+            }
         }
-        
         
 
         return redirect()->route('reimbursements.index')->with('success', 'Reimbursement updated successfully.');
@@ -203,16 +231,39 @@ class ReimbursementController extends Controller
         date_default_timezone_set($settings['timezone']); // Set timezone
         // echo "<pre>";print_r($request->status);exit;
 
+
         $Reimbursement = Reimbursement::find($request->reimbursement_id);
+
+        if ($request->status == 'Query Raised') {
+            
+            $Reimbursement->status = 'Query_Raised';
+            $Reimbursement->accountant_comment = $request->accountant_comment;
+            $Reimbursement->payment_type = null;
+            $Reimbursement->paid_at = null;
+            $Reimbursement->paid_by = null;
+            $Reimbursement->paid_receipt = null;
+            $Reimbursement->save();
+            
+            $toEmail=$Reimbursement->employee->email;
+            
+            Mail::to($toEmail)->send(new ReimbursementQueryRaisedMail($Reimbursement));
+
+            return redirect()->route('reimbursements.index')->with('success', __('Reimbursement status updated to Query Raised. Notification email sent to the employee successfully.') . 
+                ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
+                '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+            
+        }
 
         if ($request->status == 'Send Follow Up Email') {
             
             $Reimbursement->follow_up_email = 1;
             $Reimbursement->save();
             
-            $toEmail='rmb@miraclecloud-technology.com';
-            
-            Mail::to($toEmail)->send(new ReimbursementReminderApprovalMail($Reimbursement));
+            if($settings['is_email_trigger'] === 'on'){
+                 $toEmail='rmb@miraclecloud-technology.com';
+                Mail::to($toEmail)->send(new ReimbursementReminderApprovalMail($Reimbursement));
+            }
+           
 
             return redirect()->route('reimbursements.index')->with('success', __('Follow-up email sent successfully!') . 
                 ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
@@ -225,10 +276,10 @@ class ReimbursementController extends Controller
             $Reimbursement->status = 'Not_Received';
             $Reimbursement->save();
             
-            $toEmail='nkalma@miraclecloud-technology.com';
-            
-            
-            Mail::to($toEmail)->send(new ReimbursementNotReceivedMail($Reimbursement));
+            if($settings['is_email_trigger'] === 'on'){
+                $toEmail='nkalma@miraclecloud-technology.com';
+                Mail::to($toEmail)->send(new ReimbursementNotReceivedMail($Reimbursement));
+            }
 
             return redirect()->route('reimbursements.index')->with('success', __('Reimbursement status successfully updated.') . 
                 ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
@@ -241,9 +292,10 @@ class ReimbursementController extends Controller
             $Reimbursement->status = 'Received';
             $Reimbursement->save();
             
-            $toEmail='nkalma@miraclecloud-technology.com';
-            
-            Mail::to($toEmail)->send(new ReimbursementYesReceivedMail($Reimbursement));
+            if($settings['is_email_trigger'] === 'on'){
+                $toEmail='nkalma@miraclecloud-technology.com';
+                Mail::to($toEmail)->send(new ReimbursementYesReceivedMail($Reimbursement));
+            }
 
             return redirect()->route('reimbursements.index')->with('success', __('Reimbursement status successfully updated.') . 
                 ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
@@ -258,7 +310,9 @@ class ReimbursementController extends Controller
             $Reimbursement->remark = $request->remark;
 
             // Send Email
-            Mail::to($Reimbursement->employee->email)->send(new ReimbursementApprovedMail($Reimbursement));
+            if($settings['is_email_trigger'] === 'on'){
+                Mail::to($Reimbursement->employee->email)->send(new ReimbursementApprovedMail($Reimbursement));
+            }
             
             
         }
@@ -269,7 +323,9 @@ class ReimbursementController extends Controller
             $Reimbursement->remark = $request->remark;
 
             // Send Email
-            Mail::to($Reimbursement->employee->email)->send(new ReimbursementNotApprovedMail($Reimbursement));
+            if($settings['is_email_trigger'] === 'on'){
+                Mail::to($Reimbursement->employee->email)->send(new ReimbursementNotApprovedMail($Reimbursement));
+            }
         }
 
         if ($request->status == 'Mark as Paid') {
@@ -292,8 +348,11 @@ class ReimbursementController extends Controller
                 $Reimbursement->paid_receipt = $fileName;
             }
 
-            // Send Email
-            Mail::to($Reimbursement->employee->email)->send(new ReimbursementPaidMail($Reimbursement));
+            if($settings['is_email_trigger'] === 'on'){
+                // Send Email
+                Mail::to($Reimbursement->employee->email)->send(new ReimbursementPaidMail($Reimbursement));
+            }
+
         }else{
             $Reimbursement->status = $request->status;
         }

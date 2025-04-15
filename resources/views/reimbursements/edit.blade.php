@@ -44,6 +44,11 @@
                         </a>
                     </p>
                 @endif
+
+                <div class="form-check mt-2">
+                    {{ Form::checkbox('self_receipt', 1, $reimbursement->self_receipt ?? false, ['class' => 'form-check-input', 'id' => 'self_receipt']) }}
+                    <label class="form-check-label" for="self_receipt">{{ __('Self-Generated Receipt') }}</label>
+                </div>
             </div>
         </div>
     </div>
@@ -52,16 +57,26 @@
         <a href="{{ route('reimbursements.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
 
         <!-- Hidden Input to Detect Draft Submission -->
-        <input type="hidden" name="status" id="status" value="Pending">
-
+        <!-- <input type="hidden" name="status" id="status" value="Pending"> -->
+        <input type="hidden" name="status" id="status" value="{{ $reimbursement->status }}">
         @if($reimbursement->status == 'Draft')
             <!-- Save as Draft Button (Only Visible If Current Status is Draft) -->
             <button type="submit" class="btn btn-danger" onclick="document.getElementById('status').value='Draft'">
                 {{ __('Save as Draft') }}
             </button>
         @endif
+
+        @if(in_array($reimbursement->status, ['Query_Raised']))
+            <button type="submit" class="btn btn-danger" onclick="document.getElementById('status').value='Submitted'">
+                {{ __('Submit Response') }}
+            </button>
+        @else
+            <button type="submit" class="btn btn-primary" onclick="document.getElementById('status').value='Pending'">
+                {{ __('Apply Request') }}
+            </button>
+        @endif
         
-        <button type="submit" class="btn btn-primary" name="status" value="Pending">{{ __('Apply Request') }}</button>
+        <!-- <button type="submit" class="btn btn-primary" name="status" value="Pending">{{ __('Apply Request') }}</button> -->
         
     </div>
 {{ Form::close() }}

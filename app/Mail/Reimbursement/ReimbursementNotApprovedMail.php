@@ -37,7 +37,7 @@ class ReimbursementNotApprovedMail extends Mailable
                     ->replyTo($fromEmail, ucfirst($fromName))
                     ->cc($emails)
                     ->subject('Reimbursement Not Approved - ' . $this->reimbursement->title.' #R00'.$this->reimbursement->id)
-                    ->view('email.reimbursement_not_approved')
+                    ->view('email.reimbursement.reimbursement_not_approved')
                     ->with([
                         'reimbursement' => $this->reimbursement
                     ]);

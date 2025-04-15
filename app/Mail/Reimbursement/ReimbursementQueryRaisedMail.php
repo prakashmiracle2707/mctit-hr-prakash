@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class ReimbursementRequestMail extends Mailable
+class ReimbursementQueryRaisedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -19,13 +19,15 @@ class ReimbursementRequestMail extends Mailable
 
     public function build()
     {
-        $emails = [$this->reimbursement->employee->email, 'hchavda@miraclecloud-technology.com', 'nkalma@miraclecloud-technology.com'];
+        $emails = ['rmb@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com', 'nkalma@miraclecloud-technology.com'];
+        $fromEmail='nkalma@miraclecloud-technology.com';
+        $fromName='Nilesh Kalma';
 
-        $mail = $this->from($this->reimbursement->employee->email, ucfirst($this->reimbursement->employee->name)) 
-                    ->replyTo($this->reimbursement->employee->email, ucfirst($this->reimbursement->employee->name))
+        $mail = $this->from($fromEmail, ucfirst($fromName)) 
+                    ->replyTo($fromEmail, ucfirst($fromName))
                     ->cc($emails)
-                    ->subject('New Reimbursement Request - ' . $this->reimbursement->title .' #R00'.$this->reimbursement->id)
-                    ->view('email.reimbursement_new')
+                    ->subject('Query Raised: Action Required on Your Reimbursement Request - ' . $this->reimbursement->title .' #R00'.$this->reimbursement->id)
+                    ->view('email.reimbursement.reimbursement_QueryRaised')
                     ->with([
                         'reimbursement' => $this->reimbursement
                     ]);
