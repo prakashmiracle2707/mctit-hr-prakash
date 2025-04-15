@@ -737,17 +737,23 @@
                                         <td>{{ !empty($leave->employee_id) ? $leave->employees->name : '' }}
                                             </td>
                                         <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
-                                            <br />
+                                            
                                             @switch($leave->half_day_type)
                                                 @case('morning')
+                                                    <br />
                                                     <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
                                                     @break
                                                 @case('afternoon')
+                                                    <br />
                                                     <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
                                                     @break
                                                 @default
                                                     <div></div>
                                             @endswitch
+
+                                            @if ($leave->leave_type_id == 5 && !empty($leave->early_time))
+                                                <span class="badge bg-primary">{{ $leave->early_time }}</span>
+                                            @endif
                                         </td>
                                         <td>
                                             @if($leave->start_date == $leave->end_date)
