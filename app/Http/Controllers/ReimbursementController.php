@@ -11,15 +11,15 @@ use App\Models\User;
 use Carbon\Carbon;
 use App\Models\Utility;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\Reimbursement\ReimbursementApprovedMail;
-use App\Mail\Reimbursement\ReimbursementNotApprovedMail;
-use App\Mail\Reimbursement\ReimbursementRequestMail;
-use App\Mail\Reimbursement\ReimbursementPaidMail;
-use App\Mail\Reimbursement\ReimbursementNotReceivedMail;
-use App\Mail\Reimbursement\ReimbursementYesReceivedMail;
-use App\Mail\Reimbursement\ReimbursementReminderApprovalMail;
-use App\Mail\Reimbursement\ReimbursementResubmittingtMail;
-use App\Mail\Reimbursement\ReimbursementQueryRaisedMail;
+use App\Mail\ReimbursementApprovedMail;
+use App\Mail\ReimbursementNotApprovedMail;
+use App\Mail\ReimbursementRequestMail;
+use App\Mail\ReimbursementPaidMail;
+use App\Mail\ReimbursementNotReceivedMail;
+use App\Mail\ReimbursementYesReceivedMail;
+use App\Mail\ReimbursementReminderApprovalMail;
+use App\Mail\ReimbursementResubmittingtMail;
+use App\Mail\ReimbursementQueryRaisedMail;
 
 
 class ReimbursementController extends Controller

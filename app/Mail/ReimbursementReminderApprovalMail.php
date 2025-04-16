@@ -21,6 +21,7 @@ class ReimbursementReminderApprovalMail extends Mailable
     {
 
         $emails = ['nkalma@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com'];
+        
         $emails[] = $this->reimbursement->employee->email;
         //$emails = ['prakashn@miraclecloud-technology.com'];
 
