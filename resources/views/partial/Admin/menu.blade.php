@@ -353,6 +353,17 @@
                                 class="ti ti-microphone"></i></span><span class="dash-mtext">{{ __('Manage Leave') }}</span></a>
                 </li>
             @endcan
+
+            @php
+                $employee = App\Models\Employee::where('user_id', \Auth::user()->id)->first();
+            @endphp
+
+            @if (isset($employee)  && $employee->is_manager === 1)
+                <li class="dash-item {{ Request::segment(1) == 'leave-employee' ? 'active' : '' }}">
+                    <a href="{{ route('leave-employee.index') }}" class="dash-link"><span class="dash-micon"><i
+                                class="ti ti-users"></i></span><span class="dash-mtext">{{ __('Employee Leave') }}</span></a>
+                </li>
+            @endif
             <!-- Leave-->
 
             <!-- performance-->

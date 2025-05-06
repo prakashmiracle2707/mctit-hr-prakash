@@ -53,6 +53,8 @@
             </div>
         </div>
 
+        
+
         <div class="col-md-6" id="time_dropdown_wrapper" style="display: none;">
             <div class="form-group">
                 {{ Form::label('leave_time', __('Select Time'), ['class' => 'col-form-label']) }}
@@ -73,15 +75,32 @@
         </div>
     </div>
 
-    <div class="row">
+    <!-- <div class="row">
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('approver', __('To (Approver)'), ['class' => 'col-form-label']) }}
                 <input type="text" class="form-control" id="approver" name="approver" value="Ravi Brahmbhatt" disabled>
             </div>
         </div>
-
-         <!-- New CC Mail Dropdown -->
+    </div> -->
+    <div class="row">
+        <!-- <div class="col-md-6">
+            <div class="form-group">
+                {{ Form::label('managers[]', __('Managers'), ['class' => 'col-form-label']) }}<x-required></x-required>
+                {{ Form::select('managers[]', 
+                    $managerList, 
+                    old('managers', $defaultManagerList), 
+                    ['class' => 'form-control select2', 'multiple' => 'multiple', 'id' => 'managers']
+                ) }}
+                <small class="text-muted">{{ __('You can select multiple reporting managers.') }}</small>
+            </div>
+        </div> -->
+        <div class="col-md-6">
+            <div class="form-group">
+                {{ Form::label('approver', __('To (Approver)'), ['class' => 'col-form-label']) }}
+                <input type="text" class="form-control" id="approver" name="approver" value="Ravi Brahmbhatt" disabled>
+            </div>
+        </div>
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('cc_email', __('CC Email'), ['class' => 'col-form-label']) }}<x-required></x-required>
@@ -191,7 +210,7 @@
         $('#leave_type_id').on('change', function () {
             var selectedValue = $(this).val();
             
-            if (selectedValue == "1" || selectedValue == "3" || selectedValue == "4" || selectedValue == "5") {
+            if (selectedValue == "3" || selectedValue == "4" || selectedValue == "5") {
                 $('#half_day_type').val('full_day').prop('disabled', true);
             } else {
                 $('#half_day_type').prop('disabled', false);

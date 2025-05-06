@@ -197,7 +197,8 @@ class HomeController extends Controller
                 } else {
                     // For non-employees (e.g., admin)
                     $leaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
-                        ->where('status', '=', 'Pending')  
+                        // ->where('status', '=', 'Pending')  
+                        ->whereIn('status', ['Partially_Approved', 'Manager_Approved'])
                         ->with(['employees', 'leaveType']) 
                         ->orderBy('start_date', 'desc')
                         ->get();
@@ -368,8 +369,9 @@ class HomeController extends Controller
                                 ->where(function ($query) use ($user) {
                                     $query->whereJsonContains('cc_email', (string) ($user->employee->id ?? 0));
                                 })
+                                ->where('status', '!=', 'Draft')
                                 ->with(['employees', 'leaveType'])
-                                ->latest()
+                                ->orderBy('start_date', 'desc')
                                 ->get();
 
                 /* *************** New Add Start ****************************/
@@ -625,7 +627,7 @@ class HomeController extends Controller
 
                 // Skip weekends and holidays
                 if (!$date->isWeekend() && !in_array($formattedDate, $holidays)) {
-                    if($leave_type_id == 2 && $half_day_type != 'full_day'){
+                    if(($leave_type_id == 1 || $leave_type_id == 2) && $half_day_type != 'full_day'){
                        $totalLeaveDays = $totalLeaveDays + 0.5; 
                     }else{
                        $totalLeaveDays++; 

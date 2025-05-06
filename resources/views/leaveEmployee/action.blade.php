@@ -1,11 +1,4 @@
 {{ Form::open(['url' => 'leave/changeaction', 'method' => 'post']) }}
-
-@php
-    use Carbon\Carbon;
-    $endDate = Carbon::parse($leave->end_date);
-    $hideFooter = Carbon::now()->diffInDays($endDate, false) < -5;
-@endphp
-
 <div class="modal-body">
     <div class="row">
         <div class="col-12">
@@ -66,7 +59,7 @@
                 </tr> -->
                 <tr>
                     <th>{{ __('Leave Reason') }}</th>
-                    <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 300px;">{{ !empty($leave->leave_reason) ? $leave->leave_reason : '' }}</td>
+                    <td>{{ !empty($leave->leave_reason) ? $leave->leave_reason : '' }}</td>
                 </tr>
                 <tr>
                     <th>{{ __('Status') }}</th>
@@ -81,8 +74,6 @@
                             <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
                         @elseif ($leave->status == 'Partially_Approved')
                             <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
-                        <!-- @elseif (($leave->status == 'In_Process' || $leave->status == 'Manager_Approved' || $leave->status == 'Partially_Approved') && \Auth::user()->type === 'employee')
-                            <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
                         @elseif($leave->status == 'Approved')
                             <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
                         @elseif($leave->status == "Reject")
@@ -100,11 +91,7 @@
                 <tr>
                     <th>{{ __('Remark') }}</th>
                     <td>
-                        @if (!$hideFooter && in_array($leave->status, ['Manager_Approved', 'Partially_Approved', 'Reject','Approved','Pre-Approved']) && Auth::user()->type != 'employee' && $leave->status != "Cancelled")
-                            {{ Form::textarea('remark', $leave->remark, ['class' => 'form-control grammer_textarea', 'placeholder' => __('Leave Remark'), 'rows' => '3']) }}
-                        @else
-                            {{ !empty($leave->remark) ? $leave->remark : '' }}
-                        @endif
+                        {{ !empty($leave->remark) ? $leave->remark : '' }}
                     </td>
                 </tr>
                 @if($leave->status == "Cancelled")
@@ -156,7 +143,7 @@
                                 <td>
                                     {{ !empty($managerEntry->action_date) ? \Carbon\Carbon::parse($managerEntry->action_date)->format('d/m/Y') : '-' }}
                                 </td>
-                                <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 300px;">{{ $managerEntry->remark ?? '-' }}</td>
+                                <td>{{ $managerEntry->remark ?? '-' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -165,15 +152,6 @@
         </div>
     </div>
 </div>
-
-
-
-@if (!$hideFooter && in_array($leave->status, ['Manager_Approved', 'Partially_Approved', 'Reject','Approved','Pre-Approved']) && (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'CEO') && $leave->status != "Cancelled")
-<div class="modal-footer">
-    <input type="submit" value="{{ __('Approved') }}" class="btn btn-success rounded" name="status">
-    <input type="submit" value="{{ __('Reject') }}" class="btn btn-danger rounded" name="status">
-</div>
-@endif
 
 
 {{ Form::close() }}

@@ -74,21 +74,53 @@
 
     </div>
 
-    <div class="row">
+    <!-- <div class="row">
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('approver', __('To (Approver)'), ['class' => 'col-form-label']) }}
                 <input type="text" class="form-control" id="approver" name="approver" value="Ravi Brahmbhatt" disabled>
             </div>
         </div>
+    </div> -->
+
+    <div class="row">
+        
+        <!-- <div class="col-md-6">
+            <div class="form-group">
+                {{ Form::label('managers', __('Managers'), ['class' => 'col-form-label']) }}<x-required></x-required>
+                {{ Form::select('managers[]', 
+                    $managerList, 
+                    $assignedManagers ?? [], 
+                    [
+                        'class' => 'form-control select2',
+                        'multiple' => 'multiple',
+                        'id' => 'managers'
+                    ]) 
+                }}
+                <small class="text-muted">You can select multiple managers for approval tracking.</small>
+            </div>
+        </div> -->
+
+        <div class="col-md-6">
+            <div class="form-group">
+                {{ Form::label('approver', __('To (Approver)'), ['class' => 'col-form-label']) }}
+                <input type="text" class="form-control" id="approver" name="approver" value="Ravi Brahmbhatt" disabled>
+            </div>
+        </div>
+
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('cc_email', __('CC Email'), ['class' => 'col-form-label']) }}<x-required></x-required>
                 {{ Form::select('cc_email_id[]', 
-                    $employeesList->pluck('name', 'id'), 
-                    $leave->cc_email,
-                    ['class' => 'form-control select2', 'id' => 'cc_email_id', 'multiple' => 'multiple']
-                ) }}
+                    $employeesList, 
+                    $leave->cc_email ?? [],
+                    [   
+                        'class' => 'form-control select2', 
+                        'multiple' => 'multiple',
+                        'id' => 'cc_email_id' 
+                        
+                    ]) 
+                }}
                 <span style="color:#6f42c1;font-size: 11px;"><b>Note :</b>Nilesh Kalma is added by default to cc.</span>
             </div>
         </div>
@@ -205,7 +237,7 @@
 
         var leave_type_id = $('#leave_type_id').val();
 
-        if (leave_type_id == "1" || leave_type_id == "3" || leave_type_id == "4") {
+        if (leave_type_id == "3" || leave_type_id == "4") {
             $('#half_day_type').val('full_day').prop('disabled', true);
             if(leave_type_id == "4"){
                 $('#end_date').prop('disabled', true);
@@ -217,7 +249,7 @@
         $('#leave_type_id').on('change', function () {
             var selectedValue = $(this).val();
             
-            if (selectedValue == "1" || selectedValue == "3" || selectedValue == "4") {
+            if (selectedValue == "3" || selectedValue == "4") {
                 $('#half_day_type').val('full_day').prop('disabled', true);
             } else {
                 $('#half_day_type').prop('disabled', false);

@@ -849,7 +849,11 @@ class ReportController extends Controller
 
                 if ($employeeAttendance && $employeeAttendance->status === 'Present') {
                     $attendanceStatus[$date] = 'P';
-                    if ($day != 'Saturday' && $day != 'Sunday') {
+                    if ($day != 'Saturday' && $day != 'Sunday' && !$isSickLeaveDay && !$isCasualLeave) {
+                        $Present++;
+                    }
+
+                    if ($isCasualLeave && in_array($isCasualLeave->half_day_type, ['morning', 'afternoon'])) {
                         $Present++;
                     }
 
@@ -866,6 +870,16 @@ class ReportController extends Controller
                         $Present -= 0.5;
                         $attendanceStatus[$date] = 'H/F';
                     }
+
+                    if($isCasualLeave && $isCasualLeave->half_day_type === 'full_day' && $day != 'Saturday' && $day != 'Sunday'){
+                        $attendanceStatus[$date] = 'L';
+                        $cfl++;
+                    }
+
+                    if ($isSickLeaveDay) {
+                        $attendanceStatus[$date] = 'L';
+                        $sl++;
+                    }
                 } elseif ($employeeAttendance && $employeeAttendance->status === 'Leave') {
                     $attendanceStatus[$date] = 'L';
                     $lwp++;
@@ -873,7 +887,7 @@ class ReportController extends Controller
                     if ($isSickLeaveDay) {
                         $attendanceStatus[$date] = 'L';
                         $sl++;
-                    } elseif ($isCasualLeave && $isCasualLeave->half_day_type === 'full_day') {
+                    } elseif ($isCasualLeave && $isCasualLeave->half_day_type === 'full_day' && $day != 'Saturday' && $day != 'Sunday') {
                         $attendanceStatus[$date] = 'L';
                         $cfl++;
                     } elseif ($isCasualLeave && in_array($isCasualLeave->half_day_type, ['morning', 'afternoon'])) {

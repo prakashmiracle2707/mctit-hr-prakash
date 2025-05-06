@@ -88,6 +88,7 @@ use App\Http\Controllers\SalarySlipController;
 use App\Http\Controllers\ReimbursementController;
 use App\Http\Controllers\ITTicketController;
 use App\Http\Controllers\ComplaintsController;
+use App\Http\Controllers\LeaveEmployeeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -745,6 +746,7 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+
     Route::get('calender/leave', [LeaveController::class, 'calender'])->name('leave.calender')->middleware(
         [
             'auth',
@@ -760,7 +762,24 @@ Route::group(['middleware' => ['verified']], function () {
     );
 
     Route::get('leave/{id}/cancel', [LeaveController::class, 'cancelView'])->name('leave.cancel.view');
-Route::post('leave/{id}/cancel', [LeaveController::class, 'cancelStore'])->name('leave.cancel.store');
+    Route::post('leave/{id}/cancel', [LeaveController::class, 'cancelStore'])->name('leave.cancel.store');
+
+    Route::resource('leave-employee', LeaveEmployeeController::class)->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
+    Route::get('leave-employee/{id}/action', [LeaveEmployeeController::class, 'action'])->name('leave-employee.action')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
+    Route::get('leave-employee/{id}/quick-approve', [LeaveEmployeeController::class, 'quickApproveForm'])->name('leave-employee.quick.form');
+    Route::post('leave-employee/{id}/quick-approve', [LeaveEmployeeController::class, 'quickApproveAction'])->name('leave-employee.quick.action');
     
     Route::get('ticket/{id}/reply', [TicketController::class, 'reply'])->name('ticket.reply')->middleware(
         [

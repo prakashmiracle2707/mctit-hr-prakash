@@ -34,6 +34,8 @@ class Employee extends Model
         'account_type',
         'salary',
         'created_by',
+        'is_manager',
+        'manages_id',
     ];
 
     public function documents()

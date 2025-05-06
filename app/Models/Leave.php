@@ -36,4 +36,21 @@ class Leave extends Model
     {
         return $this->hasOne('App\Models\Employee', 'id', 'employee_id');
     }
+
+    public function managerUsers()
+    {
+        return $this->belongsToMany(Employee::class, 'users', 'id', 'id')
+            ->whereIn('id', $this->managers ?? []);
+    }
+
+    public function managers()
+    {
+        return $this->hasMany(LeaveManager::class);
+    }
+
+    // In LocalLeave model
+    public function leaveManagers()
+    {
+        return $this->hasMany(\App\Models\LeaveManager::class, 'leave_id');
+    }
 }
