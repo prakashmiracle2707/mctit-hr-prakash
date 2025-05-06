@@ -78,12 +78,19 @@
                                 <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                                     <div class="btn-box">
                                         {{ Form::label('month', __('Month'), ['class' => 'form-label']) }}
-                                        {{ Form::month('month', request('month'), ['class' => 'month-btn form-control current_date', 'autocomplete' => 'off']) }}
+                                        {{ Form::month('month', request('month'), [
+                                                'class' => 'month-btn form-control current_date',
+                                                'autocomplete' => 'off',
+                                                'id' => 'monthInput'
+                                            ]) }}
                                     </div>
                                 </div>
                                 <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                                     {{ Form::label('employee_id', __('Employee'), ['class' => 'form-label']) }}
-                                    {{ Form::select('employee_id', ['' => 'All'] + $employeeList->toArray(), request('employee_id'), ['class' => 'form-control select']) }}
+                                    {{ Form::select('employee_id', ['' => 'All'] + $employeeList->toArray(), request('employee_id'), [
+                                        'class' => 'form-control select',
+                                        'id' => 'employeeSelect'
+                                    ]) }}
                                 </div>
                             </div>
                         </div>
@@ -472,12 +479,28 @@
     </script>
 
     <script>
-        $(document).ready(function() {
-            var now = new Date();
-            var month = (now.getMonth() + 1);
-            if (month < 10) month = "0" + month;
-            var today = now.getFullYear() + '-' + month;
-            $('.current_date').val(today);
+        $(document).ready(function () {
+            // Get URL parameter
+            function getUrlParameter(name) {
+                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+                var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+                var results = regex.exec(location.search);
+                return results === null ? null : decodeURIComponent(results[1].replace(/\+/g, ' '));
+            }
+
+            var monthFromUrl = getUrlParameter('month');
+
+            if (monthFromUrl) {
+                $('.current_date').val(monthFromUrl);
+            } else {
+                // If not in URL, use current month
+                var now = new Date();
+                var year = now.getFullYear();
+                var month = (now.getMonth() + 1).toString().padStart(2, '0');
+                var today = year + '-' + month;
+                $('.current_date').val(today);
+            }
         });
     </script>
+
 @endpush

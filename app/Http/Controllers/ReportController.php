@@ -517,13 +517,16 @@ class ReportController extends Controller
 
         $employees = $employeeQuery->pluck('name', 'id');
 
+        $RequestMonth=$request->month;
         // Parse the input month
         $selectedMonth = Carbon::parse($request->month); // 2025-03
+
         $monthNumber = (int) $selectedMonth->format('m');
         $year = (int) $selectedMonth->format('Y');
 
         // Determine Financial Year start year
         $fyStartYear = $monthNumber >= 4 ? $year : $year - 1;
+
 
         // Get the financial year
         $financialYear = FinancialYear::whereYear('start_date', $fyStartYear)->first();
@@ -535,6 +538,9 @@ class ReportController extends Controller
         // Now you have the full Financial Year
         $startDate = Carbon::parse($financialYear->start_date);
         $endDate = Carbon::parse($financialYear->end_date);
+
+
+        
 
         if ($endDate->isFuture()) {
             $endDate = Carbon::now();
@@ -563,8 +569,10 @@ class ReportController extends Controller
         foreach ($months as $monthInfo) {
             $request->merge(['month' => $monthInfo['value']]);
 
+            
             // Pass cumulative leave usage to processMonthlyAttendance
             $monthly = $this->processMonthlyAttendance($request, $employees, $totalLeaveList, $leaveUsageTrack);
+
 
             // Save the new end balances to be used as "start" for next month
             foreach ($monthly as $attendance) {
@@ -583,9 +591,11 @@ class ReportController extends Controller
             }
 
             $attendanceData[$monthInfo['label']] = $monthly;
+
+            
         }
 
-        $monthKey = Carbon::parse($request->month)->format('F-Y');
+        $monthKey = Carbon::parse($RequestMonth)->format('F-Y');
 
         $employeesAttendance = $attendanceData[$monthKey] ?? [];
 
@@ -593,7 +603,9 @@ class ReportController extends Controller
 
 
         // Determine selected month or default to now
-        $selectedDateArray = !empty($request->month) ? Carbon::parse($request->month) : Carbon::now();
+        
+
+        $selectedDateArray = !empty($RequestMonth) ? Carbon::parse($RequestMonth) : Carbon::now();
         $month = $selectedDateArray->format('m');
         $year = $selectedDateArray->format('Y');
         $curMonth = $selectedDateArray->format('M-Y');
