@@ -32,6 +32,18 @@
 
 
         <div class="form-group col-lg-6 col-md-6">
+            {{ Form::label('client_ids', __('Clients'), ['class' => 'col-form-label']) }} <x-required></x-required>
+            {{ Form::select('client_ids[]', 
+                $clients, 
+                [],  // <-- empty array for create
+                ['class' => 'form-control select2', 'id' => 'client_ids', 'multiple' => 'multiple', 'placeholder' => __('Select Clients')]
+            ) }}
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('project_manager_id', __('Project Manager'), ['class' => 'col-form-label']) }} <x-required></x-required>
             {{ Form::select('project_manager_id[]', 
                 $employees, 
@@ -39,7 +51,6 @@
                 ['class' => 'form-control select2', 'id' => 'project_manager', 'multiple' => 'multiple', 'placeholder' => __('Select Project Manager')]
             ) }}
         </div>
-
     </div>
 
     <div class="row">

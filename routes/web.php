@@ -7,6 +7,7 @@ use App\Http\Controllers\AwardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\MeetingController;
@@ -280,6 +281,13 @@ Route::group(['middleware' => ['verified']], function () {
     );
 
     Route::resource('employee', EmployeeController::class)->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
+    Route::resource('client', ClientController::class)->middleware(
         [
             'auth',
             'XSS',
@@ -1486,6 +1494,11 @@ Route::group(['middleware' => ['verified']], function () {
 
     Route::get('/projects/{id}/manager-employees', [ProjectController::class, 'getManagerEmployeesByProject'])
     ->name('projects.manager.employees.by.project');
+
+    Route::get('/project/{id}/employees', [TicketController::class, 'getProjectEmployees'])
+    ->name('project.employees');
+
+    Route::post('/project/select', [TicketController::class, 'setSelectedProject'])->name('project.select');
 
     // IT Ticket Routes
     Route::resource('it-tickets', ITTicketController::class)->middleware([

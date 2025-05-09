@@ -2688,5 +2688,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(SecondaryRoleAssign::class, 'user_id');
     }
+
+    public function client()
+    {
+        return $this->hasOne(Client::class);
+    }
     
 }

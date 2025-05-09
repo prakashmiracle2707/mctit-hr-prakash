@@ -19,38 +19,58 @@
     @endif
 
     <div class="row">
+
         <div class="form-group col-md-6">
-            {{ Form::label('title', __('Subject'), ['class' => 'col-form-label']) }}
+            {{ Form::label('ticket_type_id', __('Ticket Type'), ['class' => 'col-form-label']) }} <x-required></x-required>
+            {{ Form::select('ticket_type_id', $ticketTypes, null, [
+                'class' => 'form-control select2',
+                'required' => true,
+                'placeholder' => __('Select Ticket Type')
+            ]) }}
+        </div>
+
+        <div class="form-group col-md-6">
+            {{ Form::label('priority_id', __('Priority'), ['class' => 'col-form-label']) }} <x-required></x-required>
+            {{ Form::select('priority_id', $ticketPriorities, $ticket->priority, [
+                'class' => 'form-control select2',
+                'required' => true,
+                'placeholder' => __('Select Priority')
+            ]) }}
+        </div>
+
+        <div class="form-group col-md-12">
+            {{ Form::label('title', __('Subject'), ['class' => 'col-form-label']) }} <x-required></x-required>
             {{ Form::text('title', null, ['class' => 'form-control', 'placeholder' => __('Enter Ticket Subject')]) }}
         </div>
+
+        <!-- <div class="form-group col-md-6">
+            {{ Form::label('project_id', __('Project'), ['class' => 'col-form-label']) }} <x-required></x-required>
+            {{ Form::select('project_id', $projects, $ticket->project_id, ['class' => 'form-control select2', 'id' => 'project_id','required' => 'required']) }}
+        </div> -->
+
         @if (\Auth::user()->type != 'employee')
             <div class="form-group col-md-6">
-                {{ Form::label('employee_id', __('Ticket for Employee'), ['class' => 'col-form-label']) }}
-                {{ Form::select('employee_id', $employees, null, ['class' => 'form-control select2']) }}
+                {{ Form::label('employee_id', __('Ticket for Employee'), ['class' => 'col-form-label']) }} <x-required></x-required>
+                {{ Form::select('employee_id', $employees, null, ['class' => 'form-control', 'id' => 'employee_id', 'required' => 'required']) }}
             </div>
         @endif
 
         <div class="form-group col-md-6">
-            <div class="form-group">
-                {{ Form::label('priority', __('Priority'), ['class' => 'col-form-label']) }}
-                <select name="priority" class="form-control">
-                    <option value="low" @if ($ticket->priority == 'low') selected @endif>{{ __('Low') }}
-                    </option>
-                    <option value="medium" @if ($ticket->priority == 'medium') selected @endif>{{ __('Medium') }}
-                    </option>
-                    <option value="high" @if ($ticket->priority == 'high') selected @endif>{{ __('High') }}
-                    </option>
-                    <option value="critical" @if ($ticket->priority == 'critical') selected @endif>
-                        {{ __('critical') }}
-                    </option>
-                </select>
-            </div>
+            {{ Form::label('start_date', __('Start Date'), ['class' => 'col-form-label']) }} <x-required></x-required>
+            {{ Form::date('start_date', $ticket->start_date, ['class' => 'form-control', 'autocomplete' => 'off']) }}
         </div>
+
+
         <div class="form-group col-md-6">
             <div class="form-group">
-                {{ Form::label('end_date', __('End Date'), ['class' => 'col-form-label']) }}
+                {{ Form::label('end_date', __('End Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
                 {{ Form::date('end_date', null, ['class' => 'form-control', 'autocomplete' => 'off']) }}
             </div>
+        </div>
+
+        <div class="form-group col-md-6">
+            {{ Form::label('status', __('Status'), ['class' => 'col-form-label']) }}
+            {{ Form::select('status', $ticketStatuses, $ticket->status, ['class' => 'form-control', 'placeholder' => __('Select Status')]) }}
         </div>
 
         <div class="form-group col-md-12">
@@ -88,15 +108,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="form-group">
-            {{ Form::label('status', __('Status'), ['class' => 'col-form-label']) }}
-            <select name="status" class="form-control " id="status">
-                <option value="close" @if ($ticket->status == 'close') selected @endif>{{ __('Close') }}</option>
-                <option value="open" @if ($ticket->status == 'open') selected @endif>{{ __('Open') }}</option>
-                <option value="onhold" @if ($ticket->status == 'onhold') selected @endif>{{ __('On Hold') }}</option>
-            </select>
-        </div>
     </div>
 </div>
 <div class="modal-footer">
@@ -107,3 +118,41 @@
 {{ Form::close() }}
 
 <script src="{{ asset('css/summernote/summernote-bs4.js') }}"></script>
+
+
+<script>
+    $(document).ready(function () {
+        // Initialize Select2
+       
+
+        // On project change
+        $('#project_id').on('change', function () {
+            var projectId = $(this).val();
+            if (projectId) {
+                var url = '{{ route("project.employees", ":id") }}'.replace(':id', projectId);
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (data) {
+                        var $employeeSelect = $('#employee_id');
+
+                        // Clear existing options
+                        $employeeSelect.empty();
+
+                        $employeeSelect.append(new Option('Select Employee', '', false, false));
+                        // Append new options
+                        $.each(data, function (id, name) {
+                            var newOption = new Option(name, id, false, false);
+                            $employeeSelect.append(newOption);
+                        });
+
+                    },
+                    error: function () {
+                        alert('Could not fetch employees.');
+                    }
+                });
+            }
+        });
+    });
+</script>

@@ -21,14 +21,17 @@
             {{ Form::text('name', null, ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Project Name')]) }}
         </div>
 
+
         <div class="form-group col-lg-6 col-md-6">
-            {{ Form::label('project_manager_ids', __('Project Managers'), ['class' => 'col-form-label']) }} <x-required></x-required>
-            {{ Form::select('project_manager_ids[]', 
-                $employees, 
-                $project->project_manager_ids,
-                ['class' => 'form-control select2', 'id' => 'project_manager_ids', 'multiple' => 'multiple', 'required' => true]
+            {{ Form::label('client_ids', __('Clients'), ['class' => 'col-form-label']) }} <x-required></x-required>
+            {{ Form::select('client_ids[]', 
+                $clients, 
+                $project->client_ids ?? [],  // Pre-selected values from the model
+                ['class' => 'form-control select2', 'id' => 'client_ids', 'multiple' => 'multiple', 'placeholder' => __('Select Clients')]
             ) }}
         </div>
+
+        
 
         <!-- <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('employees', __('Assign Employees'), ['class' => 'col-form-label']) }}<x-required></x-required>
@@ -37,6 +40,17 @@
                 $project->employees->pluck('id')->toArray(), 
                 ['class' => 'form-control select2', 'multiple' => 'multiple', 'required' => 'required']) }}
         </div> -->
+    </div>
+
+    <div class="row">
+        <div class="form-group col-lg-6 col-md-6">
+            {{ Form::label('project_manager_ids', __('Project Managers'), ['class' => 'col-form-label']) }} <x-required></x-required>
+            {{ Form::select('project_manager_ids[]', 
+                $employees, 
+                $project->project_manager_ids,
+                ['class' => 'form-control select2', 'id' => 'project_manager_ids', 'multiple' => 'multiple', 'required' => true]
+            ) }}
+        </div>
     </div>
 
     <div class="row">

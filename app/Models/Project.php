@@ -19,10 +19,12 @@ class Project extends Model
         'description',
         'created_by',
         'project_manager_ids',
+        'client_ids',
     ];
 
     protected $casts = [
         'project_manager_ids' => 'array', // Cast as array
+        'client_ids' => 'array',
     ];
 
     /**

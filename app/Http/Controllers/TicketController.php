@@ -8,6 +8,11 @@ use App\Models\Ticket;
 use App\Models\TicketReply;
 use App\Models\User;
 use App\Models\Utility;
+use App\Models\Project;
+use App\Models\Client;
+use App\Models\TicketStatus;
+use App\Models\TicketType;
+use App\Models\TicketPriority;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -16,46 +21,218 @@ class TicketController extends Controller
 {
     public function index()
     {
-        if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr') {
-            $countTicket      = Ticket::where('created_by', '=', \Auth::user()->creatorId())->count();
-            $countOpenTicket  = Ticket::where('status', '=', 'open')->where('created_by', '=', \Auth::user()->creatorId())->count();
-            $countonholdTicket  = Ticket::where('status', '=', 'onhold')->where('created_by', '=', \Auth::user()->creatorId())->count();
-            $countCloseTicket = Ticket::where('status', '=', 'close')->where('created_by', '=', \Auth::user()->creatorId())->count();
-        } else {
-            $countTicket      = Ticket::where('employee_id', '=', \Auth::user()->id)->orWhere('ticket_created', \Auth::user()->id)->count();
-            $countOpenTicket  = Ticket::where('status', '=', 'open')->where('employee_id', '=', \Auth::user()->id)->count();
-            $countonholdTicket  = Ticket::where('status', '=', 'onhold')->where('employee_id', '=', \Auth::user()->id)->count();
-            $countCloseTicket = Ticket::where('status', '=', 'close')->where('employee_id', '=', \Auth::user()->id)->count();
-        }
+        $projectId = session('selected_project_id', 'all');
+        $user = Auth::user();
 
-        $arr = [];
-        array_push($arr, $countTicket, $countOpenTicket, $countonholdTicket, $countCloseTicket);
-        $ticket_arr = json_encode($arr);
+        $ticketStatusCounts = [];
+        $statuses = TicketStatus::all();
 
-        if (\Auth::user()->can('Manage Ticket')) {
-            $user = Auth::user();
-            if ($user->type == 'employee') {
-                $tickets = Ticket::where('employee_id', '=', \Auth::user()->id)->orWhere('ticket_created', \Auth::user()->id)->get();
-            } else {
-                $tickets = Ticket::select('tickets.*')->join('users', 'tickets.created_by', '=', 'users.id')->where('users.created_by', '=', \Auth::user()->creatorId())->orWhere('tickets.created_by', \Auth::user()->creatorId())->with(['getUsers', 'createdBy'])->get();
+        if (in_array($user->type, ['company', 'hr', 'client', 'CEO'])) {
+
+            if ($user->type === 'client') {
+                $client = Client::where('user_id', $user->id)->first();
+                $clientId = (string) $client->id;
+                $projectIds = Project::whereJsonContains('client_ids', $clientId)->pluck('id');
             }
 
-            return view('ticket.index', compact('tickets', 'countTicket', 'countOpenTicket', 'countonholdTicket', 'countCloseTicket', 'ticket_arr'));
+            $query = Ticket::where('created_by', $user->creatorId());
+
+            if ($projectId !== 'all') {
+                $query->where('project_id', $projectId);
+            } elseif ($user->type === 'client') {
+                $query->whereIn('project_id', $projectIds);
+            }
+
+            $countTicket = $query->count();
+
+            foreach ($statuses as $status) {
+                $statusQuery = Ticket::where('status', $status->id)
+                    ->where('created_by', $user->creatorId());
+
+                if ($projectId !== 'all') {
+                    $statusQuery->where('project_id', $projectId);
+                } elseif ($user->type === 'client') {
+                    $statusQuery->whereIn('project_id', $projectIds);
+                }
+
+                $ticketStatusCounts[] = [
+                    'id' => $status->id,
+                    'name' => $status->name,
+                    'color' => $status->color,
+                    'count' => $statusQuery->count(),
+                ];
+            }
+        } else {
+            $query = Ticket::where(function ($q) use ($user) {
+                $q->where('employee_id', $user->id)
+                  ->orWhere('ticket_created', $user->id);
+            });
+
+            if ($projectId !== 'all') {
+                $query->where('project_id', $projectId);
+            }
+
+            $countTicket = $query->count();
+
+            foreach ($statuses as $status) {
+                $statusQuery = Ticket::where('status', $status->id)
+                    ->where('employee_id', $user->id);
+
+                if ($projectId !== 'all') {
+                    $statusQuery->where('project_id', $projectId);
+                }
+
+                $ticketStatusCounts[] = [
+                    'id' => $status->id,
+                    'name' => $status->name,
+                    'color' => $status->color,
+                    'count' => $statusQuery->count(),
+                ];
+            }
+        }
+
+        $ticket_arr = json_encode(array_column($ticketStatusCounts, 'count'));
+
+        if ($user->can('Manage Ticket')) {
+
+            if ($user->type === 'client') {
+                $client = Client::where('user_id', $user->id)->first();
+                $clientId = (string) $client->id;
+                $projectIds = Project::whereJsonContains('client_ids', $clientId)->pluck('id');
+
+                if ($projectId !== 'all') {
+                    $projectIds = $projectIds->intersect([$projectId]);
+                }
+
+                $tickets = Ticket::whereIn('project_id', $projectIds)
+                    ->with(['project', 'getUsers', 'type', 'createdBy', 'getpriority', 'getstatus'])
+                    ->get();
+
+            } elseif ($user->type === 'employee') {
+                $tickets = Ticket::where(function ($query) use ($user) {
+                    $query->where('employee_id', $user->id)
+                          ->orWhere('ticket_created', $user->id);
+                });
+
+                if ($projectId !== 'all') {
+                    $tickets->where('project_id', $projectId);
+                }
+
+                $tickets = $tickets->with(['project', 'getUsers', 'type', 'createdBy', 'getpriority', 'getstatus'])->get();
+
+            } else {
+                $tickets = Ticket::select('tickets.*')
+                    ->join('users', 'tickets.created_by', '=', 'users.id')
+                    ->where(function ($query) use ($user) {
+                        $query->where('users.created_by', $user->creatorId())
+                              ->orWhere('tickets.created_by', $user->creatorId());
+                    });
+
+                if ($projectId !== 'all') {
+                    $tickets->where('project_id', $projectId);
+                }
+
+                $tickets = $tickets->with(['project', 'getUsers', 'type', 'createdBy', 'getpriority', 'getstatus'])->get();
+            }
+
+            if ($user->type === 'client') {
+                $client = Client::where('user_id', $user->id)->first();
+                $clientId = (string) $client->id;
+                $projects = Project::whereJsonContains('client_ids', $clientId)->pluck('name', 'id');
+            } elseif ($user->type === 'employee') {
+                $employee = Employee::where('user_id', $user->id)->first();
+                $projectIds = \DB::table('project_employee')->where('employee_id', $employee->id)->pluck('project_id');
+                $projects = Project::whereIn('id', $projectIds)->pluck('name', 'id');
+            } else {
+                $projects = Project::pluck('name', 'id');
+            }
+
+            $selectedProjectId = session('selected_project_id');
+            $selectedProjectName = $selectedProjectId && $selectedProjectId !== 'all'
+                ? Project::find($selectedProjectId)?->name
+                : null;
+
+            return view('ticket.index', compact(
+                'tickets',
+                'ticketStatusCounts',
+                'ticket_arr',
+                'projects',
+                'selectedProjectName',
+                'countTicket',
+            ));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
 
-    public function create()
+    public function setSelectedProject(Request $request)
+    {
+        session(['selected_project_id' => $request->project_id]);
+        return response()->json(['status' => 'success']);
+    }
+
+    public function getProjectEmployees($id)
+    {
+        $project = Project::with('employees')->find($id);
+
+        if (!$project) {
+            return response()->json(['status' => 'error', 'message' => 'Project not found.'], 404);
+        }
+
+        // return key-value pair: id => name
+        $employees = $project->employees->pluck('name', 'user_id');
+
+        return response()->json($employees);
+    }
+
+    public function create(Request $request)
     {
         if (\Auth::user()->can('Create Ticket')) {
+            $parentId = $request->get('parent_id'); // 👈 receive parent ticket ID if it's a subtask
+
+            // Get employees
             if (\Auth::user()->type != 'employee') {
-                $employees = User::where('created_by', '=', \Auth::user()->creatorId())->where('type', '=', 'employee')->get()->pluck('name', 'id');
+                $projectId=session('selected_project_id');
+                $project = Project::with('employees')->find($projectId);
+                $employees = $project->employees->pluck('name', 'user_id');
+
+                // $employees = User::where('created_by', \Auth::user()->creatorId())
+                //                  ->where('type', 'employee')
+                //                  ->pluck('name', 'id');
             } else {
-                $employees = User::where('created_by', '=', \Auth::user()->creatorId())->where('type', '=', 'employee')->first();
+                $employees = User::where('created_by', \Auth::user()->creatorId())
+                                 ->where('type', 'employee')
+                                 ->first();
             }
 
-            return view('ticket.create', compact('employees'));
+            // Get projects based on role
+            $user = \Auth::user();
+            if ($user->type === 'client') {
+                $client = Client::where('user_id', $user->id)->first();
+                $clientId = (string) $client->id;
+                $projects = Project::whereJsonContains('client_ids', $clientId)->pluck('name', 'id');
+            } elseif ($user->type === 'employee') {
+                $employee = Employee::where('user_id', $user->id)->first();
+                $projectIds = \DB::table('project_employee')
+                                 ->where('employee_id', $employee->id)
+                                 ->pluck('project_id');
+                $projects = Project::whereIn('id', $projectIds)->pluck('name', 'id');
+            } else {
+                $projects = Project::pluck('name', 'id');
+            }
+
+            // ✅ Fetch dynamic statuses
+            $ticketStatuses = TicketStatus::pluck('name', 'id');
+
+            // Set default selected status (TO DO)
+            $defaultStatusId = TicketStatus::where('name', 'TO DO')->value('id');
+
+            // Fetch dropdown values
+            $ticketTypes = TicketType::pluck('name', 'id');
+            $ticketPriorities = TicketPriority::pluck('name', 'id');
+
+            // ✅ Pass parentId to the view if it's a subtask
+            return view('ticket.create', compact('employees', 'projects', 'parentId', 'ticketStatuses', 'defaultStatusId','ticketTypes', 'ticketPriorities'));
         } else {
             return response()->json(['error' => __('Permission denied.')], 401);
         }
@@ -69,9 +246,12 @@ class TicketController extends Controller
             $validator = \Validator::make(
                 $request->all(),
                 [
-                    'employee_id' => 'required',
+                    //'project_id'  => 'required',
+                    // 'employee_id' => 'required',
                     'title' => 'required',
-                    'priority' => 'required',
+                    'ticket_type_id' => 'required',
+                    'priority_id' => 'required',
+                    'start_date'  => 'required',
                     'end_date' => 'required',
                 ]
             );
@@ -84,13 +264,17 @@ class TicketController extends Controller
             $rand          = date('hms');
             $ticket        = new Ticket();
             $ticket->title = $request->title;
+            $ticket->ticket_type_id = $request->ticket_type_id;
+            $ticket->project_id = session('selected_project_id') ?? null;
+
             if (Auth::user()->type == "employee") {
                 $ticket->employee_id = \Auth::user()->id;
             } else {
                 $ticket->employee_id = $request->employee_id;
             }
 
-            $ticket->priority    = $request->priority;
+            $ticket->priority    = $request->priority_id;
+            $ticket->start_date   = $request->start_date;
             $date1 = date("Y-m-d");
             $date2 =  $request->end_date;
             if ($date1 > $date2) {
@@ -101,6 +285,11 @@ class TicketController extends Controller
             $ticket->ticket_code = $rand;
             $ticket->description = $request->description;
 
+            // ✅ Store parent_id if it's a subtask
+            if (!empty($request->parent_id)) {
+                $ticket->parent_id = $request->parent_id;
+            }
+
             if (!empty($request->attachment)) {
                 $image_size = $request->file('attachment')->getSize();
 
@@ -108,7 +297,10 @@ class TicketController extends Controller
                 $filename        = pathinfo($filenameWithExt, PATHINFO_FILENAME);
                 $extension       = $request->file('attachment')->getClientOriginalExtension();
                 $fileNameToStore = $filename . '_' . time() . '.' . $extension;
-                $dir = 'uploads/tickets/';
+
+                $projectId = session('selected_project_id');
+                $dir = "uploads/tickets/{$projectId}/";
+                // $dir = 'uploads/tickets/';
                 $image_path = $dir . $fileNameToStore;
 
                 $url = '';
@@ -123,7 +315,9 @@ class TicketController extends Controller
 
             $ticket->ticket_created = \Auth::user()->id;
             $ticket->created_by     = \Auth::user()->creatorId();
-            $ticket->status         = $request->status;
+
+            $defaultStatusId = TicketStatus::where('name', 'TO DO')->value('id');
+            $ticket->status = $defaultStatusId;
             $ticket->save();
 
             // slack 
@@ -211,9 +405,24 @@ class TicketController extends Controller
     {
         $ticket = Ticket::find($ticket);
         if (\Auth::user()->can('Edit Ticket')) {
-            $employees = User::where('created_by', '=', \Auth::user()->creatorId())->where('type', '=', 'employee')->get()->pluck('name', 'id');
+             // Get employees assigned to the ticket's project
+            $project = Project::with('employees')->find($ticket->project_id);
+            $employees = $project ? $project->employees->pluck('name', 'user_id') : collect();
 
-            return view('ticket.edit', compact('ticket', 'employees'));
+            $user = \Auth::user();
+            if ($user->type === 'client') {
+                $client = Client::where('user_id', $user->id)->first();
+                $clientId = (string) $client->id;
+                $projects = Project::whereJsonContains('client_ids', $clientId)->pluck('name', 'id');
+            }else{
+               $projects = Project::pluck('name', 'id');
+            }
+
+            $ticketTypes = TicketType::pluck('name', 'id');
+            $ticketPriorities = TicketPriority::pluck('name', 'id');
+            $ticketStatuses = TicketStatus::pluck('name', 'id');
+
+            return view('ticket.edit', compact('ticket', 'employees','projects','ticketPriorities','ticketTypes','ticketStatuses'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -227,7 +436,11 @@ class TicketController extends Controller
             $validator = \Validator::make(
                 $request->all(),
                 [
-                    'priority' => 'required',
+                    'status'  => 'required',
+                    'ticket_type_id' => 'required',
+                    'title' => 'required',
+                    'priority_id' => 'required',
+                    'start_date'  => 'required',
                     'end_date' => 'required',
                 ]
             );
@@ -244,14 +457,20 @@ class TicketController extends Controller
             } else {
                 $ticket->employee_id = $request->employee_id;
             }
-            $ticket->priority    = $request->priority;
+
+            $ticket->ticket_type_id = $request->ticket_type_id;
+            $ticket->priority    = $request->priority_id;
+            $ticket->start_date   = $request->start_date;
             $ticket->end_date    = $request->end_date;
             $ticket->description = $request->description;
+            $ticket->status = $request->status;
 
             if (!empty($request->attachment)) {
 
                 //storage limit
-                $dir = 'uploads/tickets/';
+                $projectId = $ticket->project_id; // Make sure this is already set
+                $dir = "uploads/tickets/{$projectId}/";
+                // $dir = 'uploads/tickets/';
                 $file_path = $dir . $ticket->attachment;
                 $image_size = $request->file('attachment')->getSize();
 
@@ -259,7 +478,7 @@ class TicketController extends Controller
                 $filename        = pathinfo($filenameWithExt, PATHINFO_FILENAME);
                 $extension       = $request->file('attachment')->getClientOriginalExtension();
                 $fileNameToStore = $filename . '_' . time() . '.' . $extension;
-                $dir = 'uploads/tickets/';
+                $dir = "uploads/tickets/{$projectId}/";
                 $image_path = $dir . $fileNameToStore;
                 if (\File::exists($image_path)) {
                     \File::delete($image_path);
@@ -302,15 +521,24 @@ class TicketController extends Controller
 
     public function reply($ticket)
     {
-        $ticketreply = TicketReply::where('ticket_id', '=', $ticket)->orderBy('id', 'DESC')->get();
-        $ticket      = Ticket::find($ticket);
+        $ticket = Ticket::with(['parent', 'subtasks', 'getpriority','type', 'getstatus', 'createdBy'])->findOrFail($ticket);
+
+        // Mark replies as read
         if (\Auth::user()->type == 'employee') {
-            $ticketreplyRead = TicketReply::where('ticket_id', $ticket->id)->where('created_by', '!=', \Auth::user()->id)->update(['is_read' => '1']);
+            TicketReply::where('ticket_id', $ticket->id)
+                ->where('created_by', '!=', \Auth::user()->id)
+                ->update(['is_read' => '1']);
         } else {
-            $ticketreplyRead = TicketReply::where('ticket_id', $ticket->id)->where('created_by', '!=', \Auth::user()->creatorId())->update(['is_read' => '1']);
+            TicketReply::where('ticket_id', $ticket->id)
+                ->where('created_by', '!=', \Auth::user()->creatorId())
+                ->update(['is_read' => '1']);
         }
 
+        $ticketreply = TicketReply::where('ticket_id', $ticket->id)
+            ->orderBy('id', 'DESC')
+            ->get();
 
+        //  echo "<pre>";print_r($ticket);exit;
         return view('ticket.reply', compact('ticket', 'ticketreply'));
     }
 
@@ -343,7 +571,9 @@ class TicketController extends Controller
             $filename        = pathinfo($filenameWithExt, PATHINFO_FILENAME);
             $extension       = $request->file('attachment')->getClientOriginalExtension();
             $fileNameToStore = $filename . '_' . time() . '.' . $extension;
-            $dir = 'uploads/tickets/';
+            $projectId = $ticket->project_id; // Make sure this is already set
+            $dir = "uploads/tickets/{$projectId}/";
+            //$dir = 'uploads/tickets/';
             $image_path = $dir . $fileNameToStore;
 
             $url = '';

@@ -19,229 +19,240 @@
 
 @section('action-button')
     @can('Create Ticket')
-        <a href="#" data-url="{{ route('ticket.create') }}" data-ajax-popup="true" data-title="{{ __('Create New Ticket') }}"
-            data-size="lg" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
-            data-bs-original-title="{{ __('Create') }}">
-            <i class="ti ti-plus"></i>
-        </a>
+        @if(session()->has('selected_project_id') && session('selected_project_id') !== 'all')
+            @if($selectedProjectName)
+                <a href="#"
+                   data-url="{{ route('ticket.create') }}"
+                   data-ajax-popup="true"
+                   data-title="{{ __('Create New Ticket') . ' : ' . $selectedProjectName }}"
+                   data-size="lg"
+                   data-bs-toggle="tooltip"
+                   title="{{ __('Create') }}"
+                   class="btn btn-sm btn-primary">
+                    <i class="ti ti-plus"></i>
+                </a>
+            @endif
+        @endif
     @endcan
 @endsection
 
 
 @section('content')
-    <div class="col-xxl-8">
-        <div class="row">
-            <div class="col-lg-3 col-6">
-                <div class="card ticket-card">
-                    <div class="card-body">
-                        <div class="badge theme-avtar bg-info">
-                            <i class="ti ti-ticket"></i>
-                        </div>
-                        <p class="text-muted text-sm mt-4 mb-2"></p>
-                        <h6 class="mb-3">{{ __('Total Ticket') }}</h6>
-                        <h3 class="mb-0">{{ $countTicket }} </h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="card ticket-card">
-                    <div class="card-body">
-                        <div class="badge theme-avtar bg-primary">
-                            <i class="ti ti-ticket"></i>
-                        </div>
-                        <p class="text-muted text-sm mt-4 mb-2"></p>
-                        <h6 class="mb-3">{{ __('Open Ticket') }}</h6>
-                        <h3 class="mb-0">{{ $countOpenTicket }}</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="card ticket-card">
-                    <div class="card-body">
-                        <div class="badge theme-avtar bg-warning">
-                            <i class="ti ti-ticket"></i>
-                        </div>
-                        <p class="text-muted text-sm mt-4 mb-2"></p>
-                        <h6 class="mb-3">{{ __('Hold Ticket') }}</h6>
-                        <h3 class="mb-0">{{ $countonholdTicket }}</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="card ticket-card">
-                    <div class="card-body">
-                        <div class="badge theme-avtar bg-danger">
-                            <i class="ti ti-ticket"></i>
-                        </div>
-                        <p class="text-muted text-sm mt-4 mb-2"></p>
-                        <h6 class="mb-3">{{ __('Close Ticket') }}</h6>
-                        <h3 class="mb-0">{{ $countCloseTicket }}</h3>
-                    </div>
-                </div>
+
+    @php
+        $selectedProjectId = session('selected_project_id', 'all'); // default to "all"
+        $projectsList = ['all' => 'All Project'] + $projects->toArray();
+    @endphp
+    <div class="row">
+        <div class="col-4">
+            <div class="form-group col-md-12">
+                {{ Form::label('project_id', __('Project'), ['class' => 'col-form-label']) }}
+                {{ Form::select('project_id', $projectsList, $selectedProjectId, [
+                    'class' => 'form-control',
+                    'id' => 'project_id',
+                    'required' => true
+                ]) }}
             </div>
         </div>
     </div>
-    <div class="col-xxl-4">
-        <div class="card">
-            <div class="card-header">
-                <div class="float-end">
-
-                </div>
-                <h5>{{ __('Ticket By Status') }}</h5>
-            </div>
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-6">
-                        <div id="projects-chart"></div>
+    <div class="row">
+        <!-- Total Ticket -->
+        <div class="col-md-2 col-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; background-color: #007bff;">
+                        <i class="ti ti-ticket text-white fs-5"></i>
                     </div>
-                    <div class="col-6">
-                        <div class="row mt-3">
-                            <div class="col-6">
-                                <span class="d-flex align-items-center mb-2">
-                                    <i class="f-10 lh-1 fas fa-circle text-danger"></i>
-                                    <span class="ms-2 text-sm">{{ __('Close') }} </span>
-                                </span>
-                            </div>
-                            <div class="col-6">
-                                <span class="d-flex align-items-center mb-2">
-                                    <i class="f-10 lh-1 fas fa-circle text-warning"></i>
-                                    <span class="ms-2 text-sm">{{ __('Hold') }}</span>
-                                </span>
-                            </div>
-                            <div class="col-6">
-                                <span class="d-flex align-items-center mb-2">
-                                    <i class="f-10 lh-1 fas fa-circle text-info"></i>
-                                    <span class="ms-2 text-sm">{{ __('Total') }}</span>
-                                </span>
-                            </div>
-                            <div class="col-6">
-                                <span class="d-flex align-items-center mb-2">
-                                    <i class="f-10 lh-1 fas fa-circle text-primary"></i>
-                                    <span class="ms-2 text-sm">{{ __('Open') }}</span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                    <h6 class="text-uppercase text-muted small mb-1">{{ __('Total Ticket') }}</h6>
+                    <h3 class="fw-bold mb-0">{{ $countTicket }}</h3>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Dynamic Ticket Statuses -->
+        @foreach ($ticketStatusCounts as $status)
+            <div class="col-lg-2 col-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                             style="width: 50px; height: 50px; background-color: {{ $status['color'] }};">
+                            <i class="ti ti-ticket text-white fs-5"></i>
+                        </div>
+                        <h6 class="text-uppercase text-muted small mb-1">{{ __($status['name']) }}</h6>
+                        <h3 class="fw-bold mb-0">{{ $status['count'] }}</h3>
+                    </div>
+                </div>
+            </div>
+        @endforeach
     </div>
 
-    <div class="col-xl-12">
-        <div class="card">
-            <div class="card-header card-body table-border-style">
-                {{-- <h5></h5> --}}
-                <div class="table-responsive">
-                    <table class="table" id="pc-dt-simple">
-                        <thead>
-                            <tr>
-                                <th>{{ __('New') }}</th>
-                                <th>{{ __('Title') }}</th>
-                                <th>{{ __('Ticket Code') }}</th>
-                                @role('company')
-                                    <th>{{ __('Employee') }}</th>
-                                @endrole
-                                <th>{{ __('Priority') }}</th>
-                                <th>{{ __('Date') }}</th>
-                                <th>{{ __('Created By') }}</th>
-                                <th>{{ __('Status') }}</th>
-                                {{-- <th>{{ __('Description') }}</th> --}}
-                                <th width="200px">{{ __('Action') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($tickets as $ticket)
-                                <tr>
-                                    <td>
-                                        @if (\Auth::user()->type == 'employee')
-                                            @if ($ticket->ticketUnread() > 0)
-                                                <i title="New Message" class="fas fa-circle circle text-success"></i>
-                                            @endif
-                                        @else
-                                            @if ($ticket->ticketUnread() > 0)
-                                                <i title="New Message" class="fas fa-circle circle text-success"></i>
-                                            @endif
-                                        @endif
-                                    </td>
-                                    <td>{{ $ticket->title }}</td>
-                                    <td>{{ $ticket->ticket_code }}</td>
-                                    @role('company')
-                                        <td>{{ !empty($ticket->employee_id) ? $ticket->getUsers->name : '' }}
-                                        </td>
-                                    @endrole
-                                    <td>
-                                        @if ($ticket->priority == 'medium')
-                                            <div class="status_badge text-capitalize badge bg-info ticket-set ">{{ __('Medium') }}
-                                            </div>
-                                        @elseif($ticket->priority == 'low')
-                                            <div class="status_badge text-capitalize badge bg-success ticket-set ">
-                                                {{ __('Low') }}</div>
-                                        @elseif($ticket->priority == 'high')
-                                            <div class="status_badge text-capitalize badge bg-warning ticket-set ">
-                                                {{ __('High') }}</div>
-                                        @elseif($ticket->priority == 'critical')
-                                            <div class="status_badge text-capitalize badge bg-danger ticket-set ">
-                                                {{ __('Critical') }}</div>
-                                        @endif
-                                    </td>
-                                    <td>{{ \Auth::user()->dateFormat($ticket->end_date) }}</td>
-                                    <td>{{ !empty($ticket->createdBy) ? $ticket->createdBy->name : '' }}</td>
-                                    <td>
-                                        @if ($ticket->status == 'open')
-                                            <div class="status_badge text-capitalize badge bg-success ticket-set ">
-                                                {{ __('Open') }}</div>
-                                        @elseif($ticket->status == 'close')
-                                            <div class="status_badge text-capitalize badge bg-danger ticket-set ">
-                                                {{ __('Close') }}</div>
-                                        @elseif($ticket->status == 'onhold')
-                                            <div class="status_badge text-capitalize badge bg-warning ticket-set ">
-                                                {{ __('On Hold') }}</div>
-                                        @endif
-                                    </td>
-                                    {{-- <td>
-                                        <p
-                                            style="white-space: nowrap;
-                                            width: 200px;
-                                            overflow: hidden;
-                                            text-overflow: ellipsis;">
-                                            {{ $ticket->description }}</p>
-                                    </td> --}}
-                                    <td class="Action">
-                                        <div class="dt-buttons">
-                                        <span>
-                                            <div class="action-btn bg-primary me-2">
-                                                <a href="{{ URL::to('ticket/' . $ticket->id . '/reply') }}"
-                                                    class="mx-3 btn btn-sm  align-items-center" data-bs-toggle="tooltip"
-                                                    title="" data-title="{{ __('Replay') }}"
-                                                    data-bs-original-title="Reply">
-                                                    <span class="text-white"><i class="ti ti-arrow-back-up "></i></span>
-                                                </a>
-                                            </div>
-                                            @if (\Auth::user()->type == 'company' || $ticket->ticket_created == \Auth::user()->id)
-                                                @can('Delete Ticket')
-                                                    <div class="action-btn bg-danger ">
-                                                        {!! Form::open([
-                                                            'method' => 'DELETE',
-                                                            'route' => ['ticket.destroy', $ticket->id],
-                                                            'id' => 'delete-form-' . $ticket->id,
-                                                        ]) !!}
-                                                        <a href="#"
-                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para"
-                                                            data-bs-toggle="tooltip" title=""
-                                                            data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
-                                                                class="ti ti-trash  "></i></span></a>
-                                                        </form>
-                                                    </div>
-                                                @endcan
-                                            @endif
+    <!-- <div class="row">
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header card-body table-border-style">
+                    <h5>{{ __('Ticket By Status') }}</h5>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <div id="projects-chart"></div>
+                            </div>
+                            <div class="col-6">
+                                <div class="row mt-3">
+                                    <div class="col-6">
+                                        <span class="d-flex align-items-center mb-2">
+                                            <i class="f-10 lh-1 fas fa-circle text-danger"></i>
+                                            <span class="ms-2 text-sm">{{ __('Close') }} </span>
                                         </span>
-                                        </div>
-                                    </td>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="d-flex align-items-center mb-2">
+                                            <i class="f-10 lh-1 fas fa-circle text-warning"></i>
+                                            <span class="ms-2 text-sm">{{ __('Hold') }}</span>
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="d-flex align-items-center mb-2">
+                                            <i class="f-10 lh-1 fas fa-circle text-info"></i>
+                                            <span class="ms-2 text-sm">{{ __('Total') }}</span>
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="d-flex align-items-center mb-2">
+                                            <i class="f-10 lh-1 fas fa-circle text-primary"></i>
+                                            <span class="ms-2 text-sm">{{ __('Open') }}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+    
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header card-body table-border-style">
+                    {{-- <h5></h5> --}}
+                    <div class="table-responsive">
+                        <table class="table" id="pc-dt-simple">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('Ticket Code') }}</th>
+                                    @if (session('selected_project_id') === 'all')
+                                        <th>{{ __('Project') }}</th>
+                                    @endif
+                                    <th>{{ __('Title') }}</th>
+                                    <th>{{ __('Priority') }}</th>
+                                    <th>{{ __('Status') }}</th>
+                                    <th>{{ __('Assignee') }}</th>
+                                    <th>{{ __('Created By') }}</th>
+                                    <th>{{ __('Created_at') }}</th>
+                                    <th width="200px">{{ __('Action') }}</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($tickets as $ticket)
+                                    <tr>
+                                        <td>
+                                            @if ($ticket->ticketUnread() > 0)
+                                                <i title="New Message" class="fas fa-circle circle text-success"></i>
+                                            @endif
+
+                                            @if ($ticket->parent_id != null)
+                                                <img src="{{ asset('public/uploads/ticket/ticket-type/SubTask.svg') }}"
+                                                     alt="{{ $ticket->type->name }}"
+                                                     title="{{ $ticket->type->name }}"
+                                                     style="width: 20px; height: 20px; object-fit: contain; margin-right: 5px;">
+                                            @else
+                                                @if (!empty($ticket->type->image))
+                                                    <img src="{{ asset('public/'.$ticket->type->image) }}"
+                                                         alt="{{ $ticket->type->name }}"
+                                                         title="{{ $ticket->type->name }}"
+                                                         style="width: 20px; height: 20px; object-fit: contain; margin-right: 5px;">
+                                                @endif
+                                            @endif
+
+                                            <a href="{{ URL::to('ticket/' . $ticket->id . '/reply') }}"
+                                                           class="btn btn-sm align-items-center"
+                                                           data-bs-toggle="tooltip" title="{{ __('Reply') }}">{{ $ticket->ticket_code }}
+                                            </a>
+                                        </td>
+                                        @if (session('selected_project_id') === 'all')
+                                        <td>
+                                            {{ $ticket->project->name ?? '-' }}
+                                        </td>
+                                        @endif
+                                        <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 400px;">{{ $ticket->title }}</td>
+
+                                        
+
+                                        <td>
+                                            @if ($ticket->getpriority)
+                                                <div class="badge p-2 px-3"
+                                                     style="background-color: {{ $ticket->getpriority->color ?? '#6c757d' }};">
+                                                    {{ $ticket->getpriority->name }}
+                                                </div>
+                                            @else
+                                                <span class="badge bg-light text-dark">{{ __('N/A') }}</span>
+                                            @endif
+                                        </td>
+
+                                        
+
+                                        <td>
+                                            @if ($ticket->getstatus)
+                                                <div class="badge p-2 px-3"
+                                                     style="background-color: {{ $ticket->getstatus->color ?? '#6c757d' }};">
+                                                    {{ $ticket->getstatus->name }}
+                                                </div>
+                                            @else
+                                                <span class="badge bg-light text-dark">{{ __('N/A') }}</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ ucfirst($ticket->getUsers->name) ?? '' }}</td>
+                                        <td>{{ ucfirst($ticket->createdBy->name) ?? '' }}</td>
+                                        <td>{{ \Auth::user()->dateFormat($ticket->created_at) }}</td>
+
+                                        <td class="Action">
+                                            <div class="dt-buttons">
+                                                <span>
+                                                    <div class="action-btn bg-primary me-2">
+                                                        <a href="{{ URL::to('ticket/' . $ticket->id . '/reply') }}"
+                                                           class="mx-3 btn btn-sm align-items-center"
+                                                           data-bs-toggle="tooltip" title="{{ __('Reply') }}">
+                                                            <span class="text-white"><i class="ti ti-arrow-back-up"></i></span>
+                                                        </a>
+                                                    </div>
+
+                                                    @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'CEO' || \Auth::user()->type == 'client' || $ticket->ticket_created == \Auth::user()->id)
+                                                        @can('Delete Ticket')
+                                                            <div class="action-btn bg-danger">
+                                                                {!! Form::open([
+                                                                    'method' => 'DELETE',
+                                                                    'route' => ['ticket.destroy', $ticket->id],
+                                                                    'id' => 'delete-form-' . $ticket->id,
+                                                                ]) !!}
+                                                                <a href="#"
+                                                                   class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                                                   data-bs-toggle="tooltip" title="{{ __('Delete') }}">
+                                                                    <span class="text-white"><i class="ti ti-trash"></i></span>
+                                                                </a>
+                                                                </form>
+                                                            </div>
+                                                        @endcan
+                                                    @endif
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+
+                    </div>
                 </div>
             </div>
         </div>
@@ -277,4 +288,25 @@
             chart.render();
         })();
     </script>
+
+    <script>
+        $(document).ready(function () {
+            $('#project_id').on('change', function () {
+                const selected = $(this).val();
+                // Store in session via AJAX
+                $.ajax({
+                    url: '{{ route("project.select") }}',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        project_id: selected
+                    },
+                    success: function () {
+                        location.reload(); // refresh page to apply filter
+                    }
+                });
+            });
+        });
+    </script>
+
 @endpush

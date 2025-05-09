@@ -44,63 +44,238 @@
     <div class="">
         <div class="col-12">
             <div class="row gy-4">
+
+                @if($ticket->parent)
+                    <div class="alert alert-info">
+                        <strong>{{ __('Parent Ticket:') }}</strong>
+                        <a href="{{ route('ticket.reply', $ticket->parent->id) }}">{{ $ticket->parent->title }}</a>
+                    </div>
+                @endif
+
+                @if($ticket->parent_id == null && $ticket->ticket_type_id == 2)
+                <div class="row">
+                    <div class="card">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
+                            <h5 class="mb-0 text-dark fw-bold">{{ __('Child Work Items') }}</h5>
+                            <a href="#" 
+                               data-url="{{ route('ticket.create', ['parent_id' => $ticket->id]) }}"
+                               data-ajax-popup="true"
+                               data-title="{{ __('Create Sub Task') }}"
+                               data-size="lg"
+                               class="btn btn-sm btn-outline-primary">
+                               {{ __('Add Sub Task') }}
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    @php
+                                        $total = $ticket->subtasks->count();
+                                        $done = $ticket->subtasks->where('status', 'close')->count();
+                                        $percent = $total ? round(($done / $total) * 100) : 0;
+                                    @endphp
+
+                                    <div class="progress mx-4 mt-3" style="height: 6px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ $percent }}%;" aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <div class="px-4 pb-3 text-muted small">
+                                        {{ $percent }}% {{ __('Done') }}
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <br />
+                                    <br />
+                                    <div class="table-responsive">
+                                        <table class="table" id="pc-dt-simple">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ __('Ticket Code') }}</th>
+                                                    @if (session('selected_project_id') === 'all')
+                                                        <th>{{ __('Project') }}</th>
+                                                    @endif
+                                                    <th>{{ __('Title') }}</th>
+                                                    @role('company|client')
+                                                        <th>{{ __('Assignee') }}</th>
+                                                    @endrole
+                                                    <th>{{ __('Priority') }}</th>
+                                                    <th>{{ __('Date') }}</th>
+                                                    <th>{{ __('Created By') }}</th>
+                                                    <th>{{ __('Status') }}</th>
+                                                    <th width="200px">{{ __('Action') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse($ticket->subtasks as $subtask)
+                                                    <tr>
+                                                        <td>
+                                                            @if ($subtask->ticketUnread() > 0)
+                                                                <i title="New Message" class="fas fa-circle circle text-success"></i>
+                                                            @endif
+
+                                                            @if ($subtask->parent_id != null)
+                                                                <img src="{{ asset('public/uploads/ticket/ticket-type/SubTask.svg') }}"
+                                                                     alt="{{ $subtask->type->name }}"
+                                                                     title="{{ $subtask->type->name }}"
+                                                                     style="width: 20px; height: 20px; object-fit: contain; margin-right: 5px;">
+                                                            @else
+                                                                @if (!empty($subtask->type->image))
+                                                                    <img src="{{ asset('public/'.$subtask->type->image) }}"
+                                                                         alt="{{ $subtask->type->name }}"
+                                                                         title="{{ $subtask->type->name }}"
+                                                                         style="width: 20px; height: 20px; object-fit: contain; margin-right: 5px;">
+                                                                @endif
+                                                            @endif
+
+                                                            <a href="{{ URL::to('ticket/' . $subtask->id . '/reply') }}"
+                                                                           class="btn btn-sm align-items-center"
+                                                                           data-bs-toggle="tooltip" title="{{ __('Reply') }}">{{ $subtask->ticket_code }}
+                                                            </a>
+                                                        </td>
+                                                        @if (session('selected_project_id') === 'all')
+                                                        <td>
+                                                            {{ $subtask->project->name ?? '-' }}
+                                                        </td>
+                                                        @endif
+                                                        <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 400px;">{{ $subtask->title }}</td>
+
+                                                        @role('company|client')
+                                                            <td>{{ ucfirst($subtask->getUsers->name) ?? '' }}</td>
+                                                        @endrole
+
+                                                        <td>
+                                                            @if ($subtask->getpriority)
+                                                                <div class="badge p-2 px-3"
+                                                                     style="background-color: {{ $subtask->getpriority->color ?? '#6c757d' }};">
+                                                                    {{ $subtask->getpriority->name }}
+                                                                </div>
+                                                            @else
+                                                                <span class="badge bg-light text-dark">{{ __('N/A') }}</span>
+                                                            @endif
+                                                        </td>
+
+                                                        <td>{{ \Auth::user()->dateFormat($subtask->end_date) }}</td>
+
+                                                        <td>{{ ucfirst($subtask->createdBy->name) ?? '' }}</td>
+
+                                                        <td>
+                                                            @if ($subtask->getstatus)
+                                                                <div class="badge p-2 px-3"
+                                                                     style="background-color: {{ $subtask->getstatus->color ?? '#6c757d' }};">
+                                                                    {{ $subtask->getstatus->name }}
+                                                                </div>
+                                                            @else
+                                                                <span class="badge bg-light text-dark">{{ __('N/A') }}</span>
+                                                            @endif
+                                                        </td>
+
+                                                        <td class="Action">
+                                                            <div class="dt-buttons">
+                                                                <span>
+                                                                    <div class="action-btn bg-primary me-2">
+                                                                        <a href="{{ URL::to('ticket/' . $subtask->id . '/reply') }}"
+                                                                           class="mx-3 btn btn-sm align-items-center"
+                                                                           data-bs-toggle="tooltip" title="{{ __('Reply') }}">
+                                                                            <span class="text-white"><i class="ti ti-arrow-back-up"></i></span>
+                                                                        </a>
+                                                                    </div>
+
+                                                                    @if (\Auth::user()->type == 'company' || $subtask->ticket_created == \Auth::user()->id)
+                                                                        @can('Delete Ticket')
+                                                                            <div class="action-btn bg-danger">
+                                                                                {!! Form::open([
+                                                                                    'method' => 'DELETE',
+                                                                                    'route' => ['ticket.destroy', $subtask->id],
+                                                                                    'id' => 'delete-form-' . $subtask->id,
+                                                                                ]) !!}
+                                                                                <a href="#"
+                                                                                   class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                                                                   data-bs-toggle="tooltip" title="{{ __('Delete') }}">
+                                                                                    <span class="text-white"><i class="ti ti-trash"></i></span>
+                                                                                </a>
+                                                                                </form>
+                                                                            </div>
+                                                                        @endcan
+                                                                    @endif
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+
                 <div class="col-lg-6">
                     <div class="row">
-                        <h5 class="mb-3">{{ __('Reply Ticket') }} - <span
-                                class="text-success">{{ $ticket->ticket_code }}</span></h5>
+                        <h5 class="mb-3">{{ __('Reply Ticket') }} - <span class="text-success">{{ $ticket->ticket_code }}</span></h5>
                         <div class="card border">
                             <div class="card-body p-0">
                                 <div class="p-4 border-bottom">
 
-                                    @if ($ticket->priority == 'medium')
-                                        <div class="badge bg-info mb-2">{{ __('Medium') }}</div>
-                                    @elseif($ticket->priority == 'low')
-                                        <div class="badge bg-success mb-2">{{ __('Low') }}
-                                        </div>
-                                    @elseif($ticket->priority == 'high')
-                                        <div class="badge bg-warning mb-2">{{ __('High') }}
-                                        </div>
-                                    @elseif($ticket->priority == 'critical')
-                                        <div class="badge bg-danger mb-2">{{ __('Critical') }}
+                                    @if ($ticket->getpriority)
+                                        <div class="badge mb-2" style="background-color: {{ $ticket->getpriority->color }}">
+                                            {{ $ticket->getpriority->name }}
                                         </div>
                                     @endif
 
-                                    <div class="d-flex justify-content-between align-items-center ">
-                                        <h5>{{ $ticket->title }}</h5>
-                                        @if ($ticket->status == 'open')
-                                            <span class="badge bg-light-primary p-2 f-w-600 text-primary ">
-                                                {{ __('Open') }}</span>
-                                        @elseif($ticket->status == 'close')
-                                            <span class="badge bg-light-danger p-2 f-w-600 text-danger ">
-                                                {{ __('Closed') }}</span>
-                                        @elseif($ticket->status == 'onhold')
-                                            <span class="badge bg-light-warning p-2 f-w-600 text-warning ">
-                                                {{ __('On Hold') }}</span>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="two-line-truncate">{{ $ticket->title }}</h5>
+                                        @if ($ticket->getstatus)
+                                            <span class="badge p-2 f-w-600" style="background-color: {{ $ticket->getstatus->color }}; color: #fff">
+                                                {{ $ticket->getstatus->name }}
+                                            </span>
                                         @endif
                                     </div>
+
                                     <p class="mb-0">
-                                        <b> {{ !empty($ticket->createdBy) ? $ticket->createdBy->name : '' }}</b>
-                                        .
-                                        <span> {{ !empty($ticket->createdBy) ? $ticket->createdBy->email : '' }}</span>
-                                        .
-                                        <span
-                                            class="text-muted">{{ \Auth::user()->dateFormat($ticket->created_at) }}</span>
+                                        <b>{{ $ticket->createdBy->name ?? '' }}</b>.
+                                        <span>{{ $ticket->createdBy->email ?? '' }}</span>.
+                                        <span class="text-muted">{{ \Auth::user()->dateFormat($ticket->created_at) }}</span>
                                     </p>
                                 </div>
+
                                 @if (!empty($ticket->description))
                                     <div class="p-4">
-                                        <p class="">{!! $ticket->description !!}</p>
+                                        <p>{!! $ticket->description !!}</p>
+
                                         @if (!empty($ticket->attachment))
-                                            <h6>{{ __('Attachments') }} :</h6>
-                                            <ul class="list-group list-group-flush">
-                                                <li class="list-group-item px-0">
-                                                    {{ !empty($ticket->attachment) ? $ticket->attachment : '' }} <a
-                                                        download=""
-                                                        href="{{ !empty($ticket->attachment) ? $attechment . $ticket->attachment : $attechment . 'default.png' }}"
-                                                        class="edit-icon py-1 ml-2" title="{{ __('Download') }}"><i
-                                                            class="fas fa-download ms-2"></i></a>
-                                                </li>
-                                            </ul>
+                                            @php
+                                                $filename = $ticket->attachment;
+                                                $fileExt = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                                                $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']);
+                                                $filePath = $attechment.$ticket->project_id."/" . $filename;
+                                            @endphp
+
+                                            <h6>{{ __('Attachments') }}:</h6>
+                                            <div class="row">
+                                                <div class="col-md-3 col-sm-4 mb-3">
+                                                    <div class="card shadow-sm border text-center">
+                                                        @if ($isImage)
+                                                            <a href="{{ $filePath }}" target="_blank">
+                                                                <img src="{{ $filePath }}" class="card-img-top img-fluid" alt="{{ $filename }}" style="height: 150px; object-fit: cover;" onerror="this.src='{{ asset(Storage::url('uploads/avatar/default.png')) }}';">
+                                                            </a>
+                                                        @else
+                                                            <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 150px;">
+                                                                <i class="fas fa-file-alt fa-3x text-muted"></i>
+                                                            </div>
+                                                        @endif
+
+                                                        <div class="card-body p-2">
+                                                            <p class="small text-truncate mb-2" title="{{ $filename }}">{{ $filename }}</p>
+                                                            <a href="{{ $filePath }}" download class="btn btn-sm btn-outline-primary w-100">
+                                                                <i class="fas fa-download"></i> Download
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         @endif
                                     </div>
                                 @endif
@@ -108,7 +283,7 @@
                         </div>
                     </div>
 
-                    @if ($ticket->status == 'open')
+                    @if ($ticket->status != 5)
                         <div class="row">
                             <div class="card">
                                 <div class="card-body">
@@ -170,6 +345,7 @@
                     @endif
                 </div>
 
+                @if(count($ticketreply) > 0)
                 <div class="col-lg-6">
                     <h5 class="mb-3">{{ __('Replies') }}</h5>
                     @foreach ($ticketreply as $reply)
@@ -177,10 +353,14 @@
                             <div class="card-header row d-flex align-items-center justify-content-between">
                                 <div class="header-right col d-flex align-items-start">
                                     <a href="#" class="avatar avatar-sm me-3">
-                                        <img alt="" class="img-fluid rounded border-2 border border-primary" width="50px" style="height: 50px""
-                                            @if (!empty($reply->users) && !empty($reply->users->avatar)) src="{{ asset(Storage::url('uploads/avatar/')) . '/' . $reply->users->avatar }}" @else  src="{{ asset(Storage::url('uploads/avatar/')) . '/avatar.png' }}" @endif>
+                                        <img alt=""
+                                             class="img-fluid rounded border-2 border border-primary"
+                                             width="50px"
+                                             style="height: 50px"
+                                             src="{{ asset(Storage::url('uploads/avatar/' . ($reply->users->avatar ?? 'avatar.png'))) }}"
+                                             onerror="this.onerror=null; this.src='{{ asset(Storage::url('uploads/avatar/avatar.png')) }}';">
                                     </a>
-                                    <h6 class="mb-0">{{ !empty($reply->users) ? $reply->users->name : '' }}
+                                    <h6 class="mb-0">{{ !empty($reply->users) ? ucfirst($reply->users->name) : '' }}
                                         <div class="d-block text-muted">
                                             {{ !empty($reply->users) ? $reply->users->email : '' }}
                                         </div>
@@ -191,24 +371,51 @@
                             </div>
                             @if (!empty($reply->description))
                                 <div class="p-4">
-                                    <p class="">{!! $reply->description !!}</p>
+                                    <p>{!! $reply->description !!}</p>
+
                                     @if (!empty($reply->attachment))
-                                        <h6>{{ __('Attachments') }} :</h6>
-                                        <ul class="list-group list-group-flush">
-                                            <li class="list-group-item px-0">
-                                                {{ !empty($reply->attachment) ? $reply->attachment : '' }} <a
-                                                    download=""
-                                                    href="{{ !empty($reply->attachment) ? $attechment . $reply->attachment : $attechment . 'default.png' }}"
-                                                    class="edit-icon py-1 ml-2" title="{{ __('Download') }}"><i
-                                                        class="fas fa-download ms-2"></i></a>
-                                            </li>
-                                        </ul>
+                                        @php
+                                            $filename = $reply->attachment;
+                                            $fileExt = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                                            $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']);
+                                            $filePath = $attechment.$ticket->project_id."/" . $filename; // example: asset('storage/uploads/attachments/')
+                                        @endphp
+
+                                        <h6>{{ __('Attachments') }}:</h6>
+                                        <div class="row">
+                                            <div class="col-md-3 col-sm-4 mb-3">
+                                                <div class="card shadow-sm border text-center">
+                                                    @if ($isImage)
+                                                        <a href="{{ $filePath }}" target="_blank">
+                                                            <img src="{{ $filePath }}"
+                                                                 class="card-img-top img-fluid"
+                                                                 alt="{{ $filename }}"
+                                                                 style="height: 150px; object-fit: cover;"
+                                                                 onerror="this.src='{{ asset(Storage::url('uploads/avatar/default.png')) }}';">
+                                                        </a>
+                                                    @else
+                                                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light"
+                                                             style="height: 150px;">
+                                                            <i class="fas fa-file-alt fa-3x text-muted"></i>
+                                                        </div>
+                                                    @endif
+
+                                                    <div class="card-body p-2">
+                                                        <p class="small text-truncate mb-2" title="{{ $filename }}">{{ $filename }}</p>
+                                                        <a href="{{ $filePath }}" download class="btn btn-sm btn-outline-primary w-100">
+                                                            <i class="fas fa-download"></i> Download
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     @endif
                                 </div>
                             @endif
                         </div>
                     @endforeach
                 </div>
+                @endif
             </div>
         </div>
     </div>

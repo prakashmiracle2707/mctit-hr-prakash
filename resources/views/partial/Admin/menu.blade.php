@@ -1,4 +1,5 @@
 @php
+
     // $logos = asset(Storage::url('uploads/logo/'));
     $logos = \App\Models\Utility::get_file('uploads/logo/');
 
@@ -9,9 +10,12 @@
     $currantLang = $users->currentLanguage();
     $logo = \App\Models\Utility::get_superadmin_logo();
     $emailTemplate = App\Models\EmailTemplate::getemailTemplate();
+
     $mode_setting = \App\Models\Utility::mode_layout();
     $lang = Auth::user()->lang;
+
     $usersroleName = $users->roles[0]->name;
+
 
 @endphp
 {{-- <nav
@@ -318,7 +322,12 @@
             @endif
             <!-- Project Not company-->
 
-
+            @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'CEO' || \Auth::user()->type == 'management')
+                <li class="dash-item">
+                    <a href="{{ route('client.index') }}" class="dash-link"><span class="dash-micon"><i
+                                class="ti ti-user"></i></span><span class="dash-mtext">{{ __('Manage Client') }}</span></a>
+                </li>
+            @endif
             <!-- Attendance Not company-->
             @if (Gate::check('Manage Attendance') && $usersroleName != "company")
                
@@ -345,7 +354,14 @@
             @endcan
             <!-- TimeSheet-->
 
-
+            <!-- ticket-->
+            @can('Manage Ticket')
+                <li class="dash-item {{ Request::segment(1) == 'ticket' ? 'active' : '' }}">
+                    <a href="{{ route('ticket.index') }}" class="dash-link"><span class="dash-micon"><i
+                                class="ti ti-license"></i></span><span class="dash-mtext">{{ __('Ticket') }}</span></a>
+                </li>
+            @endcan
+            
             <!-- Leave-->
             @can('Manage Leave')
                 <li class="dash-item {{ Request::segment(1) == 'leave' ? 'active' : '' }}">
@@ -690,13 +706,7 @@
             {{-- @endcan --}}
 
 
-            <!-- ticket-->
-            @can('Manage Ticket')
-                <li class="dash-item {{ Request::segment(1) == 'ticket' ? 'active' : '' }}">
-                    <a href="{{ route('ticket.index') }}" class="dash-link"><span class="dash-micon"><i
-                                class="ti ti-ticket"></i></span><span class="dash-mtext">{{ __('Ticket') }}</span></a>
-                </li>
-            @endcan
+            
 
             <!-- Event-->
             @can('Manage Event')
