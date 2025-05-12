@@ -37,6 +37,7 @@
         <thead>
             <tr>
                 <th>Leave Type</th>
+                <th>Leave Reason</th>
                 <th>Start Date</th>
                 <th>End Date</th>
                 <th>Total Days</th>
@@ -46,6 +47,7 @@
         <tbody>
             <tr>
                 <td>{{ $leaveType ?? '' }}</td>
+                <td>{{ $leaveReason ?? '' }}</td>
                 <td>{{ \Carbon\Carbon::parse($start_date)->format('d/m/Y') }}</td>
                 <td>{{ \Carbon\Carbon::parse($end_date)->format('d/m/Y') }}</td>
                 <td>{{ $total_leave_days}}</td>
