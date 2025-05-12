@@ -248,8 +248,10 @@ class LeaveEmployeeController extends Controller
         ];
 
         $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
+        $setings = Utility::settings();
         $emails[] = $setings['CFO_EMAIL'];
         $emails[] = $setings['DIRECTOR_EMAIL'];
+        $emails[] = $managerInfo->email;
 
         if($action === 'approve'){
             $bladeName = 'email.leave-manager-approved';
@@ -257,14 +259,18 @@ class LeaveEmployeeController extends Controller
             $bladeName = 'email.leave-manager-reject';
         }
 
-        Mail::send($bladeName, $data, function ($message) use ($data,$emails) {
-            $subjectTxt = $data['leaveType']." on ".$data["leaveDate"];
-            $message->to($data["toEmail"])  // Manager’s email address
-                    ->subject($subjectTxt)
-                    ->from($data["fromEmail"], $data["fromNameEmail"])
-                    ->replyTo($data["replyTo"], $data["replyToName"])
-                    ->cc($emails);
-        });
+        if($setings['is_email_trigger'] === 'on'){
+            Mail::send($bladeName, $data, function ($message) use ($data,$emails) {
+                $subjectTxt = $data['leaveType']." on ".$data["leaveDate"];
+                $message->to($data["toEmail"])  // Manager’s email address
+                        ->subject($subjectTxt)
+                        ->from($data["fromEmail"], $data["fromNameEmail"])
+                        ->replyTo($data["replyTo"], $data["replyToName"])
+                        ->cc($emails);
+            });
+        }
+
+        
 
         /* ********************  Email Trigger End  ******************** */
 

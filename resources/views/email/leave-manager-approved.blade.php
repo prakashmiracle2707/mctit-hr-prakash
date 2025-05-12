@@ -54,6 +54,10 @@
         </tbody>
     </table>
 
+    @if(!empty($remark))
+        <p><strong>Note:</strong> {{ $remark }}</p>
+    @endif
+
     <p><strong>Approved By (Manager):</strong> {{ ucwords($approved_by_name ?? 'Manager') }}</p>
 
     <p>We will notify you once your leave is fully approved. Please refrain from making plans or changes until the final confirmation is received.</p>
