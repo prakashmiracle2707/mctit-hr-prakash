@@ -159,6 +159,20 @@ class LeaveEmployeeController extends Controller
         return view('leaveEmployee.quick_approve', compact('leave','managerEntry'));
     }
 
+    private function getLeaveFullHalfDay($halfDayType)
+    {
+        switch($halfDayType) {
+            case 'full_day':
+                return 'Full Day';
+            case 'morning':
+                return 'First Half (Morning)';
+            case 'afternoon':
+                return 'Second Half (Afternoon)';
+            default:
+                return 'Not Specified';  // Default if no matching type is found
+        }
+    }
+
     public function quickApproveAction(Request $request, $id)
     {
         $action = $request->input('action');
@@ -171,8 +185,8 @@ class LeaveEmployeeController extends Controller
         $leave = LocalLeave::findOrFail($id);
 
         // Get the logged-in manager's user ID
-        $employee = Employee::where('user_id', \Auth::id())->first();
-        $managerId = $employee->id;
+        $managerInfo = Employee::where('user_id', \Auth::id())->first();
+        $managerId = $managerInfo->id;
 
         // Update the corresponding record in leave_managers
         $leaveManager = LeaveManager::where('leave_id', $id)
@@ -187,6 +201,72 @@ class LeaveEmployeeController extends Controller
         $leaveManager->remark = $remark;
         $leaveManager->action_date = now();
         $leaveManager->save();
+
+        /* ********************  Email Trigger Start  ******************** */
+
+        $leaveDate = "";
+
+        $formattedStartDate = \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y');
+        $formattedEndDate = \Carbon\Carbon::parse($leave->end_date)->format('d/m/Y');
+
+        if($leave->start_date == $leave->end_date){
+            $leaveDate = $formattedStartDate;
+        }else{
+
+            if($leave->total_leave_days > 1){
+                $leaveDate = $formattedStartDate." To ".$formattedEndDate." [".$leave->total_leave_days." Days ]";
+            }else{
+                $leaveDate = $formattedStartDate." To ".$formattedEndDate;
+            }
+            
+        }
+
+        $employee = Employee::where('id', $leave->employee_id)->first();
+        $leavetype = LeaveType::find($leave->leave_type_id);
+
+        $data = [
+            'employeeName' => $employee->name,
+            'leaveId' => $leave->id,
+            'leaveType' => $leavetype->title,
+            'leaveFullHalfDay' => $this->getLeaveFullHalfDay($leave->half_day_type),
+            'half_day_type' =>$leave->half_day_type,
+            'appliedOn' => $leave->remark,
+            'leaveDate' => $leaveDate,
+            'leaveReason' => $leave->leave_reason,
+            'status' => $leave->status,
+            'remark' => $remark,
+            'start_date' => $leave->start_date,
+            'end_date' => $leave->end_date,
+            'total_leave_days' => $leave->total_leave_days,
+            'toEmail' => $employee->email,
+            'approved_by_name' => $managerInfo->name,
+            //'toEmail' => 'prakashn@miraclecloud-technology.com',
+            'fromEmail' => $managerInfo->email,
+            'fromNameEmail' => $managerInfo->name,
+            'replyTo' => $managerInfo->email,
+            'replyToName' => $managerInfo->name
+        ];
+
+        $emails = Employee::whereIn('id', $leave->cc_email)->pluck('email')->toArray();
+        $emails[] = $setings['CFO_EMAIL'];
+        $emails[] = $setings['DIRECTOR_EMAIL'];
+
+        if($action === 'approve'){
+            $bladeName = 'email.leave-manager-approved';
+        }else{
+            $bladeName = 'email.leave-manager-reject';
+        }
+
+        Mail::send($bladeName, $data, function ($message) use ($data,$emails) {
+            $subjectTxt = $data['leaveType']." on ".$data["leaveDate"];
+            $message->to($data["toEmail"])  // Manager’s email address
+                    ->subject($subjectTxt)
+                    ->from($data["fromEmail"], $data["fromNameEmail"])
+                    ->replyTo($data["replyTo"], $data["replyToName"])
+                    ->cc($emails);
+        });
+
+        /* ********************  Email Trigger End  ******************** */
 
         // After saving, check all managers' statuses
         
