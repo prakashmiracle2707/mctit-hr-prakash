@@ -29,6 +29,14 @@
         ->exists();
 @endphp
 
+<style type="text/css">
+    td.description {
+      max-width: 500px;
+      white-space: normal;
+      word-wrap: break-word;
+    }
+</style>
+
 @section('content')
     <div class="col-xl-12">
         <div class="card">
@@ -42,7 +50,7 @@
                                 @endif
                                 <th>{{ __('Category') }}</th>
                                 <th>{{ __('Title') }}</th>
-                                <th>{{ __('Description') }}</th>
+                                <th class="description">{{ __('Description') }}</th>
                                 <th>{{ __('Priority') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Created At') }}</th>
@@ -59,7 +67,7 @@
                                     @endif
                                     <td>{{ $ticket->category->name ?? '-' }}</td>
                                     <td>{{ $ticket->title->name ?? '-' }}</td>
-                                    <td>{{ $ticket->description ?? '-' }}</td>
+                                    <td class="text-wrap" style="max-width: 400px;">{{ $ticket->description ?? '-' }}</td>
                                     <td>
                                         @if ($ticket->priority == 'Medium')
                                             <div class="badge bg-warning p-2 px-3 ">{{ strtoupper($ticket->priority) }}</div>
