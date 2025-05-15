@@ -840,7 +840,7 @@
                 </div>
             </div>
         </div>
-    @else
+    @elseif (\Auth::user()->type != 'employee' && \Auth::user()->type != 'client')
         <div class="col-xxl-12">
 
             {{-- start --}}
@@ -1057,175 +1057,175 @@
         {{-- </div> --}}
 
         {{-- end --}}
-
+        
         <div class="col-xxl-12">
             <div class="row">
                 
-                    <div class="col-xl-5">
+                <div class="col-xl-5">
 
-                        <div class="card" style="display:none;">
-                            <div class="card-header card-body table-border-style">
-                                <h5>{{ __('Meeting schedule') }}</h5>
-                            </div>
-                            <div class="card-body" style="height: 324px; overflow:auto">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
+                    <div class="card" style="display:none;">
+                        <div class="card-header card-body table-border-style">
+                            <h5>{{ __('Meeting schedule') }}</h5>
+                        </div>
+                        <div class="card-body" style="height: 324px; overflow:auto">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ __('Title') }}</th>
+                                            <th>{{ __('Date') }}</th>
+                                            <th>{{ __('Time') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="list">
+                                        @foreach ($meetings as $meeting)
                                             <tr>
-                                                <th>{{ __('Title') }}</th>
-                                                <th>{{ __('Date') }}</th>
-                                                <th>{{ __('Time') }}</th>
+                                                <td>{{ $meeting->title }}</td>
+                                                <td>{{ \Auth::user()->dateFormat($meeting->date) }}</td>
+                                                <td>{{ \Auth::user()->timeFormat($meeting->time) }}</td>
                                             </tr>
-                                        </thead>
-                                        <tbody class="list">
-                                            @foreach ($meetings as $meeting)
-                                                <tr>
-                                                    <td>{{ $meeting->title }}</td>
-                                                    <td>{{ \Auth::user()->dateFormat($meeting->date) }}</td>
-                                                    <td>{{ \Auth::user()->timeFormat($meeting->time) }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="card">
-                            <div class="card-header card-body table-border-style">
-                                <h5>{{ __("Today's Not Clock In") }}</h5>
-                            </div>
-                            <div class="card-body" style="height:300px; overflow:auto">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
+                    <div class="card">
+                        <div class="card-header card-body table-border-style">
+                            <h5>{{ __("Today's Not Clock In") }}</h5>
+                        </div>
+                        <div class="card-body" style="height:300px; overflow:auto">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ __('Name') }}</th>
+                                            <th>{{ __('Status') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="list">
+                                        @foreach ($notClockInDetails as $notClockIn)
                                             <tr>
-                                                <th>{{ __('Name') }}</th>
-                                                <th>{{ __('Status') }}</th>
+                                                <td>{{ $notClockIn['employee_name'] }}</td>
+                                                <td><span class="absent-btn {{ $notClockIn['leave_type'] != 'Absent' ? 'text-danger' : '' }}">
+                                                        {{ $notClockIn['leave_type'] }}
+                                                    </span>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody class="list">
-                                            @foreach ($notClockInDetails as $notClockIn)
-                                                <tr>
-                                                    <td>{{ $notClockIn['employee_name'] }}</td>
-                                                    <td><span class="absent-btn {{ $notClockIn['leave_type'] != 'Absent' ? 'text-danger' : '' }}">
-                                                            {{ $notClockIn['leave_type'] }}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="card">
-                            <div class="card-header card-body table-border-style">
-                                <h5>{{ __("Today's Clock In") }}</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table" id="pc-dt-simple">
-                                        <thead>
+                    <div class="card">
+                        <div class="card-header card-body table-border-style">
+                            <h5>{{ __("Today's Clock In") }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table" id="pc-dt-simple">
+                                    <thead>
+                                        <tr>
+                                            <!-- <th>{{ __('Date') }}</th> -->
+                                            @if (\Auth::user()->type != 'employee')
+                                                <th>{{ __('Employee') }}</th>
+                                            @endif
+                                            <!-- <th>{{ __('Status') }}</th> -->
+                                            <th>{{ __('Clock In') }}</th>
+                                            <th>{{ __('Clock Out') }}</th>
+                                            <!-- <th>{{ __('Late') }}</th>
+                                            <th>{{ __('Early Leaving') }}</th>
+                                            <th>{{ __('Overtime') }}</th> -->
+                                            <th>{{ __('Total Hours') }}</th>
+                                            <th>{{ __('Total Break Log') }}</th>
+                                            <!-- @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
+                                                <th width="200px">{{ __('Action') }}</th>
+                                            @endif -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        @foreach ($attendanceEmployee as $attendance)
                                             <tr>
-                                                <!-- <th>{{ __('Date') }}</th> -->
+                                                <!-- <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td> -->
                                                 @if (\Auth::user()->type != 'employee')
-                                                    <th>{{ __('Employee') }}</th>
-                                                @endif
-                                                <!-- <th>{{ __('Status') }}</th> -->
-                                                <th>{{ __('Clock In') }}</th>
-                                                <th>{{ __('Clock Out') }}</th>
-                                                <!-- <th>{{ __('Late') }}</th>
-                                                <th>{{ __('Early Leaving') }}</th>
-                                                <th>{{ __('Overtime') }}</th> -->
-                                                <th>{{ __('Total Hours') }}</th>
-                                                <th>{{ __('Total Break Log') }}</th>
-                                                <!-- @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
-                                                    <th width="200px">{{ __('Action') }}</th>
-                                                @endif -->
-                                            </tr>
-                                        </thead>
-                                        <tbody>
+                                                    <td>{{ !empty($attendance->employee) ? $attendance->employee->name : '' }}
+                                                        @if($attendance->work_from_home)
+                                                            <span class="badge bg-secondary p-1 px-1">WFH</span>
+                                                        @endif
 
-                                            @foreach ($attendanceEmployee as $attendance)
-                                                <tr>
-                                                    <!-- <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td> -->
-                                                    @if (\Auth::user()->type != 'employee')
-                                                        <td>{{ !empty($attendance->employee) ? $attendance->employee->name : '' }}
-                                                            @if($attendance->work_from_home)
-                                                                <span class="badge bg-secondary p-1 px-1">WFH</span>
-                                                            @endif
-
-                                                            @if ($attendance->isInBreak)
-                                                                <br /><span class="badge bg-danger p-1 px-1">On Break</span>
-                                                            @endif
-                                                        </td>
-                                                    @endif
-                                                    
-                                                    <!-- <td>{{ $attendance->status }}</td> -->
-                                                    <td>{{ $attendance->clock_in != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_in) : '00:00' }}
-                                                    </td>
-                                                    <td>
-                                                    
-                                                        @if ($attendance->clock_out == '00:00:00' && $attendance->date < date('Y-m-d'))
-                                                            <span class="badge bg-danger p-1 px-1">Missed Checkout</span>
-                                                        @else
-                                                            {{ $attendance->clock_out != '00:00:00' ? date('h:i A', strtotime($attendance->clock_out)) : '00:00' }}
+                                                        @if ($attendance->isInBreak)
+                                                            <br /><span class="badge bg-danger p-1 px-1">On Break</span>
                                                         @endif
                                                     </td>
-                                                    <!-- <td>{{ $attendance->late }}</td>
-                                                    <td>{{ $attendance->early_leaving }}</td>
-                                                    <td>{{ $attendance->overtime }}</td> -->
-                                                    <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
-                                                    <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td>
-                                                   <!--  @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
-                                                    <td class="Action">
-                                                        
-                                                        <div class="dt-buttons">
-                                                        <span>
-                                                                @can('Edit Attendance')
-                                                                    <div class="action-btn bg-info me-2">
-                                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
-                                                                            data-size="lg"
-                                                                            data-url="{{ URL::to('attendanceemployee/' . $attendance->id . '/edit') }}"
-                                                                            data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
-                                                                            title="" data-title="{{ __('Edit Attendance') }}"
-                                                                            data-bs-original-title="{{ __('Edit') }}">
-                                                                            <span class="text-white"><i class="ti ti-pencil"></i></span>
-                                                                        </a>
-                                                                    </div>
-                                                                @endcan
+                                                @endif
+                                                
+                                                <!-- <td>{{ $attendance->status }}</td> -->
+                                                <td>{{ $attendance->clock_in != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_in) : '00:00' }}
+                                                </td>
+                                                <td>
+                                                
+                                                    @if ($attendance->clock_out == '00:00:00' && $attendance->date < date('Y-m-d'))
+                                                        <span class="badge bg-danger p-1 px-1">Missed Checkout</span>
+                                                    @else
+                                                        {{ $attendance->clock_out != '00:00:00' ? date('h:i A', strtotime($attendance->clock_out)) : '00:00' }}
+                                                    @endif
+                                                </td>
+                                                <!-- <td>{{ $attendance->late }}</td>
+                                                <td>{{ $attendance->early_leaving }}</td>
+                                                <td>{{ $attendance->overtime }}</td> -->
+                                                <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
+                                                <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td>
+                                               <!--  @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
+                                                <td class="Action">
+                                                    
+                                                    <div class="dt-buttons">
+                                                    <span>
+                                                            @can('Edit Attendance')
+                                                                <div class="action-btn bg-info me-2">
+                                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                                        data-size="lg"
+                                                                        data-url="{{ URL::to('attendanceemployee/' . $attendance->id . '/edit') }}"
+                                                                        data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
+                                                                        title="" data-title="{{ __('Edit Attendance') }}"
+                                                                        data-bs-original-title="{{ __('Edit') }}">
+                                                                        <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                                    </a>
+                                                                </div>
+                                                            @endcan
 
-                                                                @can('Delete Attendance')
-                                                                    <div class="action-btn bg-danger">
-                                                                        {!! Form::open([
-                                                                            'method' => 'DELETE',
-                                                                            'route' => ['attendanceemployee.destroy', $attendance->id],
-                                                                            'id' => 'delete-form-' . $attendance->id,
-                                                                        ]) !!}
-                                                                        <a href="#"
-                                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para"
-                                                                            data-bs-toggle="tooltip" title=""
-                                                                            data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
-                                                                                class="ti ti-trash"></i></span></a>
-                                                                        </form>
-                                                                    </div>
-                                                                @endcan
-                                                            </span>
-                                                        </div>
-                                                        
-                                                    </td>
-                                                    @endif -->
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                            @can('Delete Attendance')
+                                                                <div class="action-btn bg-danger">
+                                                                    {!! Form::open([
+                                                                        'method' => 'DELETE',
+                                                                        'route' => ['attendanceemployee.destroy', $attendance->id],
+                                                                        'id' => 'delete-form-' . $attendance->id,
+                                                                    ]) !!}
+                                                                    <a href="#"
+                                                                        class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                                        data-bs-toggle="tooltip" title=""
+                                                                        data-bs-original-title="Delete" aria-label="Delete"><span class="text-white"><i
+                                                                            class="ti ti-trash"></i></span></a>
+                                                                    </form>
+                                                                </div>
+                                                            @endcan
+                                                        </span>
+                                                    </div>
+                                                    
+                                                </td>
+                                                @endif -->
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-
                     </div>
+
+                </div>
 
 
                
@@ -1265,6 +1265,7 @@
             </div>
            
         </div>
+        
 
         @can('Manage Leave')
         <div class="col-xl-12 col-lg-12 col-md-12">
