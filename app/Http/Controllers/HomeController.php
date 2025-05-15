@@ -435,9 +435,9 @@ class HomeController extends Controller
 
                 // attendanceEmployee
                 /* *************** New Add End ****************************/
-
+                $employeesinfo = Employee::where('user_id', '=', $user->id)->first();
                 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc','FindOnBreakEmployee'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc','FindOnBreakEmployee','employeesinfo'));
             }
             else
             {

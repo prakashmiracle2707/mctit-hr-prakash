@@ -385,26 +385,31 @@
                                 {{ Form::open(['url' => 'attendanceemployee/attendance', 'method' => 'post', 'id' => 'clockInForm']) }}
                                 @if (empty($employeeAttendance) || $employeeAttendance->clock_out != '00:00:00')
                                     <button type="submit" value="0" name="in" id="clock_in" class="btn btn-primary w-100">{{ __('CLOCK IN') }}</button>
-                                    <div class="form-check">
-                                        {{ Form::checkbox('work_from_home', 1, false, ['class' => 'form-check-input', 'id' => 'work_from_home_in']) }}
-                                        <label class="form-check-label" for="work_from_home_in">{{ __('Work from Home') }}</label>
-                                    </div>
+
+                                    @if($employeesinfo->work_from_home == 1)
+                                        <div class="form-check">
+                                            {{ Form::checkbox('work_from_home', 1, false, ['class' => 'form-check-input', 'id' => 'work_from_home_in']) }}
+                                            <label class="form-check-label" for="work_from_home_in">{{ __('Work from Home') }}</label>
+                                        </div>
+                                    @endif
                                 @else
                                     <button type="submit" class="btn btn-primary w-100 disabled" disabled>{{ __('CLOCK IN') }}</button>
 
-                                    <div class="form-check">
-                                        {{ Form::checkbox(
-                                            'work_from_home',
-                                            1,
-                                            $employeeAttendance->work_from_home == 1,  // Check if already enabled
-                                            [
-                                                'class' => 'form-check-input update-work-from-home-class',
-                                                'id' => 'work_from_home_in',
-                                                'data-id' => $employeeAttendance->id
-                                            ]
-                                        ) }}
-                                        <label class="form-check-label" for="work_from_home_in">{{ __('Work from Home') }}</label>
-                                    </div>
+                                    @if($employeesinfo->work_from_home == 1)
+                                        <div class="form-check">
+                                            {{ Form::checkbox(
+                                                'work_from_home',
+                                                1,
+                                                $employeeAttendance->work_from_home == 1,  // Check if already enabled
+                                                [
+                                                    'class' => 'form-check-input update-work-from-home-class',
+                                                    'id' => 'work_from_home_in',
+                                                    'data-id' => $employeeAttendance->id
+                                                ]
+                                            ) }}
+                                            <label class="form-check-label" for="work_from_home_in">{{ __('Work from Home') }}</label>
+                                        </div>
+                                    @endif
                                 @endif
                                 {{ Form::close() }}
                             </div>

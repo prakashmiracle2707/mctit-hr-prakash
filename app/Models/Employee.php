@@ -36,6 +36,7 @@ class Employee extends Model
         'created_by',
         'is_manager',
         'manages_id',
+        'work_from_home',
     ];
 
     public function documents()

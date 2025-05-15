@@ -195,7 +195,10 @@ class LeaveController extends Controller
             }
 
             $employeesList = Employee::where('user_id', '!=', \Auth::user()->id)->first();
-            $leavetypes      = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
+
+            $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
+            
+
             $leavetypes_days = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
 
             $managerList = Employee::where('created_by', \Auth::user()->creatorId())
@@ -692,7 +695,9 @@ class LeaveController extends Controller
 
                 // $employees  = Employee::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
                 // $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('title', 'id');
-                $leavetypes      = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
+                
+                // $leavetypes      = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
+                $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
 
                 // echo "<pre>";print_r($leave);exit;
 
@@ -1282,6 +1287,8 @@ class LeaveController extends Controller
 
     public function jsoncount(Request $request)
     {
+
+        $employee  = Employee::find($request->employee_id);
         // Get active financial year
         $financialYear = \DB::table('financial_years')
             ->where('is_active', 1)
@@ -1291,7 +1298,26 @@ class LeaveController extends Controller
         $startDate = $financialYear->start_date ?? Utility::AnnualLeaveCycle()['start_date'];
         $endDate   = $financialYear->end_date ?? Utility::AnnualLeaveCycle()['end_date'];
 
-        $leave_counts = LeaveType::select(
+        if($employee->work_from_home == 0){
+            $leave_counts = LeaveType::select(
+                \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_leave'),
+                'leave_types.title',
+                'leave_types.code',
+                'leave_types.days',
+                'leave_types.id'
+            )
+            ->leftJoin('leaves', function ($join) use ($request, $startDate, $endDate) {
+                $join->on('leaves.leave_type_id', '=', 'leave_types.id')
+                    ->where('leaves.employee_id', '=', $request->employee_id)
+                    ->where('leaves.status', '=', 'Approved')
+                    ->whereBetween('leaves.created_at', [$startDate, $endDate]);
+            })
+            ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
+            ->where('leave_types.code', '!=', 'WFH')
+            ->groupBy('leave_types.id')
+            ->get();
+        }else{
+            $leave_counts = LeaveType::select(
                 \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_leave'),
                 'leave_types.title',
                 'leave_types.code',
@@ -1307,6 +1333,8 @@ class LeaveController extends Controller
             ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
             ->groupBy('leave_types.id')
             ->get();
+        }
+        
 
         return $leave_counts;
     }

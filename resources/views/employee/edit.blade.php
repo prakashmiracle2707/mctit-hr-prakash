@@ -63,7 +63,33 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        {{ Form::label('managers[]', __('Managers'), ['class' => 'col-form-label']) }}<x-required></x-required>
+                                        {{ Form::select('managers[]', 
+                                            $managerList, 
+                                            old('managers', $selectedManagers), 
+                                            ['class' => 'form-control select2', 'multiple' => 'multiple', 'id' => 'managers']
+                                        ) }}
+                                        <small class="text-muted">{{ __('You can select multiple reporting managers.') }}</small>
+                                    </div>
+                                </div>
                             </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-check-label d-block mb-1" for="work_from_home">{{ __('Work From Home') }}</label>
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" class="form-check-input" id="work_from_home"
+                                               name="work_from_home"
+                                               value="1"
+                                               {{ old('work_from_home', $employee->work_from_home) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="work_from_home">{{ __('Enable') }}</label>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 {!! Form::label('address', __('Address'), ['class' => 'form-label']) !!}<x-required></x-required>
                                 {!! Form::textarea('address', null, ['class' => 'form-control', 'rows' => 3]) !!}

@@ -247,7 +247,15 @@ class EmployeeController extends Controller
             $employee     = Employee::find($id);
             $employeesId  = \Auth::user()->employeeIdFormat($employee->employee_id);
 
-            return view('employee.edit', compact('employee', 'employeesId', 'branches', 'departments', 'designations', 'documents'));
+            $managerList = Employee::where('created_by', \Auth::user()->creatorId())
+                            ->where('user_id', '!=', \Auth::user()->id)
+                            ->where('is_manager', 1)
+                            ->orderBy('name', 'asc')
+                            ->pluck('name', 'id');
+            // Ensure it's an array for Form::select to match correctly
+            $selectedManagers = json_decode($employee->manages_id, true) ?? [];
+
+            return view('employee.edit', compact('employee', 'employeesId', 'branches', 'departments', 'designations', 'documents','managerList','selectedManagers'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -332,8 +340,14 @@ class EmployeeController extends Controller
                 }
             }
 
-            $employee = Employee::findOrFail($id);
-            $input    = $request->all();
+            // Update manager list (store as JSON or array depending on DB design)
+            $employee->manages_id = $request->has('managers') ? json_encode($request->managers) : null;
+
+            // ✅ Handle work_from_home toggle (checkbox)
+            $employee->work_from_home = $request->has('work_from_home') ? 1 : 0;
+
+            // Update remaining fields
+            $input = $request->except(['document', 'managers', 'work_from_home']);
             $employee->fill($input)->save();
             if ($request->salary) {
                 return redirect()->route('setsalary.index')->with('success', 'Employee successfully updated.');
