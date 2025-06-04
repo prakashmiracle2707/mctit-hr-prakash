@@ -492,7 +492,7 @@ class HomeController extends Controller
                 foreach ($notClockIns as $employee) {
                     // Check if employee is on leave today
                     $leave = LocalLeave::where('employee_id', $employee->id)
-                        ->where('status', 'Approved')
+                        //->where('status', 'Approved')
                         ->whereDate('start_date', '<=', $today)
                         ->whereDate('end_date', '>=', $today)
                         ->whereIn('leave_type_id', [1, 2])
@@ -504,6 +504,7 @@ class HomeController extends Controller
                         'employee_name' => $employee->name,
                         'is_on_leave' => $leave ? true : false,
                         'leave_type' => $leave ? ($leave->leaveType->title ?? 'N/A') : 'Absent',
+                        'leave_status' => $leave ? ($leave->status ?? 'N/A') : '-',
                     ];
                 }
 

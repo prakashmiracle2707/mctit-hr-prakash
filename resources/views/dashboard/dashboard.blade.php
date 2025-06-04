@@ -223,7 +223,7 @@
         </div>
        
         <div class="row">
-        <div class="col-xxl-6 col-md-6" >
+        <div class="col-xxl-5 col-md-5" >
             <div class="card">
                 <div class="card-header">
                     <div class="row">
@@ -253,7 +253,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-xxl-6 col-md-6">
+        <div class="col-xxl-7 col-md-7">
             <div class="card">
                 <div class="card-header">
                     <h5>{{ __('Mark Attandance') }}</h5>
@@ -778,7 +778,7 @@
                                             @elseif ($leave->status == 'In_Process')
                                                 <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
                                             @elseif ($leave->status == 'Manager_Approved')
-                                                <div class="badge p-2 px-3" style="background:#004000;">Manager-Approved</div>
+                                                <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
                                             @elseif ($leave->status == 'Manager_Rejected')
                                                 <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
                                             @elseif ($leave->status == 'Partially_Approved')
@@ -1061,7 +1061,7 @@
         <div class="col-xxl-12">
             <div class="row">
                 
-                <div class="col-xl-5">
+                <div class="col-xl-7">
 
                     <div class="card" style="display:none;">
                         <div class="card-header card-body table-border-style">
@@ -1102,6 +1102,7 @@
                                         <tr>
                                             <th>{{ __('Name') }}</th>
                                             <th>{{ __('Status') }}</th>
+                                            <th>{{ __('Leave Status') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody class="list">
@@ -1111,6 +1112,35 @@
                                                 <td><span class="absent-btn {{ $notClockIn['leave_type'] != 'Absent' ? 'text-danger' : '' }}">
                                                         {{ $notClockIn['leave_type'] }}
                                                     </span>
+                                                </td>
+                                                <td>
+                                                    <!-- <span class="absent-btn {{ $notClockIn['leave_type'] != 'Absent' ? 'text-danger' : '' }}">
+                                                        {{ $notClockIn['leave_type'] }}
+                                                    </span> -->
+
+                                                    @if ($notClockIn['leave_status'] == 'Pending')
+                                                        <div class="badge bg-warning p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
+                                                    @elseif ($notClockIn['leave_status'] == 'In_Process')
+                                                        <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
+                                                    @elseif ($notClockIn['leave_status'] == 'Manager_Approved')
+                                                        <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
+                                                    @elseif ($notClockIn['leave_status'] == 'Manager_Rejected')
+                                                        <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
+                                                    @elseif ($notClockIn['leave_status'] == 'Partially_Approved')
+                                                        <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
+                                                    <!-- @elseif (in_array($notClockIn['leave_status'], ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
+                                                        <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
+                                                    @elseif($notClockIn['leave_status'] == 'Approved')
+                                                        <div class="badge bg-success p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
+                                                    @elseif($notClockIn['leave_status'] == "Reject")
+                                                        <div class="badge bg-danger p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
+                                                    @elseif($notClockIn['leave_status'] == "Draft")
+                                                        <div class="badge bg-info p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
+                                                    @elseif($notClockIn['leave_status'] == "Cancelled")
+                                                        <div class="badge bg-danger p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
+                                                    @elseif($notClockIn['leave_status'] == 'Pre-Approved')
+                                                        <div class="text-success"><b>{{ $notClockIn['leave_status'] }}</b></div>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -1230,7 +1260,7 @@
 
                
 
-                <div class="col-xl-7">
+                <div class="col-xl-5">
                     <div class="card">
                         <div class="card-header">
                             <div class="row">
@@ -1349,7 +1379,7 @@
                                                     @elseif ($leave->status == 'In_Process')
                                                         <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
                                                     @elseif ($leave->status == 'Manager_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#004000;">Manager-Approved</div>
+                                                        <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
                                                     @elseif ($leave->status == 'Manager_Rejected')
                                                         <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
                                                     @elseif ($leave->status == 'Partially_Approved')
@@ -1528,7 +1558,7 @@
                                                     @elseif ($leave->status == 'In_Process')
                                                         <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
                                                     @elseif ($leave->status == 'Manager_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#004000;">Manager-Approved</div>
+                                                        <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
                                                     @elseif ($leave->status == 'Manager_Rejected')
                                                         <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
                                                     @elseif ($leave->status == 'Partially_Approved')
