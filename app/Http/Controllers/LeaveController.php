@@ -1215,6 +1215,8 @@ class LeaveController extends Controller
                     'status' => $leave->status,
                     'remark' => $leave->remark,
                     'total_leave_days' => $leave->total_leave_days,
+                    'start_date' => $leave->start_date,
+                    'end_date' => $leave->end_date,
                     'toEmail' => $employee->email,
                     'fromEmail' => $fromEmail,
                     'fromNameEmail' => $fromName,

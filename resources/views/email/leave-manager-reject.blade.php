@@ -38,8 +38,12 @@
             <tr>
                 <th>Leave Type</th>
                 <th>Leave Reason</th>
+                @if($start_date == $end_date)
+                <th>Date</th>
+                @else
                 <th>Start Date</th>
                 <th>End Date</th>
+                @endif
                 <th>Total Days</th>
                 <th>Status</th>
             </tr>
@@ -48,8 +52,12 @@
             <tr>
                 <td>{{ $leaveType ?? '' }}</td>
                 <td>{{ $leaveReason ?? '' }}</td>
+                @if($start_date == $end_date)
+                <td>{{ \Carbon\Carbon::parse($start_date)->format('d/m/Y') }}</td>
+                @else
                 <td>{{ \Carbon\Carbon::parse($start_date)->format('d/m/Y') }}</td>
                 <td>{{ \Carbon\Carbon::parse($end_date)->format('d/m/Y') }}</td>
+                @endif
                 <td>{{ $total_leave_days }}</td>
                 <td><strong class="status">Rejected by Manager</strong></td>
             </tr>
