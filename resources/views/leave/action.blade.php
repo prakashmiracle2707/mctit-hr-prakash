@@ -76,9 +76,9 @@
                         @elseif ($leave->status == 'In_Process')
                             <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
                         @elseif ($leave->status == 'Manager_Approved')
-                            <div class="badge p-2 px-3" style="background:#004000;">Manager-Approved</div>
+                            <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
                         @elseif ($leave->status == 'Manager_Rejected')
-                            <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
+                            <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
                         @elseif ($leave->status == 'Partially_Approved')
                             <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
                         <!-- @elseif (($leave->status == 'In_Process' || $leave->status == 'Manager_Approved' || $leave->status == 'Partially_Approved') && \Auth::user()->type === 'employee')

@@ -780,7 +780,7 @@
                                             @elseif ($leave->status == 'Manager_Approved')
                                                 <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
                                             @elseif ($leave->status == 'Manager_Rejected')
-                                                <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
+                                                <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
                                             @elseif ($leave->status == 'Partially_Approved')
                                                 <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
                                             <!-- @elseif (in_array($leave->status, ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
@@ -1125,7 +1125,7 @@
                                                     @elseif ($notClockIn['leave_status'] == 'Manager_Approved')
                                                         <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
                                                     @elseif ($notClockIn['leave_status'] == 'Manager_Rejected')
-                                                        <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
+                                                        <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
                                                     @elseif ($notClockIn['leave_status'] == 'Partially_Approved')
                                                         <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
                                                     <!-- @elseif (in_array($notClockIn['leave_status'], ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
@@ -1381,7 +1381,7 @@
                                                     @elseif ($leave->status == 'Manager_Approved')
                                                         <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
                                                     @elseif ($leave->status == 'Manager_Rejected')
-                                                        <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
+                                                        <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
                                                     @elseif ($leave->status == 'Partially_Approved')
                                                         <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
                                                     <!-- @elseif (in_array($leave->status, ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
@@ -1560,7 +1560,7 @@
                                                     @elseif ($leave->status == 'Manager_Approved')
                                                         <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
                                                     @elseif ($leave->status == 'Manager_Rejected')
-                                                        <div class="badge p-2 px-3" style="background:#800040;">Manager-Rejected</div>
+                                                        <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
                                                     @elseif ($leave->status == 'Partially_Approved')
                                                         <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
                                                     <!-- @elseif (in_array($leave->status, ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
