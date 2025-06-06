@@ -529,7 +529,8 @@ class AttendanceEmployeeController extends Controller
                         'clock_out' => $clockOut,
                         'checkout_date' => $check->date,
                         'checkout_time_diff' => $checkoutTimeDiff,
-                        'work_from_home' => $request->has('work_from_home') ? 1 : 0
+                        'work_from_home' => $request->has('work_from_home') ? 1 : 0,
+                        'is_leave' => $request->has('is_leave') ? 1 : 0
                     ]);
 
                     return redirect()->route('attendanceemployee.index')->with('success', __('Employee attendance successfully updated.'));

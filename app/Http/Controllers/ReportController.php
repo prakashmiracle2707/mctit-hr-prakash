@@ -852,7 +852,7 @@ class ReportController extends Controller
                 }
 
                 $daysCount++;
-                $employeeAttendance = AttendanceEmployee::where('employee_id', $id)->where('date', $dateFormat)->first();
+                $employeeAttendance = AttendanceEmployee::where('employee_id', $id)->where('date', $dateFormat)->where('is_leave', 0)->first();
 
                 $isSickLeaveDay = LocalLeave::where('employee_id', $id)->where('status', 'Approved')->where('leave_type_id', 1)->whereDate('start_date', '<=', $dateFormat)->whereDate('end_date', '>=', $dateFormat)->exists();
                 $isCasualLeave = LocalLeave::where('employee_id', $id)->where('status', 'Approved')->where('leave_type_id', 2)->whereDate('start_date', '<=', $dateFormat)->whereDate('end_date', '>=', $dateFormat)->first();

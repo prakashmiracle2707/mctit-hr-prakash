@@ -30,6 +30,18 @@
                 <label class="form-check-label" for="work_from_home">{{ __('Work from Home') }}</label>
             </div>
         </div>
+
+        <!-- Is Leave Checkbox -->
+        <div class="form-group col-lg-6 col-md-6">
+            <div class="form-check mt-4">
+                {{ Form::checkbox('is_leave', 1, $attendanceEmployee->is_leave, [
+                    'class' => 'form-check-input',
+                    'id' => 'is_leave'
+                ]) }}
+                <label class="form-check-label" for="is_leave">{{ __('Is Leave') }}</label>
+            </div>
+        </div>
+
     </div>
 </div>
 <div class="modal-footer">

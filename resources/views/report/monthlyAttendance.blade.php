@@ -311,24 +311,35 @@
                                             <tr>
                                                 <th rowspan="2" class="text-align-center">{{ __('Name') }}</th>
                                                 <th colspan="3" class="left-border right-border bottom-border">{{ __('Total Present') }}</th>
-                                                <th colspan="6" class="right-border bottom-border">{{ __('Leave') }}</th>
+                                                <!-- <th colspan="6" class="right-border bottom-border">{{ __('Leave') }}</th> -->
                                                 <th colspan="3" class="right-border bottom-border">{{ __('Calendar Days') }}</th>
+                                                <th colspan="6" class="right-border bottom-border">{{ __('This Month Leave ') }}</th>
                                                 <th colspan="3" class="text-align-center bottom-border">{{ __('Leave Balance') }}</th>
                                             </tr>
                                             <tr>
                                                 <th class="left-border right-border-gray">{{ __('MON-FRI') }}</th>
                                                 <th class="right-border-gray">{{ __('SAT-SUN') }}</th>
                                                 <th class="right-border">{{ __('Holiday') }}</th>
-                                                <th class="right-border-gray">{{ __('SL') }}</th>
+                                                <!-- <th class="right-border-gray">{{ __('SL') }}</th>
                                                 <th class="right-border-gray">{{ __('CL') }}</th>
                                                 <th class="right-border-gray">{{ __('OH') }}</th>
                                                 <th class="right-border-gray">{{ __('WFH') }}</th>
                                                 <th class="right-border-gray">{{ __('LWP') }}</th>
-                                                <th class="right-border">{{ __('Absent') }}</th>
+                                                <th class="right-border">{{ __('Absent') }}</th> -->
                                                 <th class="right-border-gray">{{ __('Holiday') }}</th>
                                                 <th class="right-border-gray">{{ __('Total Weekend') }}</th>
                                                 <th class="right-border">{{ __('Total Days') }}</th>
                                                 <!-- <th class="right-border-gray">{{ __('SL Start') }}</th> -->
+                                                <th class="right-border-gray">{{ __('WFH') }}</th>
+                                                <th class="right-border-gray">{{ __('LWP') }}</th>
+                                                <th class="right-border-gray">{{ __('Absent') }}</th>
+                                                <th class="right-border-gray">{{ __('SL') }}</th>
+                                                <!-- <th class="right-border-gray">{{ __('CL Start') }}</th> -->
+                                                <th class="right-border-gray">{{ __('CL') }}</th>
+                                                <!-- <th class="right-border-gray">{{ __('OH Start') }}</th> -->
+                                                <th class="right-border">{{ __('OH') }}</th>
+                                                
+                                                
                                                 <th class="right-border-gray">{{ __('SL') }}</th>
                                                 <!-- <th class="right-border-gray">{{ __('CL Start') }}</th> -->
                                                 <th class="right-border-gray">{{ __('CL') }}</th>
@@ -369,15 +380,21 @@
                                                     <td class="left-border right-border-gray">{{ $Present }}</td>
                                                     <td class="right-border-gray">{{ $WeekdayPresent }}</td>
                                                     <td class="right-border">{{ $isPresentHoliday }}</td>
-                                                    <td class="right-border-gray">{{ $sl }}</td>
+                                                    <!-- <td class="right-border-gray">{{ $sl }}</td>
                                                     <td class="right-border-gray">{{ $cfl + $chl }}</td>
                                                     <td class="right-border-gray">{{ $oh }}</td>
                                                     <td class="right-border-gray">{{ $wfh }}</td>
                                                     <td class="right-border-gray">{{ $lwp }}</td>
-                                                    <td class="right-border">{{ $a }}</td>
+                                                    <td class="right-border">{{ $a }}</td> -->
                                                     <td class="right-border-gray">{{ $h + $oh }}</td>
                                                     <td class="right-border-gray">{{ $TotalWeekDay }}</td>
                                                     <td class="right-border" @if($totalCal != $total) style="color: red;" @endif>{{ $total }}</td>
+                                                    <td class="right-border-gray">{{ $wfh }}</td>
+                                                    <td class="right-border-gray">{{ $lwp }}</td>
+                                                    <td class="right-border-gray">{{ $a }}</td>
+                                                    <td class="right-border-gray">{{ $sl }}</td>
+                                                    <td class="right-border-gray">{{ $cfl + $chl }}</td>
+                                                    <td class="right-border">{{ $oh }}</td>
                                                     <!-- <td class="right-border-gray">{{ $startSL }}</td> -->
                                                     <td class="right-border-gray">{{ $endSL }}</td>
                                                     <!-- <td class="right-border-gray">{{ $startCL }}</td> -->

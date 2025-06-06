@@ -53,13 +53,21 @@
                             @foreach ($employees as $employee)
                                 <tr>
                                     <td>
+                                        @if($employee->work_from_home)
+                                            <i class="fa fa-desktop" aria-hidden="true" title="Work from home"></i> 
+                                        @endif
+
                                         @can('Show Employee')
                                             <a class="btn btn-outline-primary"
-                                                href="{{ route('employee.show', \Illuminate\Support\Facades\Crypt::encrypt($employee->id)) }}">{{ \Auth::user()->employeeIdFormat($employee->employee_id) }}</a>
+                                                href="{{ route('employee.show', \Illuminate\Support\Facades\Crypt::encrypt($employee->id)) }}">
+                                                {{ \Auth::user()->employeeIdFormat($employee->employee_id) }}
+                                            </a>
                                         @else
                                             <a href="#"
                                                 class="btn btn-outline-primary">{{ \Auth::user()->employeeIdFormat($employee->employee_id) }}</a>
                                         @endcan
+                                        
+                                        
                                     </td>
                                     <td>{{ $employee->name }}</td>
                                     <td>{{ !empty($employee->email) ? $employee->email : '-' }}</td>
