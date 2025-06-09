@@ -24,12 +24,17 @@
             font-weight: bold;
             color: green;
         }
+
+        .status-blue {
+            font-weight: bold;
+            color: blue;
+        }
     </style>
 </head>
 <body>
     <p>Hello {{ ucwords($employeeName ?? 'Employee') }},</p>
 
-    <p>We are pleased to inform you that your <strong>leave request</strong> has been <span class="status">approved</span> by the system automatically.</p>
+    <p>We are pleased to inform you that your <strong>leave request</strong> has been <span class="status">approved</span> <strong class="status-blue">by the system automatically. </strong></p>
 
     <p>Below are the approved details of your request:</p>
 
@@ -68,7 +73,7 @@
         <p><strong>Director's Note:</strong> {{ $remark }}</p>
     @endif
 
-    <p><strong>Approved By:</strong> System – Auto Approved</p>
+    <p><strong>Approved By:</strong> <strong class="status-blue">System – Auto Approved</strong></p>
 
     <p>You may now proceed with your plans as per the approved dates. We wish you a restful and enjoyable leave.</p>
 

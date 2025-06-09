@@ -1212,8 +1212,9 @@ class LeaveController extends Controller
             // $fromName='MCT USER';
             if($setings['is_email_trigger'] === 'on'){
 
-                $fromEmail=$setings['DIRECTOR_EMAIL'];
-                $fromName='Ravi Brahmbhatt';
+                $fromEmail=$setings['HR_EMAIL'];
+                $fromName='MCT IT SOLUTIONS PVT LTD';
+                
 
                 $data = [
                     'employeeName' => $employee->name,
@@ -1258,6 +1259,8 @@ class LeaveController extends Controller
                 $emails[] = $fromEmail;
 
                 $emails[] = $setings['CFO_EMAIL'];
+
+                $emails[] = $setings['DIRECTOR_EMAIL'];
 
                 if(!empty($managers)){
                     foreach ($ManagersEmails as $Email) {
