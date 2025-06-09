@@ -269,7 +269,11 @@
                                         <!-- @elseif (in_array($leave->status, ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
                                             <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
                                         @elseif($leave->status == 'Approved')
-                                            <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
+                                            @if($leave->approved_type == 'auto')
+                                                <div class="badge bg-success p-2 px-3 ">System – Auto Approved</div>
+                                            @else
+                                                <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
+                                            @endif
                                         @elseif($leave->status == "Reject")
                                             <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
                                         @elseif($leave->status == "Draft")

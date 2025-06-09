@@ -1124,11 +1124,12 @@ class LeaveController extends Controller
 
     public function changeaction(Request $request)
     {
+
         $leave = LocalLeave::find($request->leave_id);
 
         $leave->status = $request->status;
         $leave->remark = $request->remark;
-        if ($leave->status == 'Approved') {
+        if ($leave->status == 'Approved' || $leave->status == 'HR Approved') {
             $startDate = new \DateTime($leave->start_date);
             $endDate = new \DateTime($leave->end_date);
             $endDate->add(new \DateInterval('P1D'));  // Adjust end date to include the last day
@@ -1146,6 +1147,15 @@ class LeaveController extends Controller
 
             $leave->total_leave_days = $total_leave_days;
             $leave->status = 'Approved';
+            if($request->status == 'Approved'){
+                $leave->approved_type = 'manual';
+            }else{
+                $leave->approved_type = 'auto';
+            }
+            
+            $leave->approved_by = \Auth::user()->id;              // or hardcode system ID like 1
+            
+            $leave->approved_at = now();
         }
 
         $leave->save();
@@ -1228,6 +1238,8 @@ class LeaveController extends Controller
 
                 if($request->status == 'Approved'){
                     $emailTemp='email.leave-approved';
+                }else if($request->status == 'HR Approved'){
+                    $emailTemp='email.leave-approved-auto'; 
                 }else{
                     $emailTemp='email.leave-rejected';
                 }

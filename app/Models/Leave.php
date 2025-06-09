@@ -21,10 +21,14 @@ class Leave extends Model
         'half_day_type',
         'cc_email',
         'early_time',
+        'approved_by',
+        'approved_type',
+        'approved_at',
     ];
 
     protected $casts = [
-        'cc_email' => 'array', // Cast cc_email_id to an array
+        'cc_email' => 'array',
+        'approved_at' => 'datetime', // Ensures carbon instance
     ];
 
     public function leaveType()
@@ -35,6 +39,11 @@ class Leave extends Model
     public function employees()
     {
         return $this->hasOne('App\Models\Employee', 'id', 'employee_id');
+    }
+
+    public function approvedBy()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'approved_by');
     }
 
     public function managerUsers()
@@ -48,7 +57,6 @@ class Leave extends Model
         return $this->hasMany(LeaveManager::class);
     }
 
-    // In LocalLeave model
     public function leaveManagers()
     {
         return $this->hasMany(\App\Models\LeaveManager::class, 'leave_id');

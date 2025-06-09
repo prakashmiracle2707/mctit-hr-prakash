@@ -16,7 +16,10 @@
 
     $usersroleName = $users->roles[0]->name;
 
-
+    // Check if user has 'Complaint-Reviewer' role
+    $isDashboardReviewer = $users->secondaryRoleAssignments()
+        ->whereHas('role', fn($q) => $q->where('name', 'Dashboard-Reviewer'))
+        ->exists();
 @endphp
 {{-- <nav
     class="dash-sidebar light-sidebar {{ isset($mode_setting['is_sidebar_transperent']) && $mode_setting['is_sidebar_transperent'] == 'on' ? 'transprent-bg' : '' }}"> --}}
@@ -47,6 +50,13 @@
                     <a href="{{ route('dashboard') }}" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-home"></i></span><span class="dash-mtext">{{ __('Dashboard') }}</span></a>
                 </li>
+
+                @if($isDashboardReviewer)
+                <li class="dash-item">
+                    <a href="{{ route('dashboard-hr') }}" class="dash-link"><span class="dash-micon"><i
+                                class="ti ti-briefcase"></i></span><span class="dash-mtext">{{ __('HR-Dashboard') }}</span></a>
+                </li>
+                @endif
             @endif
             @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'CEO' || \Auth::user()->type == 'management')
                 <li class="dash-item dash-hasmenu  {{ Request::segment(1) == 'null' ? 'active dash-trigger' : '' }}">

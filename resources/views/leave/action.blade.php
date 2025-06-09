@@ -3,7 +3,7 @@
 @php
     use Carbon\Carbon;
     $endDate = Carbon::parse($leave->end_date);
-    $hideFooter = Carbon::now()->diffInDays($endDate, false) < -5;
+    $hideFooter = Carbon::now()->diffInDays($endDate, false) < -45;
 @endphp
 
 <div class="modal-body">
@@ -84,7 +84,11 @@
                         <!-- @elseif (($leave->status == 'In_Process' || $leave->status == 'Manager_Approved' || $leave->status == 'Partially_Approved') && \Auth::user()->type === 'employee')
                             <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
                         @elseif($leave->status == 'Approved')
-                            <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
+                            @if($leave->approved_type == 'auto')
+                                <div class="badge bg-success p-2 px-3 ">System – Auto Approved</div>
+                            @else
+                                <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
+                            @endif
                         @elseif($leave->status == "Reject")
                             <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
                         @elseif($leave->status == "Draft")
@@ -172,6 +176,9 @@
 <div class="modal-footer">
     <input type="submit" value="{{ __('Approved') }}" class="btn btn-success rounded" name="status">
     <input type="submit" value="{{ __('Reject') }}" class="btn btn-danger rounded" name="status">
+    @if (Auth::user()->type == 'company')
+        <input type="submit" value="{{ __('HR Approved') }}" class="btn btn-outline-success rounded" name="status">
+    @endif
 </div>
 @endif
 

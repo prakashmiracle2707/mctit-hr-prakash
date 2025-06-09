@@ -136,6 +136,7 @@ Route::any('/cookie-consent', [SettingsController::class, 'CookieConsent'])->nam
 Route::group(['middleware' => ['verified']], function () {
 
     Route::get('/dashboard', [HomeController::class, 'index'])->middleware(['auth', 'XSS'])->name('dashboard');
+    Route::get('/dashboard-hr', [HomeController::class, 'dashboard_hr'])->middleware(['auth', 'XSS'])->name('dashboard-hr');
     // Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware(
     //     [
     //         'auth',
