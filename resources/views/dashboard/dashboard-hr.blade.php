@@ -202,9 +202,7 @@
                                     <thead>
                                         <tr>
                                             <!-- <th>{{ __('Date') }}</th> -->
-                                            @if (\Auth::user()->type != 'employee')
-                                                <th>{{ __('Employee') }}</th>
-                                            @endif
+                                            <th>{{ __('Employee') }}</th>
                                             <!-- <th>{{ __('Status') }}</th> -->
                                             <th>{{ __('Clock In') }}</th>
                                             <th>{{ __('Clock Out') }}</th>
@@ -223,17 +221,17 @@
                                         @foreach ($attendanceEmployee as $attendance)
                                             <tr>
                                                 <!-- <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td> -->
-                                                @if (\Auth::user()->type != 'employee')
-                                                    <td>{{ !empty($attendance->employee) ? $attendance->employee->name : '' }}
-                                                        @if($attendance->work_from_home)
-                                                            <span class="badge bg-secondary p-1 px-1">WFH</span>
-                                                        @endif
+                                               
+                                                <td>{{ !empty($attendance->employee) ? $attendance->employee->name : '' }}
+                                                    @if($attendance->work_from_home)
+                                                        <span class="badge bg-secondary p-1 px-1">WFH</span>
+                                                    @endif
 
-                                                        @if ($attendance->isInBreak)
-                                                            <br /><span class="badge bg-danger p-1 px-1">On Break</span>
-                                                        @endif
-                                                    </td>
-                                                @endif
+                                                    @if ($attendance->isInBreak)
+                                                        <br /><span class="badge bg-danger p-1 px-1">On Break</span>
+                                                    @endif
+                                                </td>
+                                                
                                                 
                                                 <!-- <td>{{ $attendance->status }}</td> -->
                                                 <td>{{ $attendance->clock_in != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_in) : '00:00' }}
