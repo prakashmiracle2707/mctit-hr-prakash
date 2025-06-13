@@ -45,6 +45,8 @@ class HomeController extends Controller
             $user = Auth::user();
             $leaves = [];
             $Todayleaves = [];
+            $NextDayLeaves = [];
+            $nextWorkingDay = '';
             $attendanceEmployee = [];
             $ThisMonthattendanceCount = 0;
             $LastMonthattendanceCount = 0;
@@ -195,6 +197,7 @@ class HomeController extends Controller
                     // echo "<pre>";print_r($hasOngoingBreak);exit;
 
                 } else {
+                    $creatorId = \Auth::user()->creatorId();
                     // For non-employees (e.g., admin)
                     $leaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
                         // ->where('status', '=', 'Pending')  
@@ -229,6 +232,35 @@ class HomeController extends Controller
                 foreach ($leaves as $leave) {
                     if ($leave->total_leave_days == 0) {
                         $leave->total_leave_days = $this->getTotalLeaveDays($leave->start_date, $leave->end_date,$leave->leave_type_id,$leave->half_day_type);
+                    }
+                }
+
+                $today = Carbon::today();
+                $creatorId = \Auth::user()->creatorId();
+
+                // ✅ Determine next working day (skipping weekends)
+                $nextWorkingDay = $today->copy()->addDay();
+                while ($nextWorkingDay->isWeekend()) {
+                    $nextWorkingDay->addDay();
+                }
+
+                // ✅ Fetch next working day's approved leaves
+                $NextDayLeaves = LocalLeave::where('created_by', $creatorId)
+                    ->where('status', '!=', 'Draft')
+                    ->whereDate('start_date', '<=', $nextWorkingDay)
+                    ->whereDate('end_date', '>=', $nextWorkingDay)
+                    ->with(['employees', 'leaveType'])
+                    ->orderBy('start_date', 'desc')
+                    ->get();
+
+                foreach ($NextDayLeaves as $leave) {
+                    if ($leave->total_leave_days == 0) {
+                        $leave->total_leave_days = $this->getTotalLeaveDays(
+                            $leave->start_date,
+                            $leave->end_date,
+                            $leave->leave_type_id,
+                            $leave->half_day_type
+                        );
                     }
                 }
             }
@@ -437,7 +469,7 @@ class HomeController extends Controller
                 /* *************** New Add End ****************************/
                 $employeesinfo = Employee::where('user_id', '=', $user->id)->first();
                 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc','FindOnBreakEmployee','employeesinfo'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','nextWorkingDay','NextDayLeaves','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc','FindOnBreakEmployee','employeesinfo'));
             }
             else
             {
@@ -575,10 +607,10 @@ class HomeController extends Controller
                     return $attendance;
                 });
 
-                // attendanceEmployee
+                // attendanceEmployee Todayleaves
                 /* *************** New Add End ****************************/
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','nextWorkingDay','NextDayLeaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails'));
             }
         }
         else

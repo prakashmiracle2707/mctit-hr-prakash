@@ -1308,6 +1308,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" id="next-working-day-leave-tab" data-bs-toggle="tab" href="#next-working-day-leave" role="tab" aria-controls="next-working-day-leave" aria-selected="true">
+                                <h6><span class="text-success">Tomorrow on Leave ({{ $nextWorkingDay->format('d/m/Y') }} | {{ $nextWorkingDay->format('l') }})</span></h6>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" id="pending-tab" data-bs-toggle="tab" href="#pending-leaves" role="tab" aria-controls="pending-leaves" aria-selected="false">
                                 <h6><span class="text-primary">{{ __('Pending Leave Applications') }} ({{count($leaves)}})</span></h6>
                             </a>
@@ -1490,6 +1495,94 @@
                                                     </span>
                                                     </div>
                                                 </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- People Today on Leave Tab -->
+                    <div class="tab-pane fade" id="next-working-day-leave" role="tabpanel" aria-labelledby="next-working-day-leave-tab">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table datatable">
+                                    <thead>
+                                        <tr>
+                                            @if (\Auth::user()->type != 'employee')
+                                                <th>{{ __('Employee') }}</th>
+                                            @endif
+                                            <th>{{ __('Leave Type') }}</th>
+                                            <th>{{ __('Leave Date') }}</th>
+                                            <!-- <th>{{ __('End Date') }}</th> -->
+                                            <th>{{ __('Total Days') }}</th>
+                                            <th>{{ __('Leave Reason') }}</th>
+                                            <th>{{ __('status') }}</th>
+                                            <th>{{ __('Applied On') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($NextDayLeaves as $leave)
+                                            <tr>
+                                                @if (\Auth::user()->type != 'employee')
+                                                    <td>{{ !empty($leave->employee_id) ? $leave->employees->name : '' }}
+                                                    </td>
+                                                @endif
+                                                <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
+                                                    @if ($leave->leave_type_id == 5 && !empty($leave->early_time))
+                                                        <span class="badge bg-primary">{{ $leave->early_time }}</span>
+                                                    @endif
+                                                    <br />
+                                                    @switch($leave->half_day_type)
+                                                        @case('morning')
+                                                            <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
+                                                            @break
+                                                        @case('afternoon')
+                                                            <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
+                                                            @break
+                                                        @default
+                                                            <div></div>
+                                                    @endswitch
+                                                </td>
+                                                <td>
+                                                    @if($leave->start_date == $leave->end_date)
+                                                        {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }}
+                                                    @else
+                                                        {{ \Carbon\Carbon::parse($leave->start_date)->format('d/m/Y') }} <b>To</b> {{ \Carbon\Carbon::parse($leave->end_date)->format('d/m/Y') }}
+                                                    @endif
+                                                    
+                                                </td>
+                                                <!-- <td>{{ \Auth::user()->dateFormat($leave->end_date) }}</td> -->
+
+                                                <td>{{ $leave->total_leave_days }}</td>
+                                                <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td>
+                                                <td>
+                                                    @if ($leave->status == 'Pending')
+                                                        <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif ($leave->status == 'In_Process')
+                                                        <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
+                                                    @elseif ($leave->status == 'Manager_Approved')
+                                                        <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
+                                                    @elseif ($leave->status == 'Manager_Rejected')
+                                                        <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
+                                                    @elseif ($leave->status == 'Partially_Approved')
+                                                        <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
+                                                    <!-- @elseif (in_array($leave->status, ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
+                                                        <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
+                                                    @elseif($leave->status == 'Approved')
+                                                        <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == "Reject")
+                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == "Draft")
+                                                        <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == "Cancelled")
+                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
+                                                    @elseif($leave->status == 'Pre-Approved')
+                                                        <div class="text-success"><b>{{ $leave->status }}</b></div>
+                                                    @endif
+                                                </td>
+                                                <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
