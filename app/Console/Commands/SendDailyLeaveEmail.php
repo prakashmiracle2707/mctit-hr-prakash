@@ -15,13 +15,13 @@ class SendDailyLeaveEmail extends Command
 
     public function handle()
     {
-        \Log::info('✅ DailyLeaveEmail command triggered at ' . now());
+        \Log::info('DailyLeaveEmail command triggered at ' . now());
 
         $today = Carbon::today();
 
-        // ❌ Skip if today is Saturday or Sunday
+        // Skip if today is Saturday or Sunday
         if ($today->isWeekend()) {
-            \Log::info('⛔ Today is a weekend (Sat/Sun). Skipping email send.');
+            \Log::info('Today is a weekend (Sat/Sun). Skipping email send.');
             return Command::SUCCESS;
         }
 
@@ -62,11 +62,11 @@ class SendDailyLeaveEmail extends Command
         }
 
         // ✅ Send the mail
-        $email = "prakashn@miraclecloud-technology.com";
+        $email = "rmb@miraclecloud-technology.com";
         Mail::to($email)->send(new DailyLeaveSummaryMail($todayLeaves, $nextDayLeaves, $nextWorkingDay));
 
-        \Log::info("📧 Email sent for leave summary (Today + Next Working Day: " . $nextWorkingDay->format('d M Y') . ")");
-        $this->info("📧 Daily leave summary email sent.");
+        \Log::info("Email sent for leave summary (Today + Next Working Day: " . $nextWorkingDay->format('d M Y') . ")");
+        $this->info("Daily leave summary email sent.");
         return Command::SUCCESS;
     }
 }

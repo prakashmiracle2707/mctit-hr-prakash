@@ -596,7 +596,7 @@ class AttendanceEmployeeController extends Controller
             $attendanceEmployee['clock_out']     = $time;
             $attendanceEmployee['early_leaving'] = $earlyLeaving;
             $attendanceEmployee['overtime']      = $overtime;
-            $attendanceEmployee['checkout_date']      = $clockOutTime;
+            $attendanceEmployee['checkout_date']      = $date;
             $attendanceEmployee['checkout_time_diff']      = $checkoutTimeDiff;
 
             if (!empty($request->date)) {

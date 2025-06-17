@@ -24,10 +24,15 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         // $schedule->command('email:daily-leave-report')->dailyAt('12:38');
-        $schedule->command('email:daily-leave-report')->everyMinute();
+        // $schedule->command('email:daily-leave-report')->everyMinute();
         
         // $schedule->command('email:daily-leave-report')->everyFiveMinutes();
         // $schedule->command('email:daily-leave-report')->dailyAt('12:25');
+
+        $schedule->call(function () {
+            \Log::info('✅ SendDailyLeaveEmail triggered manually at ' . now());
+            Artisan::call('email:daily-leave-report');
+        })->dailyAt('20:21');
     }
 
     /**
