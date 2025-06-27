@@ -37,7 +37,7 @@ class TimesheetSheetExport implements FromCollection, WithHeadings, WithTitle, W
             $query->where('created_by', \Auth::user()->creatorId());
         }
 
-        $data = $query->get();
+        $data = $query->orderBy('date', 'asc')->get();
 
         $formatted = [];
         $total = 0;

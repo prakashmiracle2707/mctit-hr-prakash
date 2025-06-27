@@ -45,7 +45,7 @@ class TimesheetExport implements FromCollection, WithHeadings, WithStyles, WithC
             $query->where('created_by', \Auth::user()->creatorId());
         }
 
-        $data = $query->get();
+        $data = $query->orderBy('date', 'asc')->get();
         $totalMinutes = 0;
         $formattedData = [];
 
