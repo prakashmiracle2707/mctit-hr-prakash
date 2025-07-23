@@ -90,6 +90,7 @@ use App\Http\Controllers\ReimbursementController;
 use App\Http\Controllers\ITTicketController;
 use App\Http\Controllers\ComplaintsController;
 use App\Http\Controllers\LeaveEmployeeController;
+use App\Http\Controllers\CustomSaml2Controller;
 
 /*
 |--------------------------------------------------------------------------
@@ -101,6 +102,24 @@ use App\Http\Controllers\LeaveEmployeeController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+
+// Route::post('/saml2/test/acs', [CustomSaml2Controller::class, 'acs']);
+// Route::post('/saml2/test/acs', [CustomSaml2Controller::class, 'acs'])->name('saml2-acs');
+Route::post('/saml2/test/acs', function () {
+     echo "hello";exit;
+});
+
+
+Route::get('/sso/after-login', function () {
+    // echo "<pre>";print_r(auth()->id);
+    // echo "hello";exit;
+    if (auth()->check()) {
+        return redirect('/dashboard'); 
+    }
+
+    return redirect('/login')->with('error', 'Login failed.');
+});
 
 
 Route::get('/', function () {
@@ -819,7 +838,10 @@ Route::group(['middleware' => ['verified']], function () {
 
         // Attendance Logs
         Route::get('/logs', [AttendanceEmployeeController::class, 'getAttendance'])->name('attendance.logs');
+        Route::post('/employee_clockout/{id}', [AttendanceEmployeeController::class, 'employee_clockout'])->name('attendance.employee_clockout');
     });
+
+    
 
     Route::post('/attendanceemployee/update-work-from-home', [AttendanceEmployeeController::class, 'updateWorkFromHome']);
 

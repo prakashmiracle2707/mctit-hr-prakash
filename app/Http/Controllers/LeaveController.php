@@ -89,7 +89,7 @@ class LeaveController extends Controller
                         if (in_array($date->dayOfWeek, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) continue;
 
                         if ($date->between(\Carbon\Carbon::parse($financialYear->start_date), \Carbon\Carbon::parse($financialYear->end_date))) {
-                            $days += ($start->equalTo($end) && $halfDayType != 'full_day') ? 0.5 : 1;
+                            $days += ($halfDayType != 'full_day') ? 0.5 : 1;
                         }
                     }
 

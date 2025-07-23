@@ -9,6 +9,9 @@ use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
 
+use Aacotroneo\Saml2\Events\Saml2LoginEvent;
+use App\Listeners\Saml2LoginEventListener;
+
 class EventServiceProvider extends ServiceProvider
 {
     /**
@@ -22,6 +25,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         VerifyReCaptchaToken::class => [
             VerifyReCaptchaTokenLis::class,
+        ],
+        Saml2LoginEvent::class => [
+            Saml2LoginEventListener::class,
         ],
     ];
 

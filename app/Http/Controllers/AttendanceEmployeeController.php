@@ -753,6 +753,80 @@ class AttendanceEmployeeController extends Controller
     //     }
     // }
 
+    public function employee_clockout(Request $request, $id)
+    {
+        $settings = Utility::settings();
+
+        date_default_timezone_set($settings['timezone']); // Set timezone
+
+
+        $employeeId      = !empty(\Auth::user()->employee) ? \Auth::user()->employee->id : 0;
+        $todayAttendance = AttendanceEmployee::where('employee_id', '=', $employeeId)->where('date', date('Y-m-d'))->first();
+
+        $startTime = Utility::getValByName('company_start_time');
+        $endTime   = Utility::getValByName('company_end_time');
+        if (Auth::user()->type == 'employee') {
+
+            $date = date("Y-m-d");
+            $time = date("H:i:s");
+
+            //early Leaving
+            $totalEarlyLeavingSeconds = strtotime($date . $endTime) - time();
+            $hours                    = floor($totalEarlyLeavingSeconds / 3600);
+            $mins                     = floor($totalEarlyLeavingSeconds / 60 % 60);
+            $secs                     = floor($totalEarlyLeavingSeconds % 60);
+            $earlyLeaving             = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+
+            if (time() > strtotime($date . $endTime)) {
+                //Overtime
+                $totalOvertimeSeconds = time() - strtotime($date . $endTime);
+                $hours                = floor($totalOvertimeSeconds / 3600);
+                $mins                 = floor($totalOvertimeSeconds / 60 % 60);
+                $secs                 = floor($totalOvertimeSeconds % 60);
+                $overtime             = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+            } else {
+                $overtime = '00:00:00';
+            }
+
+
+
+            // Get clock-in time for the employee
+            $attendanceRecord = AttendanceEmployee::where('id', $id)->first();
+            $clockInTime = $attendanceRecord ? $attendanceRecord->clock_in : null;
+            $clockOutTime = date("H:i:s");
+
+            if ($clockInTime) {
+                //  Calculate Checkout Time Difference
+                $checkoutTimeDiffSeconds = strtotime($clockOutTime) - strtotime($clockInTime);
+                if ($checkoutTimeDiffSeconds > 0) {
+                    $checkoutHours = floor($checkoutTimeDiffSeconds / 3600);
+                    $checkoutMinutes = floor(($checkoutTimeDiffSeconds % 3600) / 60);
+                    $checkoutSeconds = floor($checkoutTimeDiffSeconds % 60);
+                    $checkoutTimeDiff = sprintf('%02d:%02d:%02d', $checkoutHours, $checkoutMinutes, $checkoutSeconds);
+                } else {
+                    $checkoutTimeDiff = '00:00:00';
+                }
+            } else {
+                $checkoutTimeDiff = '00:00:00';
+            }
+
+
+            $attendanceEmployee['clock_out']     = $time;
+            $attendanceEmployee['early_leaving'] = $earlyLeaving;
+            $attendanceEmployee['overtime']      = $overtime;
+            $attendanceEmployee['checkout_date']      = $date;
+            $attendanceEmployee['checkout_time_diff']      = $checkoutTimeDiff;
+
+            if (!empty($request->date)) {
+                $attendanceEmployee['date']       =  $request->date;
+            }
+            AttendanceEmployee::where('id', $id)->update($attendanceEmployee);
+
+            return redirect()->route('dashboard')->with('success', __('Employee successfully clock Out.'));
+        }else {
+            return response()->json(['error' => 'Attendance record not found'], 404);
+        }
+    }
 
     public function startBreak(Request $request)
     {
@@ -836,7 +910,7 @@ class AttendanceEmployeeController extends Controller
             if ($todayAttendance->clock_out != '00:00:00') {
                 return redirect()->back()->with('error', __('You have already checked out today. No further check-in allowed.'));
             } else {
-                // Clock out logic
+                /*
                 $todayAttendance->clock_out = $time;
                 
                 // Calculate total worked hours
@@ -849,10 +923,11 @@ class AttendanceEmployeeController extends Controller
                 $secs = abs(floor($totalWorkSeconds % 60));
                 $totalWorkTime = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
 
-                $todayAttendance->overtime = $totalWorkTime; // Storing total work time in overtime field
+                $todayAttendance->overtime = $totalWorkTime; 
                 $todayAttendance->save();
 
                 return redirect()->back()->with('success', __('Employee Successfully Clocked Out.'));
+                */
             }
         }
 

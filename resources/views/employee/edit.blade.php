@@ -44,6 +44,15 @@
                                         {!! Form::date('dob', null, ['class' => 'form-control ', 'id' => 'data_picker1']) !!}
                                     </div>
                                 </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {!! Form::label('relieving_date', __('Relieving Date'), ['class' => 'form-label']) !!}
+                                        {!! Form::date('relieving_date', $employee->relieving_date ?? null, ['class' => 'form-control']) !!}
+                                        <small class="text-muted">{{ __('Leave empty if the employee is still active') }}</small>
+                                    </div>
+                                </div>
+                                
                                 <div class="col-md-6 ">
                                     <div class="form-group ">
                                         {!! Form::label('gender', __('Gender'), ['class' => 'form-label']) !!}<x-required></x-required>

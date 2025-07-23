@@ -273,6 +273,7 @@ class EmployeeController extends Controller
                 'gender' => 'required',
                 'phone' => 'required|numeric',
                 'address' => 'required',
+                'relieving_date' => 'nullable|date|after_or_equal:dob',
             ];
 
             // if ($request->has('biometric_emp_id') && $employee->biometric_emp_id != $request->biometric_emp_id) {
@@ -345,9 +346,10 @@ class EmployeeController extends Controller
 
             // ✅ Handle work_from_home toggle (checkbox)
             $employee->work_from_home = $request->has('work_from_home') ? 1 : 0;
-
+            $employee->relieving_date = $request->relieving_date ?? null;
             // Update remaining fields
             $input = $request->except(['document', 'managers', 'work_from_home']);
+
             $employee->fill($input)->save();
             if ($request->salary) {
                 return redirect()->route('setsalary.index')->with('success', 'Employee successfully updated.');

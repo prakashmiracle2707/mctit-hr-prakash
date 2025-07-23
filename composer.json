@@ -9,6 +9,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "aacotroneo/laravel-saml2": "^2.1",
         "anhskohbo/no-captcha": "^3.6",
         "arkitecht/laravel-twilio": "^1.7",
         "doctrine/dbal": "^4.1",
@@ -30,6 +31,7 @@
         "orhanerday/open-ai": "^5.2",
         "psr/simple-cache": "^3.0",
         "rachidlaasri/laravel-installer": "^4.1",
+        "socialiteproviders/microsoft": "^4.6",
         "spatie/laravel-google-calendar": "^3.8",
         "spatie/laravel-permission": "^6.9",
         "whichbrowser/parser": "^2.1"
@@ -49,8 +51,12 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
-            "Modules\\": "Modules/"
-        }
+            "Modules\\": "Modules/",
+            "Aacotroneo\\Saml2\\": "vendor/aacotroneo/laravel-saml2/src/Aacotroneo/Saml2"
+        },
+        "files": [
+            "app/Helpers/CommonHelper.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

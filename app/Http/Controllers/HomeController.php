@@ -52,6 +52,7 @@ class HomeController extends Controller
             $LastMonthattendanceCount = 0;
             $totalSeconds = 0;
             $hasOngoingBreak = false;
+            $relievedCount = 0;
 
             $breakLogs = collect(); // Initialize empty collection for break logs
             $totalBreakDuration = '00:00:00'; // Default to zero time
@@ -371,7 +372,7 @@ class HomeController extends Controller
                         // Count only if date within financial year
                         if ($date->between(Carbon::parse($activeYear->start_date), Carbon::parse($activeYear->end_date))) {
                             // Count 0.5 for half-day (only if single day leave)
-                            if ($start->equalTo($end) && $halfDayType != 'full_day') {
+                            if ($halfDayType != 'full_day') {
                                 $days += 0.5;
                             } else {
                                 $days += 1;
@@ -469,7 +470,7 @@ class HomeController extends Controller
                 /* *************** New Add End ****************************/
                 $employeesinfo = Employee::where('user_id', '=', $user->id)->first();
                 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','nextWorkingDay','NextDayLeaves','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc','FindOnBreakEmployee','employeesinfo'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance','relievedCount', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','nextWorkingDay','NextDayLeaves','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc','FindOnBreakEmployee','employeesinfo'));
             }
             else
             {
@@ -508,7 +509,12 @@ class HomeController extends Controller
                 $countEmployee = count($emp);
                 $notClockIn    = AttendanceEmployee::where('date', '=', $currentDate)->get()->pluck('employee_id');
 
-                $notClockIns    = Employee::where('created_by', '=', \Auth::user()->creatorId())->whereNotIn('id', $notClockIn)->get();
+                $relievedCount = Employee::where('created_by', \Auth::user()->creatorId())
+                                    ->whereNotNull('relieving_date')
+                                    ->where('relieving_date', '<=', now())
+                                    ->count();
+
+                $notClockIns    = Employee::where('created_by', '=', \Auth::user()->creatorId())->whereNull('relieving_date')->orderBy('name', 'asc')->whereNotIn('id', $notClockIn)->get();
 
 
                 /* ****************************************************************** */
@@ -610,7 +616,7 @@ class HomeController extends Controller
                 // attendanceEmployee Todayleaves
                 /* *************** New Add End ****************************/
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','nextWorkingDay','NextDayLeaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee','relievedCount', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','nextWorkingDay','NextDayLeaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails'));
             }
         }
         else
@@ -655,6 +661,7 @@ class HomeController extends Controller
         $LastMonthattendanceCount = 0;
         $totalSeconds = 0;
         $hasOngoingBreak = false;
+        $relievedCount = 0;
 
         $breakLogs = collect(); // Initialize empty collection for break logs
         $totalBreakDuration = '00:00:00'; // Default to zero time
@@ -743,7 +750,9 @@ class HomeController extends Controller
         $countEmployee = count($emp);
         $notClockIn    = AttendanceEmployee::where('date', '=', $currentDate)->get()->pluck('employee_id');
 
-        $notClockIns    = Employee::where('created_by', '=', \Auth::user()->creatorId())->whereNotIn('id', $notClockIn)->get();
+        $relievedCount = Employee::where('created_by', \Auth::user()->creatorId())->whereNotNull('relieving_date')->where('relieving_date', '<=', now())->count();
+
+        $notClockIns    = Employee::where('created_by', '=', \Auth::user()->creatorId())->whereNotIn('id', $notClockIn)->whereNull('relieving_date')->orderBy('name', 'asc')->get();
 
 
         /* ****************************************************************** */
@@ -845,7 +854,7 @@ class HomeController extends Controller
         // attendanceEmployee  leaves
         /* *************** New Add End ****************************/
 
-        return view('dashboard.dashboard-hr', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails','isReviewer'));
+        return view('dashboard.dashboard-hr', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee','relievedCount', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails','isReviewer'));
         
         
     }

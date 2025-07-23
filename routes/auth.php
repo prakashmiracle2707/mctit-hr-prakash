@@ -14,6 +14,12 @@ use App\Http\Controllers\Auth\GoogleController;
 
 
 
+Route::get('/saml2/test/acs', function () {
+     echo "hello";exit;
+});
+
+
+
 Route::get('login/google', [GoogleController::class, 'redirectToGoogle'])->name('login.google');
 Route::get('login/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 

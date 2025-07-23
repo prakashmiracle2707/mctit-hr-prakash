@@ -47,7 +47,7 @@
                                     </div>
                                 </div>
                                 <div class="col-auto text-end">
-                                    <h4 class="m-0 text-primary">{{ $countUser + $countEmployee }}</h4>
+                                    <h4 class="m-0 text-primary">{{ $countEmployee - $relievedCount }}</h4>
                                 </div>
                             </div>
                         </div>

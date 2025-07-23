@@ -416,7 +416,7 @@
 
                             <div class="col-6">
                                 @if (!empty($employeeAttendance) && $employeeAttendance->clock_out == '00:00:00')
-                                    {{ Form::model($employeeAttendance, ['route' => ['attendanceemployee.update', $employeeAttendance->id], 'method' => 'PUT']) }}
+                                    {{ Form::model($employeeAttendance, ['route' => ['attendance.employee_clockout', $employeeAttendance->id], 'method' => 'post']) }}
                                     <button type="submit" id="clock_out" class="btn btn-danger w-100" onclick="return confirmClockOut();">{{ __('CLOCK OUT') }}</button>
                                 @else
                                     <button type="submit" class="btn btn-danger w-100 disabled" disabled>{{ __('CLOCK OUT') }}</button>
@@ -864,7 +864,7 @@
                                     </div>
                                 </div>
                                 <div class="col-auto text-end">
-                                    <h4 class="m-0 text-primary">{{ $countUser + $countEmployee }}</h4>
+                                    <h4 class="m-0 text-primary">{{ $countEmployee - $relievedCount}}</h4>
                                 </div>
                             </div>
                         </div>

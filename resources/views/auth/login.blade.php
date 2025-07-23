@@ -141,6 +141,10 @@
                 Login with Google
             </a>
 
+            <!-- <a href="{{ url('/saml2/test/login') }}" class="google-btn" style="color: black; margin-top: 10px;">
+                <img src="https://img.icons8.com/color/20/000000/microsoft.png" alt="Microsoft Logo">
+                Login with Microsoft SSO
+            </a> -->
 
         </div>
     </div>
