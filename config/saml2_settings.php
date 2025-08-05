@@ -47,7 +47,7 @@ return $settings = array(
     /**
      * Where to redirect after login if no other option was provided
      */
-    'loginRoute' => '/',
+    'loginRoute' => '/sso/after-login',
 
     /**
      * Where to redirect after login if no other option was provided

@@ -15,6 +15,8 @@ class Saml2LoginEventListener
         $samlUser = $event->getSaml2User();
         $attributes = $samlUser->getAttributes();
 
+        // Log::info('🔍 SAML Attributes JSON: ' . json_encode($samlUser->getAttributes(), JSON_PRETTY_PRINT));
+
         // Extract the email and name from SAML attributes
         $email = $attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'][0] ?? null;
         $name = $attributes['http://schemas.microsoft.com/identity/claims/displayname'][0] 

@@ -15,5 +15,6 @@ class VerifyCsrfToken extends Middleware
         'plan/paytm/*',
         'invoice/paytm/*',
         'plan-pay-with-paymentwall/*',
+        'saml2/*/acs',
     ];
 }
