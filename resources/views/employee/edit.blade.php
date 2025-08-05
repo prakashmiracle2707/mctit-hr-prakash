@@ -73,6 +73,20 @@
                                     </div>
                                 </div>
 
+                                <div class="col-md-6 ">
+                                    <div class="form-group">
+                                        <label for="availability_status">Availability Status</label>
+                                        <select name="availability_status" id="availability_status" class="form-control">
+                                            <option value="">-- Select Status --</option>
+                                            @foreach($statuses as $status)
+                                                <option value="{{ $status->id }}" {{ $employee->availability_status == $status->id ? 'selected' : '' }}>
+                                                    {{ $status->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         {{ Form::label('managers[]', __('Managers'), ['class' => 'col-form-label']) }}<x-required></x-required>

@@ -29,6 +29,7 @@ use App\Models\JoiningLetter;
 use App\Models\LoginDetail;
 use App\Models\PaySlip;
 use Illuminate\Validation\Rule;
+use App\Models\AvailabilityStatusList;
 
 //use Faker\Provider\File;
 
@@ -255,7 +256,9 @@ class EmployeeController extends Controller
             // Ensure it's an array for Form::select to match correctly
             $selectedManagers = json_decode($employee->manages_id, true) ?? [];
 
-            return view('employee.edit', compact('employee', 'employeesId', 'branches', 'departments', 'designations', 'documents','managerList','selectedManagers'));
+            $statuses = AvailabilityStatusList::all();
+
+            return view('employee.edit', compact('employee', 'employeesId', 'branches', 'departments', 'designations', 'documents','managerList','selectedManagers','statuses'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -347,6 +350,7 @@ class EmployeeController extends Controller
             // ✅ Handle work_from_home toggle (checkbox)
             $employee->work_from_home = $request->has('work_from_home') ? 1 : 0;
             $employee->relieving_date = $request->relieving_date ?? null;
+            $employee->availability_status = $request->input('availability_status');
             // Update remaining fields
             $input = $request->except(['document', 'managers', 'work_from_home']);
 

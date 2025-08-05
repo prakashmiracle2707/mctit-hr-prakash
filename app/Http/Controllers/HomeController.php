@@ -530,19 +530,34 @@ class HomeController extends Controller
                 foreach ($notClockIns as $employee) {
                     // Check if employee is on leave today
                     $leave = LocalLeave::where('employee_id', $employee->id)
-                        //->where('status', 'Approved')
                         ->whereDate('start_date', '<=', $today)
                         ->whereDate('end_date', '>=', $today)
                         ->whereIn('leave_type_id', [1, 2])
                         ->with('leaveType') // assumes relation is defined
                         ->first();
 
+                    // Get availability status (safe check)
+                    $availabilityStatus = optional($employee->availabilityStatus)->name;
+
+                    // Determine leave type
+                    $leaveType = 'Absent'; // default
+                    $leaveStatus = '-';
+
+                    if ($leave) {
+                        $leaveType = $leave->leaveType->title ?? 'N/A';
+                        $leaveStatus = $leave->status ?? 'N/A';
+                    } elseif ($availabilityStatus !== 'Available') {
+                        // If not on leave and not Available, don't show Absent
+                        $leaveType = $availabilityStatus ?? 'N/A';
+                    }
+
                     $notClockInDetails[] = [
                         'employee_id' => $employee->id,
                         'employee_name' => $employee->name,
                         'is_on_leave' => $leave ? true : false,
-                        'leave_type' => $leave ? ($leave->leaveType->title ?? 'N/A') : 'Absent',
-                        'leave_status' => $leave ? ($leave->status ?? 'N/A') : '-',
+                        'leave_type' => $leaveType,
+                        'leave_status' => $leaveStatus,
+                        'employee' => $employee, // pass full employee model if needed in view
                     ];
                 }
 
@@ -668,7 +683,7 @@ class HomeController extends Controller
 
         if (\Auth::user()->can('Manage Leave')) {
             // Get current date and current month
-            // Get the current date
+            // Get the current date notClockInDetails
             $currentDate = Carbon::today();
 
             // Get the start and end of the current month
@@ -768,19 +783,34 @@ class HomeController extends Controller
         foreach ($notClockIns as $employee) {
             // Check if employee is on leave today
             $leave = LocalLeave::where('employee_id', $employee->id)
-                //->where('status', 'Approved')
                 ->whereDate('start_date', '<=', $today)
                 ->whereDate('end_date', '>=', $today)
                 ->whereIn('leave_type_id', [1, 2])
                 ->with('leaveType') // assumes relation is defined
                 ->first();
 
+            // Get availability status (safe check)
+            $availabilityStatus = optional($employee->availabilityStatus)->name;
+
+            // Determine leave type
+            $leaveType = 'Absent'; // default
+            $leaveStatus = '-';
+
+            if ($leave) {
+                $leaveType = $leave->leaveType->title ?? 'N/A';
+                $leaveStatus = $leave->status ?? 'N/A';
+            } elseif ($availabilityStatus !== 'Available') {
+                // If not on leave and not Available, don't show Absent
+                $leaveType = $availabilityStatus ?? 'N/A';
+            }
+
             $notClockInDetails[] = [
                 'employee_id' => $employee->id,
                 'employee_name' => $employee->name,
                 'is_on_leave' => $leave ? true : false,
-                'leave_type' => $leave ? ($leave->leaveType->title ?? 'N/A') : 'Absent',
-                'leave_status' => $leave ? ($leave->status ?? 'N/A') : '-',
+                'leave_type' => $leaveType,
+                'leave_status' => $leaveStatus,
+                'employee' => $employee, // pass full employee model if needed in view
             ];
         }
 
