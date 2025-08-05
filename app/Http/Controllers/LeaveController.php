@@ -369,7 +369,7 @@ class LeaveController extends Controller
                 $startDate = \Carbon\Carbon::parse($request->start_date)->toDateString();
                 $today = \Carbon\Carbon::today()->toDateString();
 
-                if ($startDate == $today) {
+                if ($startDate == $today && \Auth::user()->type == 'employee') {
                     return redirect()->back()->with('error', __('You cannot apply for Early Leave on the same day.'));
                 }
 
@@ -783,7 +783,7 @@ class LeaveController extends Controller
                     $startDate = \Carbon\Carbon::parse($request->start_date)->toDateString();
                     $today = \Carbon\Carbon::today()->toDateString();
 
-                    if ($startDate == $today) {
+                    if ($startDate == $today && \Auth::user()->type != 'employee') {
                         return redirect()->back()->with('error', __('You cannot apply for Early Leave on the same day.'));
                     }
 

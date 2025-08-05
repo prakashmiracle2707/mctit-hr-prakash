@@ -300,4 +300,9 @@ class Employee extends Model
     {
         return $this->belongsToMany(Project::class, 'project_employee', 'employee_id', 'project_id');
     }
+
+    public function availabilityStatus()
+    {
+        return $this->belongsTo(AvailabilityStatusList::class, 'availability_status');
+    }
 }

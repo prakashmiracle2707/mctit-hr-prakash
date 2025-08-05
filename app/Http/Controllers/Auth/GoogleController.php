@@ -8,6 +8,8 @@ use App\Models\LoginDetail;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Http\RedirectResponse;
+use App\Models\Employee;
+
 
 class GoogleController extends Controller
 {
@@ -42,10 +44,28 @@ class GoogleController extends Controller
             //     ]);
             // }
             if($user){
-                Auth::login($user);
-                $this->storeLoginDetails($user);
 
-                return redirect()->intended(route('home'));
+                if($user->type == 'employee'){
+                    $employee = Employee::where('user_id', $user->id)->first();
+                    if ($employee) {
+                        // Check relieving_date
+                        if (is_null($employee->relieving_date) || $employee->relieving_date > now()) {
+                            Auth::login($user);
+                            $this->storeLoginDetails($user);
+                            return redirect()->intended(route('home'));
+                        } else {
+                            // Employee has already been relieved
+                            return redirect()->route('login')->with('error', 'Your account is no longer active.'); 
+                        }
+                    } else {
+                        // No employee record found
+                        return redirect()->route('login')->with('error', 'Employee record not found.');
+                    }
+                }else {
+                    Auth::login($user);
+                    $this->storeLoginDetails($user);
+                    return redirect()->intended(route('home'));
+                }
             }else{
                return redirect()->route('login')->with('error', 'Unregistered user. Contact admin for authentication.'); 
             }

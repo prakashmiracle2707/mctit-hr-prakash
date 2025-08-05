@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Models\Employee;
+
 
 class LoginRequest extends FormRequest
 {
@@ -73,6 +75,19 @@ class LoginRequest extends FormRequest
                             'email' => __("Your account is disabled from company."),
                         ]);
                     }
+
+                    if($user->type == 'employee'){
+                        $employee = Employee::where('user_id', $user->id)->first();
+                        if ($employee) {
+                            // Check relieving_date
+                            if ($employee->relieving_date < now()) {
+                                throw ValidationException::withMessages([
+                                    'email' => __("Your account is no longer active."),
+                                ]);
+                            }
+                        }
+                    }
+
                     $id = $user->id;
                     break;
                 }
@@ -84,6 +99,9 @@ class LoginRequest extends FormRequest
                 'email' => __("this email doesn't match"),
             ]);
         }
+
+
+        
 
         if (! Auth::attempt(['email' =>$this->email, 'password' =>$this->password,'id'=>$id], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
