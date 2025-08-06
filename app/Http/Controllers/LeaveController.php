@@ -1176,7 +1176,7 @@ class LeaveController extends Controller
                 $currentDate->modify('+1 day');
             }
 
-            $leave->total_leave_days = $total_leave_days;
+            // $leave->total_leave_days = $total_leave_days;
             $leave->status = 'Approved';
             if($request->status == 'Approved'){
                 $leave->approved_type = 'manual';
