@@ -198,6 +198,7 @@
                     <table class="table" id="pc-dt-simple">
                         <thead>
                             <tr>
+                                <th>{{ __('LeaveId') }}</th>
                                 @if (\Auth::user()->type != 'employee')
                                     <th>{{ __('Employee') }}</th>
                                 @endif
@@ -217,6 +218,7 @@
                                     $count = DB::table('leave_managers')->where('leave_id', $leave->id)->count();
                                 @endphp
                                 <tr>
+                                    <td>{{ Get_LeaveId($leave->id) }}</td>
                                     @if (\Auth::user()->type != 'employee')
                                         <td>{{ !empty($leave->employee_id) ? $leave->employees->name : '' }}
                                         </td>

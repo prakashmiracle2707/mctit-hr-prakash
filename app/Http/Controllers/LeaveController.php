@@ -19,6 +19,7 @@ use App\Models\LeaveManager;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use App\Services\UltraMsgService;
 
 class LeaveController extends Controller
 {
@@ -187,6 +188,7 @@ class LeaveController extends Controller
 
     public function create()
     {
+
         if (\Auth::user()->can('Create Leave')) {
             if (Auth::user()->type == 'employee') {
                 $employees = Employee::where('user_id', '=', \Auth::user()->id)->first();
@@ -315,7 +317,7 @@ class LeaveController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, UltraMsgService $whatsapp)
     {
         $setings = Utility::settings();
 
@@ -580,6 +582,20 @@ class LeaveController extends Controller
                         
                     }
 
+                    if($setings['is_whatsApp_Msg_trigger'] === 'on'){
+                        $leaveId = Get_LeaveId($leave->id);
+                        $employeeName = $employee->name;
+                        $leaveType = $leavetype->title;
+                        $leaveDateTo = $leaveDate;
+                        $leaveReason = $leave->leave_reason;
+                        $leave_status = GetStatusName($leave->status,$leave->approved_type);
+                        $employeePhone = $employee->phone;
+                        $leaveTypeId = $leave->leave_type_id;
+                        $leaveTime = $leave->early_time;
+                        
+                        $whatsapp->sendLeaveRequest($leaveId, $employeeName, $leaveTypeId, $leaveType, $leaveTime, $leaveDateTo, $leaveReason, $leave_status, $employeePhone);
+                    }
+
                     if($setings['is_email_trigger'] === 'on'){
 
                         $GetManagers = LeaveManager::where('leave_id', $leave->id)->pluck('manager_id')->toArray();
@@ -725,7 +741,7 @@ class LeaveController extends Controller
         }
     }
 
-    public function update(Request $request, $leave)
+    public function update(Request $request, UltraMsgService $whatsapp, $leave)
     {
         $setings = Utility::settings();
         
@@ -978,6 +994,21 @@ class LeaveController extends Controller
 
                         $leavetype = LeaveType::find($leave->leave_type_id);
 
+
+                        if($setings['is_whatsApp_Msg_trigger'] === 'on'){
+                            $leaveId = Get_LeaveId($leave->id);
+                            $employeeName = $employee->name;
+                            $leaveType = $leavetype->title;
+                            $leaveDateTo = $leaveDate;
+                            $leaveReason = $leave->leave_reason;
+                            $leave_status = GetStatusName($leave->status,$leave->approved_type);
+                            $employeePhone = $employee->phone;
+                            $leaveTypeId = $leave->leave_type_id;
+                            $leaveTime = $leave->early_time;
+                            
+                            $whatsapp->sendLeaveRequest($leaveId, $employeeName, $leaveTypeId, $leaveType, $leaveTime, $leaveDateTo, $leaveReason, $leave_status, $employeePhone);
+                        }
+
                         if($setings['is_email_trigger'] === 'on'){
 
                             $GetManagers = LeaveManager::where('leave_id', $leave->id)->pluck('manager_id')->toArray();
@@ -1122,7 +1153,7 @@ class LeaveController extends Controller
         }
     }
 
-    public function changeaction(Request $request)
+    public function changeaction(Request $request, UltraMsgService $whatsapp)
     {
 
         $leave = LocalLeave::find($request->leave_id);
@@ -1210,6 +1241,28 @@ class LeaveController extends Controller
 
             // $fromEmail='ai@miraclecloud-technology.com';
             // $fromName='MCT USER';
+
+
+            if($setings['is_whatsApp_Msg_trigger'] === 'on'){
+                $leaveId = Get_LeaveId($leave->id);
+                $employeeName = $employee->name;
+                $leaveType = $leavetype->title;
+                $leaveDateTo = $leaveDate;
+                $leaveReason = $leave->leave_reason;
+                $leave_status = GetStatusName($leave->status,$leave->approved_type);
+                $employeePhone = $employee->phone;
+                $leaveTypeId = $leave->leave_type_id;
+                $leaveTime = $leave->early_time;
+                
+                if($request->status == 'Approved'){
+                    $whatsapp->sendLeaveApproved($leaveId, $employeeName, $leaveTypeId, $leaveType, $leaveTime, $leaveDateTo, $leaveReason, $leave_status, $employeePhone);
+                }else if($request->status == 'HR Approved'){
+                    $whatsapp->sendLeaveAutoApproved($leaveId, $employeeName, $leaveTypeId, $leaveType, $leaveTime, $leaveDateTo, $leaveReason, $leave_status, $employeePhone);
+                }else{
+                    $whatsapp->sendLeaveRejected($leaveId, $employeeName, $leaveTypeId, $leaveType, $leaveTime, $leaveDateTo, $leaveReason, $leave_status, $employeePhone);
+                }
+            }
+
             if($setings['is_email_trigger'] === 'on'){
 
                 $fromEmail=$setings['HR_EMAIL'];
@@ -1425,9 +1478,10 @@ class LeaveController extends Controller
         return view('leave.cancel', compact('leave'));
     }
 
-    public function cancelStore(Request $request, $id)
+    public function cancelStore(Request $request, UltraMsgService $whatsapp, $id)
     {
         $leave = LocalLeave::findOrFail($id);
+        $setings = Utility::settings();
 
         $request->validate([
             'cancel_reason' => 'required',
@@ -1492,15 +1546,31 @@ class LeaveController extends Controller
         $emails[] = $employee->email;
 
 
+        if($setings['is_whatsApp_Msg_trigger'] === 'on'){
+            $leaveId = Get_LeaveId($leave->id);
+            $employeeName = $employee->name;
+            $leaveType = $leavetype->title;
+            $leaveDateTo = $leaveDate;
+            $leaveReason = $leave->leave_reason;
+            $leave_status = GetStatusName($leave->status,$leave->approved_type);
+            $employeePhone = $employee->phone;
+            $leaveTypeId = $leave->leave_type_id;
+            $leaveTime = $leave->early_time;
+            
+            $whatsapp->sendLeaveCancelled($leaveId, $employeeName, $leaveTypeId, $leaveType, $leaveTime, $leaveDateTo, $leaveReason, $leave_status, $employeePhone);
+        }
 
-        Mail::send('email.leave-Cancelled', $data, function ($message) use ($data,$emails) {
-            $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
-            $message->to($data["toEmail"])  // Manager’s email address
-                    ->subject($subjectTxt)
-                    ->from($data["fromEmail"], $data["fromNameEmail"])
-                    ->replyTo($data["replyTo"], $data["replyToName"])
-                    ->cc($emails);
-        });
+        if($setings['is_email_trigger'] === 'on'){
+            Mail::send('email.leave-Cancelled', $data, function ($message) use ($data,$emails) {
+                $subjectTxt = $data['leaveType']." Request on ".$data["leaveDate"];
+                $message->to($data["toEmail"])  // Manager’s email address
+                        ->subject($subjectTxt)
+                        ->from($data["fromEmail"], $data["fromNameEmail"])
+                        ->replyTo($data["replyTo"], $data["replyToName"])
+                        ->cc($emails);
+            });
+        }
+
 
         // Optional: trigger email to approver/admin
 
