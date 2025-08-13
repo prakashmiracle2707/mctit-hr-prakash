@@ -133,8 +133,11 @@ class AttendanceEmployeeController extends Controller
                 foreach ($breakLogs as $break) {
                     if (!empty($break->break_start) && !empty($break->break_end)) {
                         try {
-                            $start = Carbon::parse($break->break_start);
-                            $end = Carbon::parse($break->break_end);
+
+                            $startTime = $break->break_start_date.' '.$break->break_start; 
+                            $endTime = $break->break_end_date.' '.$break->break_end;
+                            $start = Carbon::parse($startTime);
+                            $end = Carbon::parse($endTime);
 
                             // Ensure valid duration
                             if ($end->greaterThan($start)) {
@@ -753,7 +756,91 @@ class AttendanceEmployeeController extends Controller
     //     }
     // }
 
+
     public function employee_clockout(Request $request, $id)
+    {
+        $settings = Utility::settings();
+        date_default_timezone_set($settings['timezone']); // Set timezone
+
+        $employeeId = !empty(\Auth::user()->employee) ? \Auth::user()->employee->id : 0;
+        $todayAttendance = AttendanceEmployee::where('employee_id', '=', $employeeId)
+                                              ->where('date', date('Y-m-d'))
+                                              ->first();
+
+        if (Auth::user()->type == 'employee') {
+            $date = date("Y-m-d");
+            $time = date("H:i:s");
+
+            // Early Leaving Calculation
+            $startTime = Utility::getValByName('company_start_time');
+            $endTime = Utility::getValByName('company_end_time');
+            $totalEarlyLeavingSeconds = strtotime($date . $endTime) - time();
+            $hours = floor($totalEarlyLeavingSeconds / 3600);
+            $mins = floor($totalEarlyLeavingSeconds / 60 % 60);
+            $secs = floor($totalEarlyLeavingSeconds % 60);
+            $earlyLeaving = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+
+            // Overtime Calculation
+            if (time() > strtotime($date . $endTime)) {
+                $totalOvertimeSeconds = time() - strtotime($date . $endTime);
+                $hours = floor($totalOvertimeSeconds / 3600);
+                $mins = floor($totalOvertimeSeconds / 60 % 60);
+                $secs = floor($totalOvertimeSeconds % 60);
+                $overtime = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+            } else {
+                $overtime = '00:00:00';
+            }
+
+            // Get attendance record
+            $attendanceRecord = AttendanceEmployee::where('id', $id)->first();
+            if (!$attendanceRecord) {
+                return response()->json(['error' => 'Attendance record not found'], 404);
+            }
+
+            $clockInDateTime = $attendanceRecord->date . ' ' . $attendanceRecord->clock_in; 
+            $clockOutTime = $time;  // Current time as clock-out time
+
+            // Check if the checkout time is on the next day
+            $checkoutDateTime = $date . ' ' . $clockOutTime; // Combine date and time for checkout
+
+            // Calculate checkout time difference using full datetime values
+            $checkoutTimeDiffSeconds = strtotime($checkoutDateTime) - strtotime($clockInDateTime);
+            if ($checkoutTimeDiffSeconds > 0) {
+                // Valid checkout (same day or next day)
+                $checkoutHours = floor($checkoutTimeDiffSeconds / 3600);
+                $checkoutMinutes = floor(($checkoutTimeDiffSeconds % 3600) / 60);
+                $checkoutSeconds = floor($checkoutTimeDiffSeconds % 60);
+                $checkoutTimeDiff = sprintf('%02d:%02d:%02d', $checkoutHours, $checkoutMinutes, $checkoutSeconds);
+            } else {
+                // If the checkout time is invalid (shouldn't happen)
+                $checkoutTimeDiff = '00:00:00';
+                $date = date('Y-m-d', strtotime($date . ' +1 day'));  // Set checkout date to next day
+            }
+
+            // Prepare data to update
+            $attendanceEmployee = [
+                'clock_out' => $time,
+                'early_leaving' => $earlyLeaving,
+                'overtime' => $overtime,
+                'checkout_date' => $date,  // Use the adjusted date if needed
+                'checkout_time_diff' => $checkoutTimeDiff,
+            ];
+
+            // Check if a custom date is provided in the request
+            if (!empty($request->date)) {
+                $attendanceEmployee['date'] = $request->date;
+            }
+
+            // Update the attendance record
+            AttendanceEmployee::where('id', $id)->update($attendanceEmployee);
+
+            return redirect()->route('dashboard')->with('success', __('Employee successfully clocked out.'));
+        } else {
+            return response()->json(['error' => 'Attendance record not found'], 404);
+        }
+    }
+
+    public function employee_clockoutOld(Request $request, $id)
     {
         $settings = Utility::settings();
 
@@ -831,10 +918,22 @@ class AttendanceEmployeeController extends Controller
     public function startBreak(Request $request)
     {
         $settings = Utility::settings();
+        $date = date("Y-m-d");
+        $time = date("H:i:s");
         date_default_timezone_set($settings['timezone']); // Set timezone
         $attendance = AttendanceEmployee::where('employee_id', $request->employee_id)
                                         ->where('date', today())
                                         ->first();
+        // If no attendance is found for the current date, check for the previous day
+        if (!$attendance) {
+            $previousDate = date('Y-m-d', strtotime($date . ' -1 day'));
+            $currentHour = date("H");
+            if ($currentHour < Get_MaxCheckOutTime()) {
+                $attendance = AttendanceEmployee::where('employee_id', $request->employee_id)
+                                        ->where('date', $previousDate)
+                                        ->first();
+            }
+        }
 
         if (!$attendance) {
             return response()->json(['error' => 'Attendance record not found'], 404);
@@ -845,11 +944,12 @@ class AttendanceEmployeeController extends Controller
             return response()->json(['error' => 'A break is already active. End the current break first.'], 400);
         }
 
-        $time = date("H:i:s");
+        
 
         $break = AttendanceBreak::create([
             'attendance_id' => $attendance->id,
             'break_start' => $time,
+            'break_start_date' => $date,
         ]);
 
         return response()->json(['message' => 'Break started successfully']);
@@ -858,10 +958,22 @@ class AttendanceEmployeeController extends Controller
     public function endBreak(Request $request)
     {
         $settings = Utility::settings();
+        $date = date("Y-m-d");
+        $time = date("H:i:s");
         date_default_timezone_set($settings['timezone']); // Set timezone
         $attendance = AttendanceEmployee::where('employee_id', $request->employee_id)
                                         ->where('date', today())
                                         ->first();
+        // If no attendance is found for the current date, check for the previous day
+        if (!$attendance) {
+            $previousDate = date('Y-m-d', strtotime($date . ' -1 day'));
+            $currentHour = date("H");
+            if ($currentHour < Get_MaxCheckOutTime()) {
+                $attendance = AttendanceEmployee::where('employee_id', $request->employee_id)
+                                        ->where('date', $previousDate)
+                                        ->first();
+            }
+        }
 
         if (!$attendance) {
             return response()->json(['error' => 'Attendance record not found'], 404);
@@ -876,9 +988,9 @@ class AttendanceEmployeeController extends Controller
             return response()->json(['error' => 'No active break found'], 404);
         }
 
-        $time = date("H:i:s");
+        
 
-        $break->update(['break_end' => $time]);
+        $break->update(['break_end' => $time,'break_end_date' => $date]);
 
         return response()->json(['message' => 'Break ended successfully']);
     }

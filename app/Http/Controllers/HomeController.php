@@ -102,8 +102,12 @@ class HomeController extends Controller
                         foreach ($breakLogs as $break) {
                             if (!empty($break->break_start) && !empty($break->break_end)) {
                                 try {
-                                    $start = Carbon::parse($break->break_start);
-                                    $end = Carbon::parse($break->break_end);
+
+                                    $startTime = $break->break_start_date.' '.$break->break_start;
+                                    $endTime = $break->break_end_date.' '.$break->break_end;
+                                    
+                                    $start = Carbon::parse($startTime);
+                                    $end = Carbon::parse($endTime);
 
                                     // Ensure valid duration
                                     if ($end->greaterThan($start)) {
@@ -148,6 +152,23 @@ class HomeController extends Controller
                         ->whereDate('date', now()->toDateString())
                         ->first();
 
+
+                    if (!$employeeAttendance) {
+                        $date = date("Y-m-d");
+                        $currentHour = date("H");
+                        $previousDate = date('Y-m-d', strtotime($date . ' -1 day'));
+
+                        if ($currentHour < Get_MaxCheckOutTime()) {
+
+                            $employeeAttendance = AttendanceEmployee::where('employee_id', $emp)
+                                    ->whereDate('date', $previousDate)
+                                    ->where('clock_out', '=', '00:00:00')
+                                    ->first();
+                        }
+                    }
+
+                    
+
                     // Fetch break logs for today's attendance
                     if ($employeeAttendance) {
                         $breakLogs = $employeeAttendance->breaks()->orderBy('break_start', 'desc')->get();
@@ -162,12 +183,14 @@ class HomeController extends Controller
                         foreach ($breakLogs as $break) {
                             if (!empty($break->break_start)) {
                                 try {
+                                    $startTime = $break->break_start_date.' '.$break->break_start;  // Replace with dynamic start time
+                                    $endTime = $break->break_end_date.' '.$break->break_end;    // Replace with dynamic end time
                                     // Parse break start time
-                                    $start = Carbon::parse($break->break_start);
+                                    $start = Carbon::parse($startTime);
                                     
                                     // If break has ended, use its recorded end time
-                                    if (!empty($break->break_end)) {
-                                        $end = Carbon::parse($break->break_end);
+                                    if (!empty($endTime)) {
+                                        $end = Carbon::parse($endTime);
                                     } else {
                                         // If break is in progress, use current time as end time
                                         $end = Carbon::now();
@@ -187,6 +210,8 @@ class HomeController extends Controller
                                 }
                             }
                         }
+
+                        // echo "<pre>";print_r($breakLogs);exit;
                         // exit;
                         // Ensure totalSeconds is non-negative
                         $totalSeconds = max(0, (int) round($totalSeconds)); // Round and cast to integer
@@ -267,6 +292,8 @@ class HomeController extends Controller
             }
 
 
+
+
             if($user->type == 'employee')
             {
 
@@ -312,7 +339,21 @@ class HomeController extends Controller
 
                 $date               = date("Y-m-d");
                 $time               = date("H:i:s");
+                $currentHour = date("H");
                 $employeeAttendance = AttendanceEmployee::orderBy('id', 'desc')->where('employee_id', '=', !empty(\Auth::user()->employee) ? \Auth::user()->employee->id : 0)->where('date', '=', $date)->first();
+
+                // If no attendance is found for the current date, check for the previous day
+                if (!$employeeAttendance) {
+                    $previousDate = date('Y-m-d', strtotime($date . ' -1 day'));
+
+                    if ($currentHour < Get_MaxCheckOutTime()) {
+                        $employeeAttendance = AttendanceEmployee::orderBy('id', 'desc')
+                        ->where('employee_id', '=', !empty(\Auth::user()->employee) ? \Auth::user()->employee->id : 0)
+                        ->where('date', '=', $previousDate)
+                        ->where('clock_out', '=', '00:00:00')
+                        ->first();
+                    }
+                }
 
                 // echo "<pre>";print_r($employeeAttendance);exit;
 
@@ -425,6 +466,8 @@ class HomeController extends Controller
                 // Get only today's attendance
                 $today = Carbon::today()->toDateString();
 
+                $previousDate = date('Y-m-d', strtotime($date . ' -1 day'));
+
                 $FindOnBreakEmployee = AttendanceEmployee::whereIn('employee_id', $employeeCheck)
                     ->whereDate('date', $today)
                     ->orderByRaw('work_from_home DESC')
@@ -438,12 +481,14 @@ class HomeController extends Controller
                         foreach ($breakLogs as $break) {
                             if (!empty($break->break_start)) {
                                 try {
-                                    $start = Carbon::parse($break->break_start);
+                                    $startTime = $break->break_start_date.' '.$break->break_start;
+                                    $endTime = $break->break_end_date.' '.$break->break_end;
+                                    $start = Carbon::parse($startTime);
 
-                                    if (empty($break->break_end)) {
+                                    if (empty($endTime)) {
                                         $isInBreak = true; // currently on break
                                     } else {
-                                        $end = Carbon::parse($break->break_end);
+                                        $end = Carbon::parse($endTime);
                                         if ($end->greaterThan($start)) {
                                             $duration = $start->diffInSeconds($end);
                                             $totalSeconds += (int) round($duration);
@@ -466,7 +511,7 @@ class HomeController extends Controller
                     ->values();
 
 
-                // attendanceEmployee
+                // attendanceEmployee  employeeAttendance
                 /* *************** New Add End ****************************/
                 $employeesinfo = Employee::where('user_id', '=', $user->id)->first();
                 
@@ -603,13 +648,16 @@ class HomeController extends Controller
                     foreach ($breakLogs as $break) {
                         if (!empty($break->break_start)) {
                             try {
-                                $start = Carbon::parse($break->break_start);
 
-                                if (empty($break->break_end)) {
+                                $startTime = $break->break_start_date.' '.$break->break_start; 
+                                $endTime = $break->break_end_date.' '.$break->break_end;
+                                $start = Carbon::parse($startTime);
+
+                                if (empty($endTime)) {
                                     // If break_end is NULL, employee is currently on break
                                     $isInBreak = true;
                                 } else {
-                                    $end = Carbon::parse($break->break_end);
+                                    $end = Carbon::parse($endTime);
                                     if ($end->greaterThan($start)) {
                                         $duration = $start->diffInSeconds($end);
                                         $totalSeconds += (int) round($duration);
@@ -856,13 +904,16 @@ class HomeController extends Controller
             foreach ($breakLogs as $break) {
                 if (!empty($break->break_start)) {
                     try {
-                        $start = Carbon::parse($break->break_start);
+                        $startTime = $break->break_start_date.' '.$break->break_start; 
+                        $endTime = $break->break_end_date.' '.$break->break_end;
 
-                        if (empty($break->break_end)) {
+                        $start = Carbon::parse($startTime);
+
+                        if (empty($endTime)) {
                             // If break_end is NULL, employee is currently on break
                             $isInBreak = true;
                         } else {
-                            $end = Carbon::parse($break->break_end);
+                            $end = Carbon::parse($endTime);
                             if ($end->greaterThan($start)) {
                                 $duration = $start->diffInSeconds($end);
                                 $totalSeconds += (int) round($duration);

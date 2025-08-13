@@ -215,7 +215,7 @@
                                 <th>{{ __('Early Leaving') }}</th>
                                 <th>{{ __('Overtime') }}</th> -->
                                 <th>{{ __('Total Hours') }}
-                                <!-- <th>{{ __('Total Break Log') }}</th> -->
+                                <th>{{ __('Total Break Log') }}</th>
                                 @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
                                     <th width="200px">{{ __('Action') }}</th>
                                 @endif
@@ -249,7 +249,15 @@
                                         @if ($attendance->clock_out == '00:00:00' && $attendance->date < date('Y-m-d'))
                                             <span class="badge bg-danger p-1 px-1">Missed Clock-out</span>
                                         @else
+                                            @if ($attendance->date != $attendance->checkout_date)
+                                                {{ 
+                                                    $attendance->clock_out != '00:00:00' 
+                                                    ?  date('d/m/Y', strtotime($attendance->checkout_date)).' '.date('h:i A', strtotime($attendance->clock_out))  
+                                                    : '00:00' 
+                                                }}
+                                            @else
                                             {{ $attendance->clock_out != '00:00:00' ? date('h:i A', strtotime($attendance->clock_out)) : '00:00' }}
+                                            @endif
                                         @endif
                                     </td>
                                     <!-- <td>{{ $attendance->late }}</td>
@@ -257,7 +265,7 @@
                                     <td>{{ $attendance->overtime }}</td> -->
                                     <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
 
-                                    <!-- <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td> -->
+                                    <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td>
                                     @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
                                     <td class="Action">
                                         

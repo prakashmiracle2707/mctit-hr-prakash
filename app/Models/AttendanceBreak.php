@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AttendanceBreak extends Model
 {
-    protected $fillable = ['attendance_id', 'break_start', 'break_end'];
+    protected $fillable = ['attendance_id', 'break_start', 'break_end', 'break_start_date', 'break_end_date'];
 
     public function attendance()
     {

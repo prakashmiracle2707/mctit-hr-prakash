@@ -78,9 +78,10 @@ class LoginRequest extends FormRequest
 
                     if($user->type == 'employee'){
                         $employee = Employee::where('user_id', $user->id)->first();
+                        // echo "<pre>";print_r($employee);exit;
                         if ($employee) {
                             // Check relieving_date
-                            if ($employee->relieving_date < now()) {
+                            if ($employee->relieving_date != null && $employee->relieving_date != "" && $employee->relieving_date < now()) {
                                 throw ValidationException::withMessages([
                                     'email' => __("Your account is no longer active."),
                                 ]);

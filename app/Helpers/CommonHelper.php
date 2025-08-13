@@ -56,4 +56,10 @@ if (!function_exists('GetStatusName')) {
     }
 }
 
+if (!function_exists('Get_MaxCheckOutTime')) {
+    function Get_MaxCheckOutTime() {
+        return 20;
+    }
+}
+
 ?>

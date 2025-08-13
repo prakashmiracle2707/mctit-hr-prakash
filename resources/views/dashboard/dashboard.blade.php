@@ -473,10 +473,10 @@
                                             <tbody id="break-log">
                                                 @foreach ($breakLogs as $break)
                                                     <tr>
-                                                        <td>{{ \Carbon\Carbon::parse($break->break_start)->format('h:i A') }}</td>
+                                                        <td>{{ date('d/m/Y', strtotime($break->break_start_date)).' '.\Carbon\Carbon::parse($break->break_start)->format('h:i A') }}</td>
                                                         <td>
                                                             @if ($break->break_end)
-                                                                {{\Carbon\Carbon::parse($break->break_end)->format('h:i A')}}
+                                                                {{date('d/m/Y', strtotime($break->break_end_date)).' '. \Carbon\Carbon::parse($break->break_end)->format('h:i A')}}
                                                             @else
                                                                 <span class="badge bg-danger p-1 px-1">In Progress</span>
                                                             @endif
@@ -614,9 +614,17 @@
                                         </td>
                                         <td>
                                             @if ($attendance->clock_out == '00:00:00' && $attendance->date < date('Y-m-d'))
-                                                <span class="badge bg-danger p-1 px-1">Missed</span>
+                                                <span class="badge bg-danger p-1 px-1">Missed Clock-out</span>
                                             @else
+                                                @if ($attendance->date != $attendance->checkout_date)
+                                                    {{ 
+                                                        $attendance->clock_out != '00:00:00' 
+                                                        ?  date('d/m/Y', strtotime($attendance->checkout_date)).' '.date('h:i A', strtotime($attendance->clock_out))  
+                                                        : '00:00' 
+                                                    }}
+                                                @else
                                                 {{ $attendance->clock_out != '00:00:00' ? date('h:i A', strtotime($attendance->clock_out)) : '00:00' }}
+                                                @endif
                                             @endif
                                         </td>
                                         <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
