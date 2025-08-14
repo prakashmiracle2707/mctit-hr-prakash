@@ -23,7 +23,185 @@ use App\Services\UltraMsgService;
 
 class LeaveController extends Controller
 {
+
     public function index()
+    {
+        if (!\Auth::user()->can('Manage Leave')) {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+
+        $leaveCounts = [];
+        $leaveTypes = [];
+        $leaveTypesAll = [];
+
+        // Financial year setup
+        $financialYears = FinancialYear::pluck('year_range', 'id');
+        $activeYearId = FinancialYear::where('is_active', 1)->value('id');
+        $selectedFinancialYearId = request('financial_year_id', $activeYearId);
+        $selectedEmployeeId = request('employee_id');
+        $financialYear = FinancialYear::findOrFail($selectedFinancialYearId);
+
+        // Employee & manager lists
+        $creatorId = \Auth::user()->creatorId();
+        $employeeList = Employee::where('created_by', $creatorId)
+            ->orderBy('name', 'asc')
+            ->pluck('name', 'id');
+
+        $managerList = Employee::where('created_by', $creatorId)
+            ->where('is_manager', true)
+            ->orderBy('name', 'asc')
+            ->pluck('name', 'id');
+
+        // Role-specific logic
+        if (\Auth::user()->type == 'employee') {
+            $employee = Employee::where('user_id', \Auth::id())->firstOrFail();
+            $leaves = $this->getLeavesForEmployee($employee->id, $financialYear);
+            $leaveTypes = $this->getLeaveTypes(['SL', 'CL', 'WFH', 'OH', 'EL']);
+        } else {
+            $leaves = $this->getLeavesForAdmin($financialYear, $selectedEmployeeId);
+            $leaveTypes = $this->getLeaveTypes(['SL', 'CL', 'WFH', 'OH', 'EL']);
+        }
+
+        // Initialize leave counts
+        foreach ($leaveTypes as $id => $title) {
+            $leaveCounts[$id] = ['Approved' => 0, 'Reject' => 0, 'Pending' => 0,];
+        }
+
+        // For counts
+        $LeavesList = LocalLeave::where('created_by', \Auth::user()->creatorId());
+
+        if (\Auth::user()->type == 'employee') {
+            $employee = Employee::where('user_id', \Auth::id())->firstOrFail();
+            $LeavesList->where('employee_id', $employee->id);
+        }
+
+        if ($selectedEmployeeId && \Auth::user()->type != 'employee') {
+            $LeavesList->where('employee_id', $selectedEmployeeId);
+        }
+
+        $LeavesList = $LeavesList->get();
+
+        // Calculate counts
+        foreach ($LeavesList as $LeaveDetails) {
+            $status = $LeaveDetails->status;
+
+            // Treat Manager_Rejected as Pending
+            if ($status === 'In_Process' || $status === 'Manager_Approved') {
+                $status = 'Pending';
+            }
+
+            // Treat Manager_Rejected as Rejected
+            if ($status === 'Manager_Rejected') {
+                $status = 'Reject';
+            }
+
+            // For EL leave type, treat Pre-Approved as Approved
+            $leaveType = LeaveType::find($LeaveDetails->leave_type_id);
+            if ($leaveType && $leaveType->code === 'EL' && $status === 'Pre-Approved') {
+                $status = 'Approved';
+            }
+
+            $days = $this->calculateLeaveDays($LeaveDetails, $financialYear);
+
+            if (isset($leaveCounts[$LeaveDetails->leave_type_id][$status])) {
+                $leaveCounts[$LeaveDetails->leave_type_id][$status] += $days;
+            }
+        }
+
+        $leaveTypesAll = LeaveType::where(function ($query) use ($leaveTypes) {
+            foreach ($leaveTypes as $id => $title) {
+                $query->orWhere('id', $id);
+            }
+        })->get()->keyBy('id');
+
+        // Ensure leave days are calculated
+        foreach ($leaves as $leave) {
+            if ($leave->total_leave_days == 0) {
+                $leave->total_leave_days = $this->calculateLeaveDays($leave, $financialYear);
+            }
+        }
+
+        return view('leave.index', compact(
+            'leaves',
+            'leaveCounts',
+            'leaveTypes',
+            'leaveTypesAll',
+            'financialYears',
+            'activeYearId',
+            'selectedFinancialYearId',
+            'selectedEmployeeId',
+            'employeeList',
+            'managerList'
+        ));
+    }
+
+    /**
+     * Get leaves for a specific employee.
+     */
+    private function getLeavesForEmployee($employeeId, $financialYear)
+    {
+        return LocalLeave::where('employee_id', $employeeId)
+            ->where(function ($query) use ($financialYear) {
+                $query->whereBetween('start_date', [$financialYear->start_date, $financialYear->end_date])
+                      ->orWhereBetween('end_date', [$financialYear->start_date, $financialYear->end_date]);
+            })
+            ->orderBy('applied_on', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get leaves for admin/manager.
+     */
+    private function getLeavesForAdmin($financialYear, $selectedEmployeeId = null)
+    {
+        $query = LocalLeave::where('created_by', \Auth::user()->creatorId())
+            ->where('status', '!=', 'Draft')
+            ->where(function ($query) use ($financialYear) {
+                $query->whereBetween('start_date', [$financialYear->start_date, $financialYear->end_date])
+                      ->orWhereBetween('end_date', [$financialYear->start_date, $financialYear->end_date]);
+            });
+
+        if ($selectedEmployeeId) {
+            $query->where('employee_id', $selectedEmployeeId);
+        }
+
+        return $query->with(['employees', 'leaveType'])
+            ->orderByRaw("FIELD(status, 'Pending', 'Manager_Approved') DESC")
+            ->orderBy('applied_on', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get leave types by codes.
+     */
+    private function getLeaveTypes(array $codes)
+    {
+        return LeaveType::where(function ($query) use ($codes) {
+            foreach ($codes as $code) {
+                $query->orWhere('code', 'like', "%$code%");
+            }
+        })->pluck('title', 'id');
+    }
+
+    /**
+     * Calculate leave days excluding weekends.
+     */
+    private function calculateLeaveDays($leave, $financialYear)
+    {
+        $start = \Carbon\Carbon::parse($leave->start_date);
+        $end = \Carbon\Carbon::parse($leave->end_date);
+        $days = 0;
+
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            if (in_array($date->dayOfWeek, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) continue;
+            if ($date->between($financialYear->start_date, $financialYear->end_date)) {
+                $days += ($leave->half_day_type != 'full_day') ? 0.5 : 1;
+            }
+        }
+
+        return $days;
+    }
+    public function indexOld()
     {
         $leaveCounts = [];
         $leaveTypes = [];
@@ -104,6 +282,59 @@ class LeaveController extends Controller
                     $query->where('code', 'like', '%SL%')->orWhere('code', 'like', '%CL%');
                 })->get()->keyBy('id');
             } else {
+
+                $leaves = LocalLeave::where(function ($query) use ($financialYear) {
+                        $query->whereBetween('start_date', [$financialYear->start_date, $financialYear->end_date])
+                              ->orWhereBetween('end_date', [$financialYear->start_date, $financialYear->end_date]);
+                    })
+                    ->orderBy('applied_on', 'desc')
+                    ->get();
+
+                    // echo "<pre>";print_r($leaves);exit;
+
+                $leaveTypes = LeaveType::where(function ($query) {
+                    $query->where('code', 'like', '%SL%')->orWhere('code', 'like', '%CL%')->orWhere('code', 'like', '%WFH%');
+                })->pluck('title', 'id','code');
+
+                foreach ($leaveTypes as $id => $title) {
+                    $leaveCounts[$id] = [
+                        'Approved' => 0,
+                        'Rejected' => 0,
+                        'Pending' => 0,
+                    ];
+                }
+
+                $LeavesList = LocalLeave::get();
+
+                foreach ($LeavesList as $LeaveDetails) {
+                    $leaveTypeId = $LeaveDetails->leave_type_id;
+                    $status = $LeaveDetails->status;
+                    $start = \Carbon\Carbon::parse($LeaveDetails->start_date);
+                    $end = \Carbon\Carbon::parse($LeaveDetails->end_date);
+                    $halfDayType = $LeaveDetails->half_day_type;
+                    $days = 0;
+
+                    for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                        if (in_array($date->dayOfWeek, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) continue;
+
+                        if ($date->between(\Carbon\Carbon::parse($financialYear->start_date), \Carbon\Carbon::parse($financialYear->end_date))) {
+                            $days += ($halfDayType != 'full_day') ? 0.5 : 1;
+                        }
+                    }
+
+                    if (isset($leaveCounts[$leaveTypeId][$status])) {
+                        $leaveCounts[$leaveTypeId][$status] += $days;
+                    }
+                }
+
+                $leaveTypes = LeaveType::pluck('title', 'id','code');
+                $leaveTypesAll = LeaveType::where(function ($query) {
+                    $query->where('code', 'like', '%SL%')->orWhere('code', 'like', '%CL%')->orWhere('code', 'like', '%WFH%');
+                })->get()->keyBy('id');
+
+
+
+
                 // Admin / CEO / Manager
                 $leavesQuery = LocalLeave::where('created_by', \Auth::user()->creatorId())
                     ->where('status', '!=', 'Draft')

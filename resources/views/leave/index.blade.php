@@ -44,9 +44,10 @@
         </ul>
     </div>
 @endif
-@if(\Auth::user()->type == 'employee')
+
 <div class="row">
-    <div class="col-lg-4 col-md-6">
+    @if (\Auth::user()->type == 'employee')
+    <div class="col-lg-3 col-md-6">
         <div class="card">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between">
@@ -58,9 +59,15 @@
                             <h5 class="mb-0">Allowed Leave</h5>
                             <div>
                                 @foreach($leaveTypesAll as $type)
-                                    <p class="text-muted text-sm mb-0">
-                                        Total {{ $type->title }} : {{ $type->days }}
-                                    </p>
+                                    @if($type->code != 'WFH')
+                                        <p class="text-muted text-sm mb-0">
+                                            Total {{ $type->title }}
+                                            @if($type->code == 'EL')
+                                                <b>(Per Month 1)</b>
+                                            @endif
+                                            : {{ $type->days }}
+                                        </p>
+                                    @endif
                                 @endforeach
                             </div>
                         </div>
@@ -69,14 +76,16 @@
             </div>
         </div>
     </div>
+    @endif
 
     @php
         // Simulate the same leaveCounts structure
         // $leaveCounts = [leave_type_id => ['Approved' => x, 'Rejected' => y, 'Pending' => z]];
         // $leaveTypes = [leave_type_id => 'Leave Type Name'];
+        $colClass = (\Auth::user()->type == 'employee') ? 'col-lg-3 col-md-6' : 'col-lg-4 col-md-6';
     @endphp
     {{-- Approved --}}
-    <div class="col-lg-4 col-md-6">
+    <div class="{{ $colClass }}">
         <div class="card stats-wrapper dash-info-card">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between">
@@ -102,7 +111,7 @@
     </div>
 
     {{-- Rejected --}}
-    <div class="col-lg-4 col-md-6">
+    <div class="{{ $colClass }}">
         <div class="card stats-wrapper dash-info-card">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between">
@@ -116,7 +125,7 @@
                                 @foreach ($leaveCounts as $leaveTypeId => $statuses)
                                     <p class="text-muted text-sm mb-0">
                                         Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
-                                        {{ $statuses['Rejected'] ?? 0 }}
+                                        {{ $statuses['Reject'] ?? 0 }}
                                     </p>
                                 @endforeach
                             </div>
@@ -128,7 +137,7 @@
     </div>
 
     {{-- Pending --}}
-    <!-- <div class="col-lg-4 col-md-6">
+    <div class="{{ $colClass }}">
         <div class="card stats-wrapper dash-info-card">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between">
@@ -151,9 +160,9 @@
                 </div>
             </div>
         </div>
-    </div> -->
+    </div>
 </div>
-@endif
+
 <div class="row">
 
     {{ Form::open(['route' => ['leave.index'], 'method' => 'get', 'id' => 'leave_form']) }}
