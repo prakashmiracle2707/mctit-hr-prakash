@@ -93,7 +93,7 @@
                                         'Payroll Employee' => __('Payroll Employee'),
                                         'Trainee' => __('Trainee'),
                                         'College Trainee' => __('College Trainee'),
-                                    ], old('employee_type', 'Payroll Employee'), [ // default Payroll Employee
+                                    ], old('employee_type', $employee->employee_type ?? 'Payroll Employee'), [
                                         'class' => 'form-control',
                                         'placeholder' => __('Select Employee Type'),
                                         'required' => 'required',

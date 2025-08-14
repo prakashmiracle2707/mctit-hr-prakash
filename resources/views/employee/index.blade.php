@@ -70,7 +70,11 @@
                                         
                                         
                                     </td>
-                                    <td>{{ $employee->name }}</td>
+                                    <td>{{ $employee->name }}
+                                        @if($employee->employee_type != 'Payroll Employee')
+                                            ({{$employee->employee_type}})
+                                        @endif
+                                    </td>
                                     <td>{{ !empty($employee->email) ? $employee->email : '-' }}</td>
                                     <!-- <td>
                                         {{ !empty($employee->branch_id) ? $employee->branch->name : '-' }}
