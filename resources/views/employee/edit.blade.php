@@ -87,6 +87,19 @@
                                     </div>
                                 </div>
 
+                                <div class="form-group col-md-6">
+                                    {!! Form::label('employee_type', __('Employee Type'), ['class' => 'form-label']) !!}<x-required></x-required>
+                                    {!! Form::select('employee_type', [
+                                        'Payroll Employee' => __('Payroll Employee'),
+                                        'Trainee' => __('Trainee'),
+                                        'College Trainee' => __('College Trainee'),
+                                    ], old('employee_type', 'Payroll Employee'), [ // default Payroll Employee
+                                        'class' => 'form-control',
+                                        'placeholder' => __('Select Employee Type'),
+                                        'required' => 'required',
+                                    ]) !!}
+                                </div>
+
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         {{ Form::label('managers[]', __('Managers'), ['class' => 'col-form-label']) }}<x-required></x-required>

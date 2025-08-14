@@ -112,7 +112,42 @@ class LeaveController extends Controller
             foreach ($leaveTypes as $id => $title) {
                 $query->orWhere('id', $id);
             }
-        })->get()->keyBy('id');
+        })->get()->map(function ($type) {
+
+            // Get active financial year
+            $financialYear = \DB::table('financial_years')
+                ->where('is_active', 1)
+                ->first();
+
+            $startDate = $financialYear->start_date ?? Utility::AnnualLeaveCycle()['start_date'];
+            $endDate   = $financialYear->end_date ?? Utility::AnnualLeaveCycle()['end_date'];
+
+
+            // Calculate months worked
+            $employeeJoinDate = auth()->user()->employee->company_doj ?? null;
+            // Calculate months of service in the financial year
+            $joinDate = \Carbon\Carbon::parse($employeeJoinDate);
+
+            // If joined before FY start, start from FY start
+            if ($joinDate->lt(\Carbon\Carbon::parse($startDate))) {
+                $joinDate = \Carbon\Carbon::parse($startDate);
+            }
+
+            if ($employeeJoinDate) {
+                $monthsWorked = $joinDate->diffInMonths(\Carbon\Carbon::parse($endDate)) + 1; // +1 to include current month
+            } else {
+                $monthsWorked = 12; // default full year
+            }
+
+            // Prorated leave = (annual leave days / 12) * months worked
+            if (isset($type->days)) {
+                $type->allowed_leave = round(($type->days / 12) * $monthsWorked);
+            }else{
+               $type->allowed_leave = round(($type->days / 12) * $monthsWorked);
+            }
+
+            return $type;
+        })->keyBy('id');
 
         // Ensure leave days are calculated
         foreach ($leaves as $leave) {
@@ -424,7 +459,7 @@ class LeaveController extends Controller
             if (Auth::user()->type == 'employee') {
                 $employees = Employee::where('user_id', '=', \Auth::user()->id)->first();
             } else {
-                $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
+                $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())->orderBy('name', 'asc')->get()->pluck('name', 'id');
             }
 
             $employeesList = Employee::where('user_id', '!=', \Auth::user()->id)->first();
@@ -551,6 +586,26 @@ class LeaveController extends Controller
     public function store(Request $request, UltraMsgService $whatsapp)
     {
         $settings = Utility::settings();
+
+        $employee = Employee::find($request->employee_id);
+
+        // Get active financial year
+        $financialYear = \DB::table('financial_years')
+            ->where('is_active', 1)
+            ->first();
+
+        $startDate = $financialYear->start_date ?? Utility::AnnualLeaveCycle()['start_date'];
+        $endDate   = $financialYear->end_date ?? Utility::AnnualLeaveCycle()['end_date'];
+
+        // Calculate months of service in the financial year
+        $joinDate = \Carbon\Carbon::parse($employee->company_doj);
+
+        // If joined before FY start, start from FY start
+        if ($joinDate->lt(\Carbon\Carbon::parse($startDate))) {
+            $joinDate = \Carbon\Carbon::parse($startDate);
+        }
+
+        $monthsWorked = $joinDate->diffInMonths(\Carbon\Carbon::parse($endDate)) + 1;
 
         if (\Auth::user()->can('Create Leave')) {
             if ($request->leave_type_id == 5) {
@@ -710,7 +765,11 @@ class LeaveController extends Controller
                     ->sum('total_leave_days');
             }
 
-            $return = $leave_type->days - $leaves_used;
+
+
+            $allowed_leave = round(($leave_type->days / 12) * $monthsWorked);
+
+            $return = $allowed_leave - $leaves_used;
 
             if ($total_leave_days > $return) {
                 return redirect()->back()->with('error', __('You are not eligible for leave.'));
@@ -720,7 +779,7 @@ class LeaveController extends Controller
                 return redirect()->back()->with('error', __('Multiple leave entries are pending.'));
             }
 
-            if ($leave_type->days >= $total_leave_days) {
+            if ($allowed_leave >= $total_leave_days) {
                 $leave = new LocalLeave();
                 if (\Auth::user()->type == "employee") {
                     $leave->employee_id = $request->employee_id;
@@ -907,7 +966,7 @@ class LeaveController extends Controller
 
                 return redirect()->route('leave.index')->with('success', __('Leave successfully created.'));
             } else {
-                return redirect()->back()->with('error', __('Leave type ' . $leave_type->name . ' allows a maximum of ' . $leave_type->days . ' days. Please ensure your selected days are under ' . $leave_type->days . ' days.'));
+                return redirect()->back()->with('error', __('Leave type ' . $leave_type->name . ' allows a maximum of ' . $allowed_leave . ' days. Please ensure your selected days are under ' . $leave_type->days . ' days.'));
             }
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
@@ -937,7 +996,7 @@ class LeaveController extends Controller
                 if (Auth::user()->type == 'employee') {
                     $employees = Employee::where('employee_id', '=', \Auth::user()->creatorId())->first();;
                 } else {
-                    $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
+                    $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())->orderBy('name', 'asc')->get()->pluck('name', 'id');
                 }
 
                 // $employees  = Employee::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
@@ -975,6 +1034,27 @@ class LeaveController extends Controller
     public function update(Request $request, UltraMsgService $whatsapp, $leave)
     {
         $settings = Utility::settings();
+
+
+        $employee = Employee::find($request->employee_id);
+
+        // Get active financial year
+        $financialYear = \DB::table('financial_years')
+            ->where('is_active', 1)
+            ->first();
+
+        $startDate = $financialYear->start_date ?? Utility::AnnualLeaveCycle()['start_date'];
+        $endDate   = $financialYear->end_date ?? Utility::AnnualLeaveCycle()['end_date'];
+
+        // Calculate months of service in the financial year
+        $joinDate = \Carbon\Carbon::parse($employee->company_doj);
+
+        // If joined before FY start, start from FY start
+        if ($joinDate->lt(\Carbon\Carbon::parse($startDate))) {
+            $joinDate = \Carbon\Carbon::parse($startDate);
+        }
+
+        $monthsWorked = $joinDate->diffInMonths(\Carbon\Carbon::parse($endDate)) + 1;
         
         $leave = LocalLeave::find($leave);
         if (\Auth::user()->can('Edit Leave') || 
@@ -1121,7 +1201,9 @@ class LeaveController extends Controller
                         ->sum('total_leave_days');
                 }
 
-                $return = $leave_type->days - $leaves_used;
+                $allowed_leave = round(($leave_type->days / 12) * $monthsWorked);
+
+                $return = $allowed_leave - $leaves_used;
 
                 if ($total_leave_days > $return) {
                     return redirect()->back()->with('error', __('You are not eligible for leave.'));
@@ -1131,7 +1213,7 @@ class LeaveController extends Controller
                     return redirect()->back()->with('error', __('Multiple leave entries are pending.'));
                 }
 
-                if ($leave_type->days >= $total_leave_days) {
+                if ($allowed_leave >= $total_leave_days) {
 
                     /* Manager Find List START */
 
@@ -1326,7 +1408,7 @@ class LeaveController extends Controller
 
                     return redirect()->route('leave.index')->with('success', __('Leave successfully updated.'));
                 } else {
-                    return redirect()->back()->with('error', __('Leave type ' . $leave_type->name . ' is allowed for a maximum of ' . $leave_type->days . " days. Please make sure your selected days are under " . $leave_type->days . ' days.'));
+                    return redirect()->back()->with('error', __('Leave type ' . $leave_type->name . ' is allowed for a maximum of ' . $allowed_leave . " days. Please make sure your selected days are under " . $leave_type->days . ' days.'));
                 }
             } else {
                 return redirect()->back()->with('error', __('Permission denied.'));
@@ -1587,6 +1669,66 @@ class LeaveController extends Controller
 
 
     public function jsoncount(Request $request)
+    {
+        $employee = Employee::find($request->employee_id);
+
+        // Get active financial year
+        $financialYear = \DB::table('financial_years')
+            ->where('is_active', 1)
+            ->first();
+
+        $startDate = $financialYear->start_date ?? Utility::AnnualLeaveCycle()['start_date'];
+        $endDate   = $financialYear->end_date ?? Utility::AnnualLeaveCycle()['end_date'];
+
+        // Calculate months of service in the financial year
+        $joinDate = \Carbon\Carbon::parse($employee->company_doj);
+
+        if ($joinDate->lt(\Carbon\Carbon::parse($startDate))) {
+            $joinDate = \Carbon\Carbon::parse($startDate);
+        }
+
+        $monthsWorked = $joinDate->diffInMonths(\Carbon\Carbon::parse($endDate)) + 1;
+
+        // Get all leave types for this employee
+        $leaveQuery = LeaveType::select(
+            \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_leave'),
+            'leave_types.title',
+            'leave_types.code',
+            'leave_types.days',
+            'leave_types.id'
+        )
+        ->leftJoin('leaves', function ($join) use ($request, $startDate, $endDate) {
+            $join->on('leaves.leave_type_id', '=', 'leave_types.id')
+                ->where('leaves.employee_id', '=', $request->employee_id)
+                ->where('leaves.status', '=', 'Approved')
+                ->whereBetween('leaves.created_at', [$startDate, $endDate]);
+        })
+        ->where('leave_types.created_by', '=', \Auth::user()->creatorId());
+
+        // Restrict leave types based on employee type
+        if ($employee->employee_type != "Payroll Employee") {
+            // Only LWP allowed
+            $leaveQuery->where('leave_types.code', '=', 'LWP');
+        } elseif ($employee->work_from_home == 0) {
+            // Exclude WFH for non-WFH employees
+            $leaveQuery->where('leave_types.code', '!=', 'WFH');
+        }
+
+        $leave_counts = $leaveQuery
+            ->groupBy('leave_types.id')
+            ->get();
+
+        // Pro-rate leave based on months worked
+        foreach ($leave_counts as $leave) {
+            $leave->days = round(($leave->days / 12) * $monthsWorked);
+        }
+
+        return $leave_counts;
+    }
+
+
+
+    public function jsoncountOld(Request $request)
     {
 
         $employee  = Employee::find($request->employee_id);

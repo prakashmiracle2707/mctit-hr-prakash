@@ -65,7 +65,7 @@
                                             @if($type->code == 'EL')
                                                 <b>(Per Month 1)</b>
                                             @endif
-                                            : {{ $type->days }}
+                                            : {{ $type->allowed_leave }}
                                         </p>
                                     @endif
                                 @endforeach

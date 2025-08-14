@@ -350,6 +350,7 @@ class EmployeeController extends Controller
             // ✅ Handle work_from_home toggle (checkbox)
             $employee->work_from_home = $request->has('work_from_home') ? 1 : 0;
             $employee->relieving_date = $request->relieving_date ?? null;
+            $employee->employee_type = $request->employee_type ?? null;
             $employee->availability_status = $request->input('availability_status');
             // Update remaining fields
             $input = $request->except(['document', 'managers', 'work_from_home']);
