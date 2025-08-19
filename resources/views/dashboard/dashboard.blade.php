@@ -1203,6 +1203,7 @@
                                                 
                                                 <!-- <td>{{ $attendance->status }}</td> -->
                                                 <td>{{ $attendance->clock_in != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_in) : '00:00' }}
+                                                    {!! Get_Device_Type_Icon($attendance->device_type_clockin,\Auth::user()->id) !!}
                                                 </td>
                                                 <td>
                                                 
@@ -1211,6 +1212,7 @@
                                                     @else
                                                         {{ $attendance->clock_out != '00:00:00' ? date('h:i A', strtotime($attendance->clock_out)) : '00:00' }}
                                                     @endif
+                                                    {!! Get_Device_Type_Icon($attendance->device_type_clockout,\Auth::user()->id) !!}
                                                 </td>
                                                 <!-- <td>{{ $attendance->late }}</td>
                                                 <td>{{ $attendance->early_leaving }}</td>
