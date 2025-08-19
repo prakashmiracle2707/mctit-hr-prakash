@@ -63,7 +63,7 @@
                                         <p class="text-muted text-sm mb-0">
                                             Total {{ $type->title }}
                                             @if($type->code == 'EL')
-                                                <b>(Per Month 1)</b>
+                                                <b>(Limit: 1 Per Month)</b>
                                             @endif
                                             : {{ $type->allowed_leave }}
                                         </p>

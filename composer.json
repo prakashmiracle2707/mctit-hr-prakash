@@ -14,6 +14,7 @@
         "arkitecht/laravel-twilio": "^1.7",
         "doctrine/dbal": "^4.1",
         "guzzlehttp/guzzle": "^7.9",
+        "jenssegers/agent": "*",
         "kkomelin/laravel-translatable-string-exporter": "^1.22",
         "konekt/html": "^6.5",
         "laravel/framework": "^11.9",

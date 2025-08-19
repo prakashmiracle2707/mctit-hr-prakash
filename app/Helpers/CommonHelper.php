@@ -1,5 +1,7 @@
 <?php
 
+use Jenssegers\Agent\Agent;
+
 if (!function_exists('format_currency')) {
     function format_currency($amount, $currency = 'INR') {
         return number_format($amount, 2) . ' ' . $currency;
@@ -15,6 +17,14 @@ if (!function_exists('generate_uuid')) {
 if (!function_exists('Get_LeaveId')) {
     function Get_LeaveId($LeaveId) {
         return "#L00".$LeaveId;
+    }
+}
+
+if (!function_exists('Get_Device_Type')) {
+    function Get_Device_Type() {
+        $agent = new Agent();
+        $device_type = $agent->isMobile() ? 'mobile' : 'desktop';
+        return $device_type;
     }
 }
 

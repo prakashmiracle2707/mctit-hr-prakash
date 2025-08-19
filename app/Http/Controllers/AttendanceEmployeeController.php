@@ -816,7 +816,7 @@ class AttendanceEmployeeController extends Controller
                 $checkoutTimeDiff = '00:00:00';
                 $date = date('Y-m-d', strtotime($date . ' +1 day'));  // Set checkout date to next day
             }
-
+            
             // Prepare data to update
             $attendanceEmployee = [
                 'clock_out' => $time,
@@ -824,6 +824,7 @@ class AttendanceEmployeeController extends Controller
                 'overtime' => $overtime,
                 'checkout_date' => $date,  // Use the adjusted date if needed
                 'checkout_time_diff' => $checkoutTimeDiff,
+                'device_type_clockout' => Get_Device_Type(),
             ];
 
             // Check if a custom date is provided in the request
@@ -1070,6 +1071,7 @@ class AttendanceEmployeeController extends Controller
         $employeeAttendance->total_rest = '00:00:00';
         $employeeAttendance->created_by = \Auth::user()->id;
         $employeeAttendance->work_from_home = $request->has('work_from_home') ? 1 : 0;
+        $employeeAttendance->device_type_clockin = Get_Device_Type();
         $employeeAttendance->save();
 
         return redirect()->back()->with('success', __('Employee Successfully Clocked In.'));
