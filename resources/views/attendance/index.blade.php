@@ -47,47 +47,6 @@
         $('input[name="type"]:radio:checked').trigger('change');
     </script>
 
-<script>
-    $(document).ready(function() {
-            var b_id = $('#branch_id').val();
-            // getDepartment(b_id);
-        });
-        $(document).on('change', 'select[name=branch]', function() {
-            var branch_id = $(this).val();
-
-            getDepartment(branch_id);
-        });
-
-        function getDepartment(bid) {
-
-            $.ajax({
-                url: '{{ route('monthly.getdepartment') }}',
-                type: 'POST',
-                data: {
-                    "branch_id": bid,
-                    "_token": "{{ csrf_token() }}",
-                },
-                success: function(data) {
-
-                    $('.department_id').empty();
-                    var emp_selct = `<select class="form-control department_id" name="department_id" id="choices-multiple"
-                                            placeholder="Select Department" >
-                                            </select>`;
-                    $('.department_div').html(emp_selct);
-
-                    $('.department_id').append('<option value="0"> {{ __('All') }} </option>');
-                    $.each(data, function(key, value) {
-                        $('.department_id').append('<option value="' + key + '">' + value +
-                            '</option>');
-                    });
-                    new Choices('#choices-multiple', {
-                        removeItemButton: true,
-                    });
-                }
-            });
-        }
-</script>
-
 @endpush
 @section('content')
     @if (session('status'))
@@ -135,26 +94,12 @@
                                         {{ Form::date('date', isset($_GET['date']) ? $_GET['date'] : '', ['class' => 'form-control month-btn']) }}
                                     </div>
                                 </div>
-                                @if (\Auth::user()->type != 'employee')
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                        <div class="btn-box">
-                                            {{ Form::label('branch', __('Branch'), ['class' => 'form-label']) }}
-                                            {{ Form::select('branch', $branch, isset($_GET['branch']) ? $_GET['branch'] : '', ['class' => 'form-control select', 'id' => 'branch_id']) }}
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                        {{-- <div class="btn-box">
-                                            {{ Form::label('department', __('Department'), ['class' => 'form-label']) }}
-                                            {{ Form::select('department', $department, isset($_GET['department']) ? $_GET['department'] : '', ['class' => 'form-control select']) }}
-                                        </div> --}}
+                                
 
-                                        <div class="form-icon-user" id="department_div">
-                                            {{ Form::label('department', __('Department'), ['class' => 'form-label']) }}
-                                            <select class="form-control select department_id" name="department_id"
-                                                id="department_id" placeholder="Select Department">
-                                            </select>
-                                        </div>
-
+                                @if(\Auth::user()->type != 'employee')
+                                    <div class="col-md-3">
+                                        {{ Form::label('employee_id', __('Employee'), ['class' => 'form-label']) }}
+                                        {{ Form::select('employee_id', ['' => 'All'] + $employeeList->toArray(), request('employee_id'), ['class' => 'form-control select']) }}
                                     </div>
                                 @endif
 

@@ -17,7 +17,7 @@ use Carbon\Carbon;
 
 class AttendanceEmployeeController extends Controller
 {
-    public function index(Request $request)
+    public function indexOld(Request $request)
     {
         if (\Auth::user()->can('Manage Attendance')) {
             $branch = Branch::where('created_by', \Auth::user()->creatorId())->get()->pluck('name', 'id');
@@ -158,6 +158,84 @@ class AttendanceEmployeeController extends Controller
             // echo "<pre>";print_r($attendanceEmployee);exit;
 
             return view('attendance.index', compact('attendanceEmployee', 'branch', 'department'));
+        } else {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+    }
+
+
+    public function index(Request $request)
+    {
+        if (\Auth::user()->can('Manage Attendance')) {
+
+            // Employee dropdown data
+            $employeeList = Employee::where('created_by', \Auth::user()->creatorId())
+                ->orderBy('name', 'asc')
+                ->pluck('name', 'id');
+
+            if (\Auth::user()->type == 'employee') {
+                $emp = !empty(\Auth::user()->employee) ? \Auth::user()->employee->id : 0;
+                $attendanceEmployee = AttendanceEmployee::where('employee_id', $emp);
+            } else {
+                $employee = Employee::select('id')->where('created_by', \Auth::user()->creatorId());
+
+                // ✅ Replace branch/department filter with employee filter
+                if (!empty($request->employee_id)) {
+                    $employee->where('id', $request->employee_id);
+                }
+
+                $employee = $employee->get()->pluck('id');
+                $attendanceEmployee = AttendanceEmployee::whereIn('employee_id', $employee);
+            }
+
+            // ✅ Apply date filters
+            if ($request->type == 'monthly' && !empty($request->month)) {
+                $month = date('m', strtotime($request->month));
+                $year  = date('Y', strtotime($request->month));
+                $start_date = date($year . '-' . $month . '-01');
+                $end_date   = date('Y-m-t', strtotime('01-' . $month . '-' . $year));
+                $attendanceEmployee->whereBetween('date', [$start_date, $end_date]);
+            } elseif ($request->type == 'daily' && !empty($request->date)) {
+                $attendanceEmployee->where('date', $request->date);
+            } else {
+                $month = date('m');
+                $year  = date('Y');
+                $start_date = date($year . '-' . $month . '-01');
+                $end_date   = date('Y-m-t', strtotime('01-' . $month . '-' . $year));
+                $attendanceEmployee->whereBetween('date', [$start_date, $end_date]);
+            }
+
+            $attendanceEmployee = $attendanceEmployee->orderBy('created_at', 'desc')->get();
+
+            // ✅ Add break calculation (unchanged)
+            $attendanceEmployee = $attendanceEmployee->map(function ($attendance) {
+                $breakLogs = $attendance->breaks()->whereNotNull('break_end')->get();
+                $totalSeconds = 0;
+                foreach ($breakLogs as $break) {
+                    if (!empty($break->break_start) && !empty($break->break_end)) {
+                        try {
+                            $startTime = $break->break_start_date.' '.$break->break_start; 
+                            $endTime   = $break->break_end_date.' '.$break->break_end;
+                            $start = Carbon::parse($startTime);
+                            $end   = Carbon::parse($endTime);
+                            if ($end->greaterThan($start)) {
+                                $totalSeconds += $start->diffInSeconds($end);
+                            }
+                        } catch (\Exception $e) {
+                            \Log::error("Break calculation failed for Attendance ID: {$attendance->id} - " . $e->getMessage());
+                        }
+                    }
+                }
+                $attendance->totalBreakDuration = sprintf(
+                    '%02d:%02d:%02d',
+                    intdiv($totalSeconds, 3600),
+                    intdiv($totalSeconds % 3600, 60),
+                    $totalSeconds % 60
+                );
+                return $attendance;
+            });
+
+            return view('attendance.index', compact('attendanceEmployee', 'employeeList'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
