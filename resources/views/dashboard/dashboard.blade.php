@@ -37,24 +37,24 @@
                 <div class="row">
 
                     <div class="col-lg-4 col-md-6">
-
                         <div class="card stats-wrapper dash-info-card">
-                            <div class="card-body stats">
-                                <div class="row align-items-center justify-content-between">
-                                    <div class="col-auto mb-3 mb-sm-0">
-                                        <div class="d-flex align-items-center">
-                                            <div class="badge theme-avtar bg-primary">
-                                                <i class="ti ti-users"></i>
-                                            </div>
-                                            <div class="ms-3">
-                                                <small class="text-muted">{{ __('This Month') }}</small>
-                                                <h6 class="m-0"><a
-                                                    href="#">{{ __('Attandance') }}</a></h6>
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="badge theme-avtar bg-primary">
+                                            <i class="ti ti-users"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h5 class="mb-0">Attendance Summary</h5>
+                                            <div>
+                                                <p class="text-muted text-sm mb-0">
+                                                    This Month Attandance: {{ $ThisMonthattendanceCount }}
+                                                </p>
+                                                <p class="text-muted text-sm mb-0">
+                                                    Last Month Attandance: {{ $LastMonthattendanceCount }}
+                                                </p>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-auto text-end">
-                                        <h4 class="m-0 text-primary">{{ $ThisMonthattendanceCount }}</h4>
                                     </div>
                                 </div>
                             </div>
@@ -62,24 +62,24 @@
                     </div>
 
                     <div class="col-lg-4 col-md-6">
-
                         <div class="card stats-wrapper dash-info-card">
-                            <div class="card-body stats">
-                                <div class="row align-items-center justify-content-between">
-                                    <div class="col-auto mb-3 mb-sm-0">
-                                        <div class="d-flex align-items-center">
-                                            <div class="badge theme-avtar bg-info">
-                                                <i class="ti ti-ticket"></i>
-                                            </div>
-                                            <div class="ms-3">
-                                                <small class="text-muted">{{ __('Last Month') }}</small>
-                                                <h6 class="m-0"><a
-                                                    href="#">{{ __('Attandance') }}</a></h6>
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="badge theme-avtar bg-danger">
+                                            <i class="ti ti-clock"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h5 class="mb-0">Hours Summary</h5>
+                                            <div>
+                                                <p class="text-muted text-sm mb-0">
+                                                    This Month Hours: {{ $thisMonthNetHourse }}
+                                                </p>
+                                                <p class="text-muted text-sm mb-0">
+                                                    Last Month Hours: {{ $lastMonthNetHourse }}
+                                                </p>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-auto text-end">
-                                        <h4 class="m-0 text-info"> {{ $LastMonthattendanceCount }}</h4>
                                     </div>
                                 </div>
                             </div>
@@ -94,7 +94,7 @@
                                     <div class="col-auto mb-3 mb-sm-0">
                                         <div class="d-flex align-items-center">
                                             <div class="badge theme-avtar bg-success">
-                                                <i class="ti ti-clock"></i>
+                                                <i class="ti ti-car"></i>
                                             </div>
                                             <div class="ms-3">
                                                 <small class="text-muted">{{ __('This Month') }}</small>
@@ -104,7 +104,7 @@
                                         </div>
                                     </div>
                                     <div class="col-auto text-end">
-                                        <h4 class="m-0 text-info"> 0</h4>
+                                        <h4 class="m-0 text-info"> {{ $monthlyHolidayCount}}</h4>
                                     </div>
                                 </div>
                             </div>
@@ -854,7 +854,7 @@
             {{-- start --}}
             <div class="row">
 
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-3 col-md-6">
 
                     <div class="card stats-wrapper dash-info-card">
                         <div class="card-body stats">
@@ -867,7 +867,7 @@
                                         <div class="ms-3">
                                             <small class="text-muted">{{ __('Total') }}</small>
                                             <h6 class="m-0"><a
-                                                href="{{ route('user.index') }}">{{ __('Staff') }}</a></h6>
+                                                href="#">{{ __('Staff') }}</a></h6>
                                         </div>
                                     </div>
                                 </div>
@@ -904,7 +904,7 @@
                     </div>
                 </div> -->
 
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-3 col-md-6">
 
                     <div class="card stats-wrapper dash-info-card">
                         <div class="card-body stats">
@@ -917,7 +917,7 @@
                                         <div class="ms-3">
                                             <small class="text-muted">{{ __('Total') }}</small>
                                             <h6 class="m-0"><a
-                                                href="{{ route('ticket.index') }}">{{ __("Today's Not Clock In") }}</a></h6>
+                                                href="#">{{ __("Today's Not Clock In") }}</a></h6>
                                         </div>
                                     </div>
                                 </div>
@@ -954,7 +954,7 @@
                     </div>
                 </div> -->
 
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-3 col-md-6">
 
                     <div class="card stats-wrapper dash-info-card">
                         <div class="card-body stats">
@@ -962,17 +962,42 @@
                                 <div class="col-auto mb-3 mb-sm-0">
                                     <div class="d-flex align-items-center">
                                         <div class="badge theme-avtar bg-warning">
-                                            <i class="ti ti-wallet"></i>
+                                            <i class="ti ti-clock"></i>
                                         </div>
                                         <div class="ms-3">
                                             <small class="text-muted">{{ __('Total') }}</small>
                                             <h6 class="m-0"><a
-                                                href="{{ route('accountlist.index') }}">{{ __("Today's Clock In") }}</a></h6>
+                                                href="#">{{ __("Today's Clock In") }}</a></h6>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-auto text-end">
                                     <h4 class="m-0 text-warning">{{ count($attendanceEmployee) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card stats-wrapper dash-info-card">
+                        <div class="card-body stats">
+                            <div class="row align-items-center justify-content-between">
+                                <div class="col-auto mb-3 mb-sm-0">
+                                    <div class="d-flex align-items-center">
+                                        <div class="badge theme-avtar bg-danger">
+                                            <i class="ti ti-user"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <small class="text-muted">{{ __('Total') }}</small>
+                                            <h6 class="m-0"><a
+                                                href="#">{{ __("Today's Clock Out") }}</a></h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto text-end">
+                                    <h4 class="m-0 text-danger">{{ $todaysClockOutCount }}</h4>
                                 </div>
                             </div>
                         </div>

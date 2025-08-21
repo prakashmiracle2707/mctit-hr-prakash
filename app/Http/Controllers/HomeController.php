@@ -20,6 +20,7 @@ use App\Models\Leave as LocalLeave;
 use App\Models\FinancialYear;
 use Carbon\Carbon;
 use App\Models\LeaveType;
+use App\Models\Holiday;
 
 
 class HomeController extends Controller
@@ -53,9 +54,28 @@ class HomeController extends Controller
             $totalSeconds = 0;
             $hasOngoingBreak = false;
             $relievedCount = 0;
+            $thisMonthNetHourse = 0;
+            $lastMonthNetHourse = 0;
 
             $breakLogs = collect(); // Initialize empty collection for break logs
             $totalBreakDuration = '00:00:00'; // Default to zero time
+
+
+            // Today's Clock Out records
+            $todaysClockOut = AttendanceEmployee::whereDate('date', Carbon::today())
+                                ->where('clock_out', '!=', "00:00:00")
+                                ->with('employee') // assumes relation AttendanceEmployee -> employee
+                                ->orderBy('clock_out', 'desc')
+                                ->get();
+
+            // Count (if needed separately)
+            $todaysClockOutCount = $todaysClockOut->count();
+
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth   = Carbon::now()->endOfMonth();
+
+            $monthlyHolidayCount = Holiday::whereBetween('start_date', [$startOfMonth, $endOfMonth])
+                ->count();
 
             if (\Auth::user()->can('Manage Leave')) {
                 // Get current date and current month
@@ -297,7 +317,26 @@ class HomeController extends Controller
             if($user->type == 'employee')
             {
 
-                $emp = Employee::where('user_id', '=', $user->id)->first();
+                // Current month & year
+                $month = Carbon::now()->month;
+                $year  = Carbon::now()->year;
+
+                // Last month & year
+                $lastMonthDate = Carbon::now()->subMonth();
+                $lastMonth     = $lastMonthDate->month;
+                $lastYear      = $lastMonthDate->year;
+
+                $emp = Employee::where('user_id', $user->id)->first();
+
+                // This month stats
+                $thisMonthStats = get_employee_monthly_work_stats($emp->id, $month, $year);
+                $thisMonthNetHourse   = $thisMonthStats['total_net_hhmmss'];
+
+                // Last month stats
+                $lastMonthStats = get_employee_monthly_work_stats($emp->id, $lastMonth, $lastYear);
+                $lastMonthNetHourse   = $lastMonthStats['total_net_hhmmss'];
+
+                
 
                 $announcements = Announcement::orderBy('announcements.id', 'desc')->take(5)->leftjoin('announcement_employees', 'announcements.id', '=', 'announcement_employees.announcement_id')->where('announcement_employees.employee_id', '=', $emp->id)->orWhere(
                     function ($q){
@@ -515,7 +554,7 @@ class HomeController extends Controller
                 /* *************** New Add End ****************************/
                 $employeesinfo = Employee::where('user_id', '=', $user->id)->first();
                 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance','relievedCount', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','nextWorkingDay','NextDayLeaves','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc','FindOnBreakEmployee','employeesinfo'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance','relievedCount', 'officeTime','disableCheckbox','isWorkFromHome','leaves','Todayleaves','attendanceEmployee','ThisMonthattendanceCount', 'LastMonthattendanceCount','breakLogs', 'totalBreakDuration','totalSeconds','nextWorkingDay','NextDayLeaves','hasOngoingBreak','leaveCounts','leaveTypes','leaveTypesAll','leaves_cc','FindOnBreakEmployee','employeesinfo','todaysClockOutCount','monthlyHolidayCount','thisMonthNetHourse','lastMonthNetHourse'));
             }
             else
             {
@@ -679,7 +718,7 @@ class HomeController extends Controller
                 // attendanceEmployee Todayleaves
                 /* *************** New Add End ****************************/
 
-                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee','relievedCount', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','nextWorkingDay','NextDayLeaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails'));
+                return view('dashboard.dashboard', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee','relievedCount', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','nextWorkingDay','NextDayLeaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails','todaysClockOutCount','monthlyHolidayCount','thisMonthNetHourse','lastMonthNetHourse'));
             }
         }
         else
@@ -728,6 +767,16 @@ class HomeController extends Controller
 
         $breakLogs = collect(); // Initialize empty collection for break logs
         $totalBreakDuration = '00:00:00'; // Default to zero time
+
+        // Today's Clock Out records
+        $todaysClockOut = AttendanceEmployee::whereDate('date', Carbon::today())
+                            ->where('clock_out', '!=', "00:00:00")
+                            ->with('employee') // assumes relation AttendanceEmployee -> employee
+                            ->orderBy('clock_out', 'desc')
+                            ->get();
+
+        // Count (if needed separately)
+        $todaysClockOutCount = $todaysClockOut->count();
 
         if (\Auth::user()->can('Manage Leave')) {
             // Get current date and current month
@@ -935,7 +984,7 @@ class HomeController extends Controller
         // attendanceEmployee  leaves
         /* *************** New Add End ****************************/
 
-        return view('dashboard.dashboard-hr', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee','relievedCount', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails','isReviewer'));
+        return view('dashboard.dashboard-hr', compact('arrEvents', 'announcements', 'activeJob','inActiveJOb','meetings', 'countEmployee','relievedCount', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'countEmployee', 'accountBalance', 'totalPayee', 'totalPayer','attendanceEmployee','leaves','Todayleaves','breakLogs', 'totalBreakDuration', 'totalSeconds','hasOngoingBreak','notClockInDetails','isReviewer','todaysClockOutCount'));
         
         
     }
