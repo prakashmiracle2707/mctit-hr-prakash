@@ -37,7 +37,8 @@ if (!function_exists('Get_Device_Type_Icon')) {
     function Get_Device_Type_Icon($TypeIcon, $UserId)
     {
         if ($TypeIcon === 'mobile' && ($UserId == 3 || $UserId == 1)) {
-            return "<i class='ti ti-device-mobile' style='color:red;' title='Mobile'></i>";
+            // return "<i class='ti ti-device-mobile' style='color:red;' title='Mobile'></i>";
+            return false;
         }
         return false;
     }
