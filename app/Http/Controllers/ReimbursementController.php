@@ -25,24 +25,54 @@ use App\Mail\ReimbursementQueryRaisedMail;
 class ReimbursementController extends Controller
 {
 
-    // ✅ Admin Panel to See All Requests
     public function index()
     {
-        $query = Reimbursement::with('employee', 'assignedUser')->latest();
+        // Base query with role-based visibility
+        $base = Reimbursement::query()->with('employee','assignedUser');
 
-        // Exclude Draft status for non-employees (Managers, CEO)
-        if (\Auth::user()->type == 'employee') {
-            $query->where('employee_id', Auth::id());
+        if (Auth::user()->type === 'employee') {
+            $base->where('employee_id', Auth::id());
         } else {
-            // For non-employees, exclude Draft status
-            $query->where('status', '!=', 'Draft');
+            // Managers/CEO/etc. – hide Draft
+            $base->where('status', '!=', 'Draft');
         }
 
-        $reimbursements = $query->get();
+        // Table data
+        $reimbursements = (clone $base)->latest()->get();
 
-        // echo "<pre>";print_r($reimbursements);exit;
+        // === Aggregates for Pending / Received / Approved ===
+        $wanted = ['Pending','Received','Approved','Paid'];
 
-        return view('reimbursements.index', compact('reimbursements'));
+        $aggregates = (clone $base)
+            ->selectRaw('status, COUNT(*) AS cnt, COALESCE(SUM(amount),0) AS total')
+            ->whereIn('status', $wanted)
+            ->groupBy('status')
+            ->get();
+
+        // Ensure all 3 keys exist even if 0 rows
+        $counts  = array_fill_keys($wanted, 0);
+        $amounts = array_fill_keys($wanted, 0.0);
+
+        foreach ($aggregates as $row) {
+            $counts[$row->status]  = (int) $row->cnt;
+            $amounts[$row->status] = (float) $row->total;
+        }
+
+        return view('reimbursements.index', compact('reimbursements','counts','amounts'));
+    }
+
+    public function indexold() { 
+        $query = Reimbursement::with('employee', 'assignedUser')->latest(); 
+        // Exclude Draft status for non-employees (Managers, CEO) 
+        if (\Auth::user()->type == 'employee') { 
+            $query->where('employee_id', Auth::id()); 
+        } else { 
+            // For non-employees, exclude Draft status 
+            $query->where('status', '!=', 'Draft'); 
+        } 
+        $reimbursements = $query->get(); 
+        // echo "<pre>";print_r($reimbursements);exit; 
+        return view('reimbursements.index', compact('reimbursements')); 
     }
 
     public function create()
@@ -255,14 +285,16 @@ class ReimbursementController extends Controller
         }
 
         if ($request->status == 'Send Follow Up Email') {
+
+            if($settings['is_email_trigger'] === 'on' && $Reimbursement->follow_up_email === 0){
+                $toEmail='rmb@miraclecloud-technology.com';
+                Mail::to($toEmail)->send(new ReimbursementReminderApprovalMail($Reimbursement));
+            }
             
             $Reimbursement->follow_up_email = 1;
             $Reimbursement->save();
             
-            if($settings['is_email_trigger'] === 'on'){
-                 $toEmail='rmb@miraclecloud-technology.com';
-                Mail::to($toEmail)->send(new ReimbursementReminderApprovalMail($Reimbursement));
-            }
+            
            
 
             return redirect()->route('reimbursements.index')->with('success', __('Follow-up email sent successfully!') . 

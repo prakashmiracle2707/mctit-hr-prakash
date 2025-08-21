@@ -18,7 +18,85 @@
     @endif
 @endsection
 
+
 @section('content')
+
+    <div class="col-xl-12">
+        <div class="row">
+            <div class="col-lg-4 col-md-6">
+                <div class="card stats-wrapper dash-info-card">
+                    <div class="card-body stats">
+                        <div class="row align-items-center justify-content-between">
+                            <div class="col-auto mb-3 mb-sm-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="badge theme-avtar bg-danger">
+                                        <i class="ti ti-lock"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <small class="text-muted">{{ __('Total Amount') }}</small>
+                                        <h6 class="m-0"><a
+                                            href="#">{{ __("Pending") }}</a></h6>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto text-end">
+                                <h4 class="m-0 text-info"> &#x20B9; {{ number_format($amounts['Pending'], 2) }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card stats-wrapper dash-info-card">
+                    <div class="card-body stats">
+                        <div class="row align-items-center justify-content-between">
+                            <div class="col-auto mb-3 mb-sm-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="badge theme-avtar bg-warning">
+                                        <i class="ti ti-check"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <small class="text-muted">{{ __('Total Amount') }}</small>
+                                        <h6 class="m-0"><a
+                                            href="#">{{ __("Approved") }}</a></h6>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto text-end">
+                                <h4 class="m-0 text-info"> &#x20B9; {{ number_format($amounts['Approved'], 2) }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card stats-wrapper dash-info-card">
+                    <div class="card-body stats">
+                        <div class="row align-items-center justify-content-between">
+                            <div class="col-auto mb-3 mb-sm-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="badge theme-avtar bg-success">
+                                        <i class="ti ti-wallet"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <small class="text-muted">{{ __('Total Amount') }}</small>
+                                        <h6 class="m-0"><a
+                                            href="#">{{ __("Received") }}</a></h6>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto text-end">
+                                <h4 class="m-0 text-info">
+                                    &#x20B9; {{ number_format(($amounts['Received'] ?? 0) + ($amounts['Paid'] ?? 0), 2) }}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header card-body table-border-style">
