@@ -39,7 +39,7 @@
     .bottom-border { border-bottom: 2px solid #008ECC !important; }
 </style>
 
-@if (!empty($attendanceData))
+@if (!empty($attendanceData) && !request('employee_id'))
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -71,11 +71,14 @@
                                         <table class="table">
                                             <thead>
                                                 <tr>
+                                                    <th rowspan="2" class="text-align-center">{{ __('#') }}</th>
                                                     <th rowspan="2" class="text-align-center">{{ __('Name') }}</th>
+                                                    <th rowspan="2" class="text-align-center">{{ __('company_doj') }}</th>
                                                     <th colspan="3" class="left-border right-border bottom-border">{{ __('Total Present') }}</th>
                                                     <!-- <th colspan="6" class="right-border bottom-border">{{ __('Leave') }}</th> -->
                                                     <th colspan="3" class="right-border bottom-border">{{ __('Calendar Days') }}</th>
                                                     <th colspan="6" class="right-border bottom-border">{{ __('This Month Leave ') }}</th>
+                                                    <th colspan="3" class="right-border bottom-border">{{ __('Allowed Leave') }}</th>
                                                     <th colspan="3" class="text-align-center bottom-border">{{ __('Leave Balance') }}</th>
                                                 </tr>
                                                 <tr>
@@ -103,10 +106,17 @@
                                                     
                                                     <th class="right-border-gray">{{ __('SL') }}</th>
                                                     <th class="right-border-gray">{{ __('CL') }}</th>
+                                                    <th class="right-border">{{ __('OH') }}</th>
+
+                                                    <th class="right-border-gray">{{ __('SL') }}</th>
+                                                    <th class="right-border-gray">{{ __('CL') }}</th>
                                                     <th class="right-border-gray">{{ __('OH') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                @php
+                                                $i=0;
+                                                @endphp
                                                 @foreach($monthData as $attendance)
                                                     @php
                                                         $summary = $attendance['summary'];
@@ -128,15 +138,22 @@
                                                         $totalCal = $Present + $WeekdayPresent + $isPresentHoliday + ($h - $isPresentHoliday) + ($sl + $cfl + $chl + $oh) + $lwp + $a + ($TotalWeekDay - $WeekdayPresent);
 
                                                         // Leave balances
-                                                        $startSL = $leave['start']['SL'] ?? 0;
+                                                        $allowedSL = $leave['allowed']['SL'] ?? 0;
                                                         $endSL = $leave['end']['SL'] ?? 0;
-                                                        $startCL = $leave['start']['CL'] ?? 0;
+                                                        $allowedCL = $leave['allowed']['CL'] ?? 0;
                                                         $endCL = $leave['end']['CL'] ?? 0;
-                                                        $startOH = $leave['start']['OH'] ?? 0;
+                                                        $allowedOH = $leave['allowed']['OH'] ?? 0;
                                                         $endOH = $leave['end']['OH'] ?? 0;
+                                                        $i++;
                                                     @endphp
                                                     <tr>
+                                                        <td>{{ $i }}</td>
                                                         <td>{{ $attendance['name'] }}</td>
+                                                        <td style="{{ $attendance['company_doj_flag'] === false ? 'color:red;' : '' }}">
+                                                            {{ $attendance['company_doj'] }}
+                                                            <!-- 
+                                                            ({{ $attendance['id'] }})({{ $attendance['monthsWorked'] }}) -->
+                                                        </td>
                                                         <td class="left-border right-border-gray">{{ $Present }}</td>
                                                         <td class="right-border-gray">{{ $WeekdayPresent }}</td>
                                                         <td class="right-border">{{ $isPresentHoliday }}</td>
@@ -158,6 +175,9 @@
                                                         <td class="right-border-gray">{{ $sl }}</td>
                                                         <td class="right-border-gray">{{ $cfl + $chl }}</td>
                                                         <td class="right-border">{{ $oh }}</td>
+                                                        <td class="right-border-gray">{{ $allowedSL }}</td>
+                                                        <td class="right-border-gray">{{ $allowedCL }}</td>
+                                                        <td class="right-border">{{ $allowedOH }}</td>
                                                         <td class="right-border-gray">{{ $endSL }}</td>
                                                         <td class="right-border-gray">{{ $endCL }}</td>
                                                         <td class="right-border-gray">{{ $endOH }}</td>
@@ -192,11 +212,13 @@
                                         <table class="table">
                                             <thead>
                                                 <tr>
+                                                    <th>{{ __('#') }}</th>
                                                     <th>{{ __('Name') }}</th>
                                                     @php
                                                         $firstEmployee = collect($monthData)->first();
                                                         $dates = isset($firstEmployee['status']) ? array_keys($firstEmployee['status']) : [];
                                                         $monthYear = \Carbon\Carbon::createFromFormat('F-Y', $label); // $label = "March-2025" etc.
+                                                        $z=0;
                                                     @endphp
                                                     @foreach ($dates as $date)
                                                         @php
@@ -209,7 +231,11 @@
                                             </thead>
                                             <tbody>
                                                 @foreach ($monthData as $attendance)
+                                                    @php
+                                                        $z++;
+                                                    @endphp
                                                     <tr>
+                                                        <td>{{ $z }}</td>
                                                         <td>{{ $attendance['name'] }}</td>
                                                         @foreach ($dates as $date)
                                                             @php $status = $attendance['status'][$date] ?? ''; @endphp
@@ -243,6 +269,242 @@
                         </div> <!-- end month tab -->
                     @endforeach
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+@else
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                
+                <div class="tab-pane fade show active" id="content-all-record-view" role="tabpanel">
+                    <ul class="nav nav-tabs mb-3" id="subTab-all-record-view" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="summary-tab-all-record-view" data-bs-toggle="tab" href="#summary-all-record-view" role="tab">{{ __('Summary') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="daily-tab-all-record-view" data-bs-toggle="tab" href="#daily-all-record-view" role="tab">{{ __('Daily Attendance') }}</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- Summary Tab -->
+                        <div class="tab-pane fade show active" id="summary-all-record-view" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <!-- <th rowspan="2" class="text-align-center">{{ __('#') }}</th> -->
+                                            <th rowspan="2" class="text-align-center">{{ __('Month/Year') }}</th>
+                                            <!-- <th rowspan="2" class="text-align-center">{{ __('Name') }}</th>
+                                            <th rowspan="2" class="text-align-center">{{ __('company_doj') }}</th> -->
+                                            <th colspan="3" class="left-border right-border bottom-border">{{ __('Total Present') }}</th>
+                                            <!-- <th colspan="6" class="right-border bottom-border">{{ __('Leave') }}</th> -->
+                                            <th colspan="3" class="right-border bottom-border">{{ __('Calendar Days') }}</th>
+                                            <th colspan="6" class="right-border bottom-border">{{ __('This Month Leave ') }}</th>
+                                            <th colspan="3" class="right-border bottom-border">{{ __('Allowed Leave') }}</th>
+                                            <th colspan="3" class="text-align-center bottom-border">{{ __('Leave Balance') }}</th>
+                                        </tr>
+                                        <tr>
+                                            <th class="left-border right-border-gray">{{ __('MON-FRI') }}</th>
+                                            <th class="right-border-gray">{{ __('SAT-SUN') }}</th>
+                                            <th class="right-border">{{ __('Holiday') }}</th>
+                                            <!-- <th class="right-border-gray">{{ __('SL') }}</th>
+                                            <th class="right-border-gray">{{ __('CL') }}</th>
+                                            <th class="right-border-gray">{{ __('OH') }}</th>
+                                            <th class="right-border-gray">{{ __('WFH') }}</th>
+                                            <th class="right-border-gray">{{ __('LWP') }}</th>
+                                            <th class="right-border">{{ __('Absent') }}</th> -->
+                                            <th class="right-border-gray">{{ __('Holiday') }}</th>
+                                            <th class="right-border-gray">{{ __('Total Weekend') }}</th>
+                                            <th class="right-border">{{ __('Total Days') }}</th>
+
+                                            <th class="right-border-gray">{{ __('WFH') }}</th>
+                                            <th class="right-border-gray">{{ __('LWP') }}</th>
+                                            <th class="right-border-gray">{{ __('Absent') }}</th>
+                                            <th class="right-border-gray">{{ __('SL') }}</th>
+                                            <!-- <th class="right-border-gray">{{ __('CL Start') }}</th> -->
+                                            <th class="right-border-gray">{{ __('CL') }}</th>
+                                            <!-- <th class="right-border-gray">{{ __('OH Start') }}</th> -->
+                                            <th class="right-border">{{ __('OH') }}</th>
+                                            
+                                            <th class="right-border-gray">{{ __('SL') }}</th>
+                                            <th class="right-border-gray">{{ __('CL') }}</th>
+                                            <th class="right-border">{{ __('OH') }}</th>
+
+                                            <th class="right-border-gray">{{ __('SL') }}</th>
+                                            <th class="right-border-gray">{{ __('CL') }}</th>
+                                            <th class="right-border-gray">{{ __('OH') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach($attendanceData as $label => $monthData)   
+                                        @php
+                                        $i=0;
+                                        @endphp
+                                        @foreach($monthData as $attendance)
+                                            @php
+                                                $summary = $attendance['summary'];
+                                                $leave = $attendance['leave_balance'];
+                                                $Present = $summary['Present'] ?? 0;
+                                                $WeekdayPresent = $summary['WeekdayPresent'] ?? 0;
+                                                $isPresentHoliday = $summary['isPresentHoliday'] ?? 0;
+                                                $sl = $summary['SL'] ?? 0;
+                                                $cfl = $summary['CFL'] ?? 0;
+                                                $chl = $summary['CHL'] ?? 0;
+                                                $oh = $summary['OH'] ?? 0;
+                                                $lwp = $summary['LWP'] ?? 0;
+                                                $wfh = $summary['WFH'] ?? 0;
+                                                $a = $summary['A'] ?? 0;
+                                                $h = $summary['H'] ?? 0;
+                                                $TotalWeekDay = $summary['TotalWeekDay'] ?? 0;
+                                                $total = $summary['TotalMonthDays'] ?? 0;
+
+                                                $totalCal = $Present + $WeekdayPresent + $isPresentHoliday + ($h - $isPresentHoliday) + ($sl + $cfl + $chl + $oh) + $lwp + $a + ($TotalWeekDay - $WeekdayPresent);
+
+                                                // Leave balances
+                                                $allowedSL = $leave['allowed']['SL'] ?? 0;
+                                                $endSL = $leave['end']['SL'] ?? 0;
+                                                $allowedCL = $leave['allowed']['CL'] ?? 0;
+                                                $endCL = $leave['end']['CL'] ?? 0;
+                                                $allowedOH = $leave['allowed']['OH'] ?? 0;
+                                                $endOH = $leave['end']['OH'] ?? 0;
+                                                $i++;
+                                            @endphp
+                                            <tr>
+                                                <!-- <td>{{ $i }}</td> -->
+                                                <td>{{ $label }}</td>
+                                                <!-- <td>{{ $attendance['name'] }}</td>
+                                                <td style="{{ $attendance['company_doj_flag'] === false ? 'color:red;' : '' }}">
+                                                    {{ $attendance['company_doj'] }}
+                                                </td> -->
+                                                <td class="left-border right-border-gray">{{ $Present }}</td>
+                                                <td class="right-border-gray">{{ $WeekdayPresent }}</td>
+                                                <td class="right-border">{{ $isPresentHoliday }}</td>
+                                                <!-- <td class="right-border-gray">{{ $sl }}</td>
+                                                <td class="right-border-gray">{{ $cfl + $chl }}</td>
+                                                <td class="right-border-gray">{{ $oh }}</td>
+                                                <td class="right-border-gray">{{ $wfh }}</td>
+                                                <td class="right-border-gray">{{ $lwp }}</td>
+                                                <td class="right-border">{{ $a }}</td> -->
+                                                <td class="right-border-gray">{{ $h + $oh }}</td>
+                                                <td class="right-border-gray">{{ $TotalWeekDay }}</td>
+                                                <td class="right-border" @if($totalCal != $total) style="color:red;" @endif>{{ $total }}</td>
+
+                                                {{-- Leave Balance --}}
+                                                
+                                                <td class="right-border-gray">{{ $wfh }}</td>
+                                                <td class="right-border-gray">{{ $lwp }}</td>
+                                                <td class="right-border-gray">{{ $a }}</td>
+                                                <td class="right-border-gray">{{ $sl }}</td>
+                                                <td class="right-border-gray">{{ $cfl + $chl }}</td>
+                                                <td class="right-border">{{ $oh }}</td>
+                                                <td class="right-border-gray">{{ $allowedSL }}</td>
+                                                <td class="right-border-gray">{{ $allowedCL }}</td>
+                                                <td class="right-border">{{ $allowedOH }}</td>
+                                                <td class="right-border-gray">{{ $endSL }}</td>
+                                                <td class="right-border-gray">{{ $endCL }}</td>
+                                                <td class="right-border-gray">{{ $endOH }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Daily Attendance Tab -->
+                        <div class="tab-pane fade" id="daily-all-record-view" role="tabpanel">
+
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <div class="me-3"><span class="badge bg-success p-2">P</span> = Present</div>
+                                        <div class="me-3"><span class="badge bg-danger p-2">L</span> = Leave</div>
+                                        <div class="me-3"><span class="badge bg-warning p-2">A</span> = Absent</div>
+                                        <div class="me-3"><span class="badge bg-primary p-2">H</span> = Holiday</div>
+                                        <div class="me-3"><span class="badge bg-black p-2">LWP</span> = Leave Without Pay</div>
+                                        <div class="me-3"><span class="badge bg-indigo-500 p-2">H/F</span> = Half-Day</div>
+                                        <div class="me-3"><span class="badge bg-danger p-2">OL</span> = Optional Leave</div>
+                                        <!-- <div class="me-3"><span class="text-muted">X</span> = Not Applicable</div>
+                                        <div class="me-3"><span class="text-muted">-</span> = Weekend / No Data</div> -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <br />
+                            
+                            @foreach($attendanceData as $label => $monthData)
+                                <br />
+                                    <h5 class="fw-bold">{{ $label }}</h5>
+                                <br /> 
+                                <div class="table-responsive py-4 attendance-table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <!-- <th>{{ __('#') }}</th> -->
+                                                <!-- <th rowspan="2" class="text-align-center">{{ __('Month/Year') }}</th> -->
+                                                <!-- <th>{{ __('Name') }}</th> -->
+                                                @php
+                                                    $firstEmployee = collect($monthData)->first();
+                                                    $dates = isset($firstEmployee['status']) ? array_keys($firstEmployee['status']) : [];
+                                                    $monthYear = \Carbon\Carbon::createFromFormat('F-Y', $label); // $label = "March-2025" etc.
+                                                    $z=0;
+                                                @endphp
+                                                @foreach ($dates as $date)
+                                                    @php
+                                                        $fullDate = \Carbon\Carbon::createFromDate($monthYear->year, $monthYear->month, (int)$date);
+                                                        $isWeekend = $fullDate->isSaturday() || $fullDate->isSunday();
+                                                    @endphp
+                                                    <th class="{{ $isWeekend ? 'text-danger' : '' }}">{{ (int)$date }}</th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($monthData as $attendance)
+                                                @php
+                                                    $z++;
+                                                @endphp
+                                                <tr>
+                                                    <!-- <td>{{ $z }}</td> -->
+                                                    <!-- <td>{{ $label }}</td> -->
+                                                    <!-- <td>{{ $attendance['name'] }}</td> -->
+                                                    @foreach ($dates as $date)
+                                                        @php $status = $attendance['status'][$date] ?? ''; @endphp
+                                                        <td>
+                                                            @if ($status == 'P')
+                                                                <i class="badge bg-success p-2">{{ __('P') }}</i>
+                                                            @elseif($status == 'A')
+                                                                <i class="badge bg-warning p-2">{{ __('A') }}</i>
+                                                            @elseif($status == 'H')
+                                                                <i class="badge bg-primary p-2">{{ __('H') }}</i>
+                                                            @elseif($status == 'L')
+                                                                <i class="badge bg-danger p-2">{{ __('L') }}</i>
+                                                            @elseif($status == 'LWP')
+                                                                <i class="badge bg-black p-2">{{ __('LWP') }}</i>
+                                                            @elseif($status == 'H/F')
+                                                                <i class="badge bg-indigo-500 p-2">{{ __('H/F') }}</i>
+                                                            @elseif($status == 'OL')
+                                                                <i class="badge bg-danger p-2">{{ __('OL') }}</i>
+                                                            @else
+                                                                <span>-</span>
+                                                            @endif
+                                                        </td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endforeach
+                            
+                        </div>
+                    </div> <!-- end tab-content -->
+                </div> <!-- end month tab -->
+                
+                
             </div>
         </div>
     </div>

@@ -260,6 +260,7 @@
                                 @endphp
                                 <thead>
                                     <tr>
+                                        <th>{{ __('#') }}</th>
                                         <th class="active">{{ __('Name') }}</th>
                                         @foreach ($dates as $date)
                                             @php
@@ -271,8 +272,15 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @php
+                                    $z=0;
+                                    @endphp
                                     @foreach ($employeesAttendance as $attendance)
+                                        @php
+                                        $z++;
+                                        @endphp
                                         <tr>
+                                            <td>{{ $z }}</td>
                                             <td>{{ $attendance['name'] }}</td>
                                             @foreach ($attendance['status'] as $status)
                                                 <td>
@@ -309,11 +317,14 @@
                                     <table class="table">
                                         <thead>
                                             <tr>
+                                                <th rowspan="2" class="text-align-center">{{ __('#') }}</th>
                                                 <th rowspan="2" class="text-align-center">{{ __('Name') }}</th>
+                                                <th rowspan="2" class="text-align-center">{{ __('company_doj') }}</th>
                                                 <th colspan="3" class="left-border right-border bottom-border">{{ __('Total Present') }}</th>
                                                 <!-- <th colspan="6" class="right-border bottom-border">{{ __('Leave') }}</th> -->
                                                 <th colspan="3" class="right-border bottom-border">{{ __('Calendar Days') }}</th>
                                                 <th colspan="6" class="right-border bottom-border">{{ __('This Month Leave ') }}</th>
+                                                <th colspan="3" class="right-border bottom-border">{{ __('Allowed Leave') }}</th>
                                                 <th colspan="3" class="text-align-center bottom-border">{{ __('Leave Balance') }}</th>
                                             </tr>
                                             <tr>
@@ -332,22 +343,26 @@
                                                 <!-- <th class="right-border-gray">{{ __('SL Start') }}</th> -->
                                                 <th class="right-border-gray">{{ __('WFH') }}</th>
                                                 <th class="right-border-gray">{{ __('LWP') }}</th>
-                                                <th class="right-border-gray">{{ __('Absent') }}</th>
+                                                <th class="right-border-gray">{{ __('Ab') }}</th>
                                                 <th class="right-border-gray">{{ __('SL') }}</th>
                                                 <!-- <th class="right-border-gray">{{ __('CL Start') }}</th> -->
                                                 <th class="right-border-gray">{{ __('CL') }}</th>
                                                 <!-- <th class="right-border-gray">{{ __('OH Start') }}</th> -->
                                                 <th class="right-border">{{ __('OH') }}</th>
                                                 
+                                                <th class="right-border-gray">{{ __('SL') }}</th>
+                                                <th class="right-border-gray">{{ __('CL') }}</th>
+                                                <th class="right-border">{{ __('OH') }}</th>
                                                 
                                                 <th class="right-border-gray">{{ __('SL') }}</th>
-                                                <!-- <th class="right-border-gray">{{ __('CL Start') }}</th> -->
                                                 <th class="right-border-gray">{{ __('CL') }}</th>
-                                                <!-- <th class="right-border-gray">{{ __('OH Start') }}</th> -->
                                                 <th class="right-border-gray">{{ __('OH') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            @php
+                                            $i=0;
+                                            @endphp
                                             @foreach ($employeesAttendance as $attendance)
                                                 @php
                                                     $summary = $attendance['summary'];
@@ -368,15 +383,22 @@
 
                                                     $totalCal = $Present + $WeekdayPresent + $isPresentHoliday + ($h - $isPresentHoliday) + ($sl + $cfl + $chl + $oh) + $lwp + $a + ($TotalWeekDay - $WeekdayPresent);
 
-                                                    $startSL = $leaveBalance['start']['SL'] ?? 0;
+                                                    $allowedSL = $leaveBalance['allowed']['SL'] ?? 0;
                                                     $endSL = $leaveBalance['end']['SL'] ?? 0;
-                                                    $startCL = $leaveBalance['start']['CL'] ?? 0;
+                                                    $allowedCL = $leaveBalance['allowed']['CL'] ?? 0;
                                                     $endCL = $leaveBalance['end']['CL'] ?? 0;
-                                                    $startOH = $leaveBalance['start']['OH'] ?? 0;
+                                                    $allowedOH = $leaveBalance['allowed']['OH'] ?? 0;
                                                     $endOH = $leaveBalance['end']['OH'] ?? 0;
+                                                    $i++;
                                                 @endphp
                                                 <tr>
+                                                    <td>{{ $i }}</td>
                                                     <td>{{ $attendance['name'] }}</td>
+                                                    <td style="{{ $attendance['company_doj_flag'] === false ? 'color:red;' : '' }}">
+                                                        {{ $attendance['company_doj'] }}
+                                                        <!-- 
+                                                        ({{ $attendance['id'] }})({{ $attendance['monthsWorked'] }}) -->
+                                                    </td>
                                                     <td class="left-border right-border-gray">{{ $Present }}</td>
                                                     <td class="right-border-gray">{{ $WeekdayPresent }}</td>
                                                     <td class="right-border">{{ $isPresentHoliday }}</td>
@@ -395,11 +417,13 @@
                                                     <td class="right-border-gray">{{ $sl }}</td>
                                                     <td class="right-border-gray">{{ $cfl + $chl }}</td>
                                                     <td class="right-border">{{ $oh }}</td>
-                                                    <!-- <td class="right-border-gray">{{ $startSL }}</td> -->
+                                                    
+                                                    <td class="right-border-gray">{{ $allowedSL }}</td>
+                                                    <td class="right-border-gray">{{ $allowedCL }}</td>
+                                                    <td class="right-border">{{ $allowedOH }}</td>
+
                                                     <td class="right-border-gray">{{ $endSL }}</td>
-                                                    <!-- <td class="right-border-gray">{{ $startCL }}</td> -->
                                                     <td class="right-border-gray">{{ $endCL }}</td>
-                                                    <!-- <td class="right-border-gray">{{ $startOH }}</td> -->
                                                     <td class="right-border-gray">{{ $endOH }}</td>
                                                 </tr>
                                             @endforeach

@@ -3,6 +3,10 @@
 use Jenssegers\Agent\Agent;
 use Carbon\Carbon;
 use App\Models\AttendanceEmployee;
+use App\Models\LeaveType;
+use App\Models\Employee;
+use Illuminate\Support\Facades\DB;
+
 
 if (!function_exists('format_currency')) {
     function format_currency($amount, $currency = 'INR')
@@ -29,7 +33,12 @@ if (!function_exists('Get_Device_Type')) {
     function Get_Device_Type()
     {
         $agent = new Agent();
-        return $agent->isMobile() ? 'mobile' : 'desktop';
+        $device = $agent->device();
+
+        if (in_array(strtolower($device), ['iphone','ipad','android','mobile'])) {
+            return 'mobile';
+        }
+        return 'desktop';
     }
 }
 
@@ -37,7 +46,7 @@ if (!function_exists('Get_Device_Type_Icon')) {
     function Get_Device_Type_Icon($TypeIcon, $UserId)
     {
         if ($TypeIcon === 'mobile' && ($UserId == 3 || $UserId == 1)) {
-            // return "<i class='ti ti-device-mobile' style='color:red;' title='Mobile'></i>";
+            //return "<i class='ti ti-device-mobile' style='color:red;' title='Mobile'></i>";
             return false;
         }
         return false;
@@ -208,5 +217,86 @@ if (!function_exists('get_employee_monthly_work_stats')) {
     }
 
 }
+
+
+if (!function_exists('get_allowed_leave_per_employee')) {
+    function get_allowed_leave_per_employee($empId,$financialYear)
+    {
+        // $empId = 37;
+        // Which leave types to consider (expects a Collection keyed by id: [id => title])
+        $leaveTypes = getLeaveTypes(['SL', 'CL', 'WFH', 'OH']);
+        $typeIds    = $leaveTypes->keys()->all();
+        if (empty($typeIds)) {
+            return collect();
+        }
+
+        // Active financial year (fallback to utility)
+        $fy = DB::table('financial_years')->where('id', $financialYear->id)->first();
+        $fyStart = Carbon::parse($fy->start_date ?? Utility::AnnualLeaveCycle()['start_date'])->startOfMonth();
+        $fyEnd   = Carbon::parse($fy->end_date   ?? Utility::AnnualLeaveCycle()['end_date'])->endOfMonth();
+
+        // Employee (by user_id)
+        $employee = Employee::where('id', $empId)->first();
+        if (!$employee) {
+            return collect();
+        }
+
+        $monthsWorked = 0;
+        // Months worked within FY (inclusive)
+        if ($employee->company_doj) {
+            $join = Carbon::parse($employee->company_doj)->startOfMonth();
+
+            if ($join->lt($fyStart)) {
+                // Joined before FY start → full year
+                $monthsWorked = 12; // usually 12
+            } elseif ($join->gt($fyEnd)) {
+                // Joined after FY end → 0 months
+                $monthsWorked = 0;
+            } else {
+                // Joined during FY → prorated
+                $monthsWorked = round($join->diffInMonths($fyEnd));
+            }
+        } else {
+            // No DOJ (default full year)
+            $monthsWorked = 12;
+        }
+
+        // Fetch leave type rows once, compute allowed leave
+        $leaveTypesAll = LeaveType::whereIn('id', $typeIds)->get()
+            ->map(function ($type) use ($monthsWorked) {
+                $days = (int) ($type->days ?? 0);
+
+                $cal1 = $days / 12;
+                $type->cal1 = $cal1;
+                $type->allowed_leave = roundToHalf($cal1 * $monthsWorked);
+                $type->monthsWorked = $monthsWorked;
+                return $type;
+            })
+            ->keyBy('id');
+        /*if($empId == 42){
+            echo "<pre>";print_r($leaveTypesAll);exit;
+        }*/
+        return $leaveTypesAll;
+    }
+}
+
+if (!function_exists('getLeaveTypes')) {
+    function getLeaveTypes(array $codes)
+    {
+        return LeaveType::where(function ($query) use ($codes) {
+            foreach ($codes as $code) {
+                $query->orWhere('code', 'like', "%$code%");
+            }
+        })->pluck('title', 'id');
+    }
+}
+
+if (!function_exists('roundToHalf')) {
+    function roundToHalf($value)
+    {
+        return floor($value * 2) / 2;
+    }
+}
+    
 
 ?>

@@ -61,6 +61,7 @@
                                         <th colspan="3" class="left-border right-border bottom-border">{{ __('Total Present') }}</th>
                                         <th colspan="6" class="right-border bottom-border">{{ __('Leave') }}</th>
                                         <th colspan="3" class="right-border bottom-border">{{ __('Calendar Days') }}</th>
+                                        <th colspan="3" class="right-border bottom-border">{{ __('Allowed Leave') }}</th>
                                         <th colspan="3" class="text-align-center bottom-border">{{ __('Leave Balance') }}</th>
                                     </tr>
                                     <tr>
@@ -76,6 +77,11 @@
                                         <th class="right-border-gray">{{ __('Holiday') }}</th>
                                         <th class="right-border-gray">{{ __('Total Weekend') }}</th>
                                         <th class="right-border">{{ __('Total Days') }}</th>
+
+                                        <th class="right-border-gray">{{ __('SL') }}</th>
+                                        <th class="right-border-gray">{{ __('CL') }}</th>
+                                        <th class="right-border">{{ __('OH') }}</th>
+
                                         <th class="right-border-gray">{{ __('SL') }}</th>
                                         <th class="right-border-gray">{{ __('CL') }}</th>
                                         <th class="right-border-gray">{{ __('OH') }}</th>
@@ -106,6 +112,10 @@
                                                 $endSL = $leave['end']['SL'] ?? 0;
                                                 $endCL = $leave['end']['CL'] ?? 0;
                                                 $endOH = $leave['end']['OH'] ?? 0;
+
+                                                $allowedSL = $leave['allowed']['SL'] ?? 0;
+                                                $allowedCL = $leave['allowed']['CL'] ?? 0;
+                                                $allowedOH = $leave['allowed']['OH'] ?? 0;
                                             @endphp
                                             <tr>
                                                 <td>{{ $label }}</td>
@@ -121,6 +131,9 @@
                                                 <td class="right-border-gray">{{ $h + $oh }}</td>
                                                 <td class="right-border-gray">{{ $TotalWeekDay }}</td>
                                                 <td class="right-border" @if($totalCal != $total) style="color:red;" @endif>{{ $total }}</td>
+                                                <td class="right-border-gray">{{ $allowedSL }}</td>
+                                                <td class="right-border-gray">{{ $allowedCL }}</td>
+                                                <td class="right-border">{{ $allowedOH }}</td>
                                                 <td class="right-border-gray">{{ $endSL }}</td>
                                                 <td class="right-border-gray">{{ $endCL }}</td>
                                                 <td class="right-border-gray">{{ $endOH }}</td>
