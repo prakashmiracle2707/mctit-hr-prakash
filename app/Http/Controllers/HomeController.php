@@ -21,6 +21,7 @@ use App\Models\FinancialYear;
 use Carbon\Carbon;
 use App\Models\LeaveType;
 use App\Models\Holiday;
+use Illuminate\Support\Facades\DB;
 
 
 class HomeController extends Controller
@@ -469,11 +470,51 @@ class HomeController extends Controller
                 $leaveTypes = LeaveType::pluck('title', 'id');
 
 
+                $leaveTypes = getLeaveTypes(['SL', 'CL']);
+                $typeIds    = $leaveTypes->keys()->all();
 
-                $leaveTypesAll = LeaveType::where(function ($query) {
-                                    $query->where('code', 'like', '%SL%')
-                                          ->orWhere('code', 'like', '%CL%');
-                                })->get()->keyBy('id');
+                // --- Active financial year (fallback to utility) ---
+                $fy      = DB::table('financial_years')->where('is_active', 1)->first();
+                $fyStart = Carbon::parse($fy->start_date ?? Utility::AnnualLeaveCycle()['start_date'])->startOfMonth();
+                $fyEnd   = Carbon::parse($fy->end_date   ?? Utility::AnnualLeaveCycle()['end_date'])->endOfMonth();
+
+                // --- Employee DOJ (from auth user) ---
+                $employee = auth()->user()->employee ?? null;
+
+                $monthsWorked = 0;
+                if ($employee && $employee->company_doj) {
+                    $join = Carbon::parse($employee->company_doj)->startOfMonth();
+
+                    if ($join->lt($fyStart)) {
+                        // Joined before FY start → full FY
+                        $monthsWorked = 12; // usually 12
+                    } elseif ($join->gt($fyEnd)) {
+                        // Joined after FY end → 0
+                        $monthsWorked = 0;
+                    } else {
+                        // Joined within FY → prorated
+                        $monthsWorked = round($join->diffInMonths($fyEnd)); // inclusive
+                    }
+                } else {
+                    // No DOJ → full FY
+                    $monthsWorked = 12;
+                }
+
+
+                // --- Fetch leave types and compute prorated allowed leave ---
+                $leaveTypesAll = LeaveType::whereIn('id', $typeIds)
+                    ->get()
+                    ->map(function ($type) use ($monthsWorked) {
+                        $days = (float) ($type->days ?? 0);
+
+                        $perMonth = $days / 12; // entitlement per month
+                        $type->allowed_leave = roundToHalf($perMonth * $monthsWorked);
+                        $type->monthsWorked  = $monthsWorked; // debug
+                        $type->perMonth      = $perMonth;     // debug
+
+                        return $type;
+                    })
+                    ->keyBy('id');
 
                 
                 /* ******************* Leave calculation end ******************* */

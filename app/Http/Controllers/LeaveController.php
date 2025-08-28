@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use App\Services\UltraMsgService;
+use Illuminate\Support\Facades\DB;
 
 class LeaveController extends Controller
 {
@@ -108,46 +109,49 @@ class LeaveController extends Controller
             }
         }
 
-        $leaveTypesAll = LeaveType::where(function ($query) use ($leaveTypes) {
-            foreach ($leaveTypes as $id => $title) {
-                $query->orWhere('id', $id);
-            }
-        })->get()->map(function ($type) {
+        $typeIds    = $leaveTypes->keys()->all();
 
-            // Get active financial year
-            $financialYear = \DB::table('financial_years')
-                ->where('is_active', 1)
-                ->first();
+        // --- Active financial year (fallback to utility) ---
+        $fy      = DB::table('financial_years')->where('is_active', 1)->first();
+        $fyStart = Carbon::parse($fy->start_date ?? Utility::AnnualLeaveCycle()['start_date'])->startOfMonth();
+        $fyEnd   = Carbon::parse($fy->end_date   ?? Utility::AnnualLeaveCycle()['end_date'])->endOfMonth();
 
-            $startDate = $financialYear->start_date ?? Utility::AnnualLeaveCycle()['start_date'];
-            $endDate   = $financialYear->end_date ?? Utility::AnnualLeaveCycle()['end_date'];
+        // --- Employee DOJ (from auth user) ---
+        $employee = auth()->user()->employee ?? null;
 
+        $monthsWorked = 0;
+        if ($employee && $employee->company_doj) {
+            $join = Carbon::parse($employee->company_doj)->startOfMonth();
 
-            // Calculate months worked
-            $employeeJoinDate = auth()->user()->employee->company_doj ?? null;
-            // Calculate months of service in the financial year
-            $joinDate = \Carbon\Carbon::parse($employeeJoinDate);
-
-            // If joined before FY start, start from FY start
-            if ($joinDate->lt(\Carbon\Carbon::parse($startDate))) {
-                $joinDate = \Carbon\Carbon::parse($startDate);
-            }
-
-            if ($employeeJoinDate) {
-                $monthsWorked = $joinDate->diffInMonths(\Carbon\Carbon::parse($endDate)) + 1; // +1 to include current month
+            if ($join->lt($fyStart)) {
+                // Joined before FY start → full FY
+                $monthsWorked = 12; // usually 12
+            } elseif ($join->gt($fyEnd)) {
+                // Joined after FY end → 0
+                $monthsWorked = 0;
             } else {
-                $monthsWorked = 12; // default full year
+                // Joined within FY → prorated
+                $monthsWorked = round($join->diffInMonths($fyEnd)); // inclusive
             }
+        } else {
+            // No DOJ → full FY
+            $monthsWorked = 12;
+        }
 
-            // Prorated leave = (annual leave days / 12) * months worked
-            if (isset($type->days)) {
-                $type->allowed_leave = round(($type->days / 12) * $monthsWorked);
-            }else{
-               $type->allowed_leave = round(($type->days / 12) * $monthsWorked);
-            }
+        // --- Fetch leave types and compute prorated allowed leave ---
+        $leaveTypesAll = LeaveType::whereIn('id', $typeIds)
+            ->get()
+            ->map(function ($type) use ($monthsWorked) {
+                $days = (float) ($type->days ?? 0);
 
-            return $type;
-        })->keyBy('id');
+                $perMonth = $days / 12; // entitlement per month
+                $type->allowed_leave = roundToHalf($perMonth * $monthsWorked);
+                $type->monthsWorked  = $monthsWorked; // debug
+                $type->perMonth      = $perMonth;     // debug
+
+                return $type;
+            })
+            ->keyBy('id');
 
         // Ensure leave days are calculated
         foreach ($leaves as $leave) {

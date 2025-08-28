@@ -124,7 +124,7 @@
                                             <div>
                                                 @foreach($leaveTypesAll as $type)
                                                     <p class="text-muted text-sm mb-0">
-                                                        Total {{ $type->title }} : {{ $type->days }}
+                                                        Total {{ $type->title }} : {{ $type->allowed_leave }}
                                                     </p>
                                                 @endforeach
                                             </div>
