@@ -27,6 +27,7 @@ class LeaveController extends Controller
 
     public function index()
     {
+
         if (!\Auth::user()->can('Manage Leave')) {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -394,7 +395,7 @@ class LeaveController extends Controller
 
             foreach ($leaves as $leave) {
                 if ($leave->total_leave_days == 0) {
-                    $leave->total_leave_days = $this->getTotalLeaveDays(
+                    $leave->total_leave_days = getTotalLeaveDays(
                         $leave->start_date,
                         $leave->end_date,
                         $leave->leave_type_id,
@@ -419,7 +420,6 @@ class LeaveController extends Controller
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
-
 
     // Private function to calculate leave days excluding weekends
     private function getTotalLeaveDays($startDate, $endDate,$leave_type_id,$half_day_type)
@@ -723,7 +723,7 @@ class LeaveController extends Controller
 
             // Calculate total leave days excluding weekends (Saturday and Sunday)
             
-            $total_leave_days = $this->getTotalLeaveDays($request->start_date, $request->end_date,$request->leave_type_id,$request->half_day_type);
+            $total_leave_days = getTotalLeaveDays($request->start_date, $request->end_date,$request->leave_type_id,$request->half_day_type);
 
             $date = Utility::AnnualLeaveCycle();
 
@@ -826,6 +826,16 @@ class LeaveController extends Controller
                 $leave->cc_email = $cc_email_id;
                 $leave->early_time = $request->leave_time;
                 $leave->save();
+
+                if($leave){
+                    /* Call createLeaveDaysFromLeaveId Function and update Start */
+                        $total_leave_days =createLeaveDaysFromLeaveId($leave->id);
+                        // Update the Leave record
+                        $leave->total_leave_days = $total_leave_days;
+                        $leave->save();
+                    /* Call createLeaveDaysFromLeaveId Function and update End */
+                }
+                
 
 
 
@@ -1169,7 +1179,7 @@ class LeaveController extends Controller
                 $employee = Employee::where('employee_id', '=', $leave->employee_id)->first();
 
                 
-                $total_leave_days = $this->getTotalLeaveDays($request->start_date, $request->end_date,$request->leave_type_id,$request->half_day_type);
+                $total_leave_days = getTotalLeaveDays($request->start_date, $request->end_date,$request->leave_type_id,$request->half_day_type);
 
                 $date = Utility::AnnualLeaveCycle();
 
@@ -1406,6 +1416,15 @@ class LeaveController extends Controller
                        
 
                         /* **********************  Email Send  End ********************** */
+                    }
+
+                    if($leave){
+                        /* Call createLeaveDaysFromLeaveId Function and update Start */
+                            $total_leave_days =createLeaveDaysFromLeaveId($leave->id);
+                            // Update the Leave record
+                            $leave->total_leave_days = $total_leave_days;
+                            $leave->save();
+                        /* Call createLeaveDaysFromLeaveId Function and update End */
                     }
                    
                     

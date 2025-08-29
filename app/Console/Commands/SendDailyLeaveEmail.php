@@ -52,7 +52,7 @@ class SendDailyLeaveEmail extends Command
         foreach ([$todayLeaves, $nextDayLeaves] as $group) {
             foreach ($group as $leave) {
                 if ($leave->total_leave_days == 0) {
-                    $leave->total_leave_days = $this->getTotalLeaveDays(
+                    $leave->total_leave_days = getTotalLeaveDays(
                         $leave->start_date,
                         $leave->end_date,
                         $leave->leave_type_id,
@@ -71,37 +71,4 @@ class SendDailyLeaveEmail extends Command
         return Command::SUCCESS;
     }
 
-    private function getTotalLeaveDays($startDate, $endDate,$leave_type_id,$half_day_type)
-    {
-        $startDate = \Carbon\Carbon::parse($startDate);
-        $endDate = \Carbon\Carbon::parse($endDate);
-
-        $totalLeaveDays = 0;
-
-        if($leave_type_id != 5){
-            // Fetch all holidays in the date range
-            $holidays = \App\Models\Holiday::where('is_optional', 0)
-                        ->pluck('start_date')
-                        ->map(fn($date) => \Carbon\Carbon::parse($date)->format('Y-m-d'))
-                        ->toArray();
-
-            // echo "<pre>";print_r($holidays);exit;
-
-            for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
-                $formattedDate = $date->format('Y-m-d');
-
-                // Skip weekends and holidays
-                if (!$date->isWeekend() && !in_array($formattedDate, $holidays)) {
-                    if(($leave_type_id == 1 || $leave_type_id == 2) && $half_day_type != 'full_day'){
-                       $totalLeaveDays = $totalLeaveDays + 0.5; 
-                    }else{
-                       $totalLeaveDays++; 
-                    }
-                    
-                }
-            }
-        }
-
-        return $totalLeaveDays;
-    }
 }

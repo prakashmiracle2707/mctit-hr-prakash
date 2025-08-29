@@ -61,4 +61,9 @@ class Leave extends Model
     {
         return $this->hasMany(\App\Models\LeaveManager::class, 'leave_id');
     }
+
+    public function leaveDays()
+    {
+        return $this->hasMany(\App\Models\LeaveDay::class, 'leave_id');
+    }
 }

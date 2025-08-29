@@ -6,6 +6,9 @@ use App\Models\AttendanceEmployee;
 use App\Models\LeaveType;
 use App\Models\Employee;
 use Illuminate\Support\Facades\DB;
+use App\Models\LeaveDay;
+use App\Models\Leave;
+use App\Models\Holiday;
 
 
 if (!function_exists('format_currency')) {
@@ -399,6 +402,135 @@ if (!function_exists('roundToHalf')) {
     function roundToHalf($value)
     {
         return floor($value * 2) / 2;
+    }
+}
+
+
+if (!function_exists('getTotalLeaveDays')) {
+    /**
+     * Calculate total leave days between two dates.
+     * Skips weekends and non-optional holidays.
+     * Half-day applies to SL/CL (type 1,2) when $half_day_type != 'full_day'.
+     */
+    function getTotalLeaveDays(string $startDate, string $endDate, int $leave_type_id, ?string $half_day_type = null): float
+    {
+        $start = Carbon::parse($startDate)->startOfDay();
+        $end   = Carbon::parse($endDate)->endOfDay();
+
+        // e.g. leave_type_id = 5 is excluded (as per your original code)
+        if ($leave_type_id == 5) {
+            return 0;
+        }
+
+        // Pull only holidays inside the range (non-optional)
+        $holidays = Holiday::where('is_optional', 0)
+            ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
+            ->pluck('start_date')
+            ->map(fn ($d) => Carbon::parse($d)->toDateString())
+            ->toArray();
+
+        $total = 0.0;
+
+        for ($dt = $start->copy()->startOfDay(); $dt->lte($end); $dt->addDay()) {
+            $ymd = $dt->toDateString();
+
+            // Skip weekends and holidays
+            if ($dt->isWeekend() || in_array($ymd, $holidays, true)) {
+                continue;
+            }
+
+            // Half-day logic for SL/CL only
+
+            if (in_array($half_day_type, ['morning', 'afternoon'], true)) {
+                $total += 0.5;
+            } else {
+                $total += 1;
+            }
+
+            /* if (in_array($leave_type_id, [1, 2, 6], true) && ($half_day_type && $half_day_type !== 'full_day')) {
+                $total += 0.5;
+            } else {
+                $total += 1;
+            }*/
+        }
+
+        return $total;
+    }
+}
+
+
+if (!function_exists('createLeaveDaysFromLeaveId')) {
+    /**
+     * Create leave_days for the given leave_id by expanding start_date..end_date
+     * Skips Sat/Sun and non-optional holidays.
+     * Half-day rule:
+     *  - For SL/CL (ids 1,2), if half_day_type != 'full_day' AND it's a single-day leave,
+     *    that day is 0.5 unit. (Adjust as needed.)
+     *
+     * @return int number of rows inserted
+     */
+    function createLeaveDaysFromLeaveId(int $leaveId): int
+    {
+        /** @var Leave|null $leave */
+        $leave = Leave::find($leaveId);
+        if (!$leave) return 0;
+
+        $start = Carbon::parse($leave->start_date)->startOfDay();
+        $end   = Carbon::parse($leave->end_date)->endOfDay();
+
+        // clear old child rows
+        LeaveDay::where('leave_id', $leave->id)->delete();
+
+        // get holidays only by start_date
+        $isHoliday = Holiday::where('is_optional', 0)
+                    ->whereDate('start_date', $start->toDateString())
+                    ->exists();
+
+        $rows = [];
+        $totalUnits = 0.0;
+
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                $ymd = $date->toDateString();
+
+                $isHoliday = Holiday::where('is_optional', 0)
+                    ->whereDate('start_date', $ymd)
+                    ->exists();
+
+                if ($date->isSaturday() || $date->isSunday() || $isHoliday) {
+                    continue;
+                }
+
+                // Default units
+                $units = 1.0;
+
+                // If leave is half-day (morning or afternoon)
+                if (in_array($leave->half_day_type, ['morning', 'afternoon'], true)) {
+                    $units = 0.5;
+                }
+
+                if ((int)$leave->leave_type_id == 5) {
+                    $units = 0;
+                }
+
+                $rows[] = [
+                    'leave_id'       => $leave->id,
+                    'date'           => $ymd,
+                    'leave_units'    => $units,                     // full day
+                    'leave_type_id'  => (int)$leave->leave_type_id,
+                    'half_day_type'  => $leave->half_day_type,
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ];
+
+                $totalUnits += $units;
+        }
+
+        if ($rows) {
+            LeaveDay::insert($rows);
+        }
+
+
+        return $totalUnits;
     }
 }
     
