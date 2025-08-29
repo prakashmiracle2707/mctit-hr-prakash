@@ -781,29 +781,7 @@
                                         <!-- <td>{{ $leave->total_leave_days }}</td> -->
                                         <!-- <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td> -->
                                         <td>
-                                            @if ($leave->status == 'Pending')
-                                                <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>
-                                            @elseif ($leave->status == 'In_Process')
-                                                <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
-                                            @elseif ($leave->status == 'Manager_Approved')
-                                                <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
-                                            @elseif ($leave->status == 'Manager_Rejected')
-                                                <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
-                                            @elseif ($leave->status == 'Partially_Approved')
-                                                <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
-                                            <!-- @elseif (in_array($leave->status, ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
-                                                <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
-                                            @elseif($leave->status == 'Approved')
-                                                <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
-                                            @elseif($leave->status == "Reject")
-                                                <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
-                                            @elseif($leave->status == "Draft")
-                                                <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
-                                            @elseif($leave->status == "Cancelled")
-                                                <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
-                                            @elseif($leave->status == 'Pre-Approved')
-                                                <div class="text-success"><b>{{ $leave->status }}</b></div>
-                                            @endif
+                                            {!! leaveStatusBadge($leave) !!}
                                         </td>
                                         <!-- <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td> -->
                                     </tr>
@@ -1147,32 +1125,8 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <!-- <span class="absent-btn {{ $notClockIn['leave_type'] != 'Absent' ? 'text-danger' : '' }}">
-                                                        {{ $notClockIn['leave_type'] }}
-                                                    </span> -->
-
-                                                    @if ($notClockIn['leave_status'] == 'Pending')
-                                                        <div class="badge bg-warning p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
-                                                    @elseif ($notClockIn['leave_status'] == 'In_Process')
-                                                        <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
-                                                    @elseif ($notClockIn['leave_status'] == 'Manager_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
-                                                    @elseif ($notClockIn['leave_status'] == 'Manager_Rejected')
-                                                        <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
-                                                    @elseif ($notClockIn['leave_status'] == 'Partially_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
-                                                    <!-- @elseif (in_array($notClockIn['leave_status'], ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
-                                                        <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
-                                                    @elseif($notClockIn['leave_status'] == 'Approved')
-                                                        <div class="badge bg-success p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
-                                                    @elseif($notClockIn['leave_status'] == "Reject")
-                                                        <div class="badge bg-danger p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
-                                                    @elseif($notClockIn['leave_status'] == "Draft")
-                                                        <div class="badge bg-info p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
-                                                    @elseif($notClockIn['leave_status'] == "Cancelled")
-                                                        <div class="badge bg-danger p-2 px-3 ">{{ $notClockIn['leave_status'] }}</div>
-                                                    @elseif($notClockIn['leave_status'] == 'Pre-Approved')
-                                                        <div class="text-success"><b>{{ $notClockIn['leave_status'] }}</b></div>
+                                                    @if ($notClockIn['leave_id'] != 0)
+                                                        {!! leaveStatusBadgeList($notClockIn['leave_id']) !!}
                                                     @endif
                                                 </td>
                                             </tr>
@@ -1414,29 +1368,7 @@
                                                 <td>{{ $leave->total_leave_days }}</td>
                                                 <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td>
                                                 <td>
-                                                    @if ($leave->status == 'Pending')
-                                                        <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif ($leave->status == 'In_Process')
-                                                        <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
-                                                    @elseif ($leave->status == 'Manager_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
-                                                    @elseif ($leave->status == 'Manager_Rejected')
-                                                        <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
-                                                    @elseif ($leave->status == 'Partially_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
-                                                    <!-- @elseif (in_array($leave->status, ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
-                                                        <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
-                                                    @elseif($leave->status == 'Approved')
-                                                        <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == "Reject")
-                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == "Draft")
-                                                        <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == "Cancelled")
-                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == 'Pre-Approved')
-                                                        <div class="text-success"><b>{{ $leave->status }}</b></div>
-                                                    @endif
+                                                    {!! leaveStatusBadge($leave) !!}
                                                 </td>
                                                 <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
 
@@ -1593,29 +1525,7 @@
                                                 <td>{{ $leave->total_leave_days }}</td>
                                                 <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td>
                                                 <td>
-                                                    @if ($leave->status == 'Pending')
-                                                        <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif ($leave->status == 'In_Process')
-                                                        <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
-                                                    @elseif ($leave->status == 'Manager_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
-                                                    @elseif ($leave->status == 'Manager_Rejected')
-                                                        <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
-                                                    @elseif ($leave->status == 'Partially_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
-                                                    <!-- @elseif (in_array($leave->status, ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
-                                                        <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
-                                                    @elseif($leave->status == 'Approved')
-                                                        <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == "Reject")
-                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == "Draft")
-                                                        <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == "Cancelled")
-                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == 'Pre-Approved')
-                                                        <div class="text-success"><b>{{ $leave->status }}</b></div>
-                                                    @endif
+                                                    {!! leaveStatusBadge($leave) !!}
                                                 </td>
                                                 <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
                                             </tr>
@@ -1681,29 +1591,7 @@
                                                 <td>{{ $leave->total_leave_days }}</td>
                                                 <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 350px;">{{ $leave->leave_reason }}</td>
                                                 <td>
-                                                    @if ($leave->status == 'Pending')
-                                                        <div class="badge bg-warning p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif ($leave->status == 'In_Process')
-                                                        <div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>
-                                                    @elseif ($leave->status == 'Manager_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>
-                                                    @elseif ($leave->status == 'Manager_Rejected')
-                                                        <div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>
-                                                    @elseif ($leave->status == 'Partially_Approved')
-                                                        <div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>
-                                                    <!-- @elseif (in_array($leave->status, ['In_Process', 'Manager_Approved','Partially_Approved']) && \Auth::user()->type === 'employee')
-                                                        <div class="badge p-2 px-3" style="background:#FA5F55;">In-Process</div> -->
-                                                    @elseif($leave->status == 'Approved')
-                                                        <div class="badge bg-success p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == "Reject")
-                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == "Draft")
-                                                        <div class="badge bg-info p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == "Cancelled")
-                                                        <div class="badge bg-danger p-2 px-3 ">{{ $leave->status }}</div>
-                                                    @elseif($leave->status == 'Pre-Approved')
-                                                        <div class="text-success"><b>{{ $leave->status }}</b></div>
-                                                    @endif
+                                                    {!! leaveStatusBadge($leave) !!}
                                                 </td>
                                                 <td>{{ \Carbon\Carbon::parse($leave->applied_on)->format('d/m/Y') }}</td>
                                             </tr>

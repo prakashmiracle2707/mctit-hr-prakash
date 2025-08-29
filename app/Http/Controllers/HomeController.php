@@ -667,10 +667,12 @@ class HomeController extends Controller
                     // Determine leave type
                     $leaveType = 'Absent'; // default
                     $leaveStatus = '-';
+                    $leaveId=0;
 
                     if ($leave) {
                         $leaveType = $leave->leaveType->title ?? 'N/A';
                         $leaveStatus = $leave->status ?? 'N/A';
+                        $leaveId = $leave->id;
                     } elseif ($availabilityStatus !== 'Available') {
                         // If not on leave and not Available, don't show Absent
                         $leaveType = $availabilityStatus ?? 'N/A';
@@ -682,6 +684,7 @@ class HomeController extends Controller
                         'is_on_leave' => $leave ? true : false,
                         'leave_type' => $leaveType,
                         'leave_status' => $leaveStatus,
+                        'leave_id' => $leaveId,
                         'employee' => $employee, // pass full employee model if needed in view
                     ];
                 }
@@ -933,10 +936,12 @@ class HomeController extends Controller
             // Determine leave type
             $leaveType = 'Absent'; // default
             $leaveStatus = '-';
+            $leaveId=0;
 
             if ($leave) {
                 $leaveType = $leave->leaveType->title ?? 'N/A';
                 $leaveStatus = $leave->status ?? 'N/A';
+                $leaveId=$leave->id;
             } elseif ($availabilityStatus !== 'Available') {
                 // If not on leave and not Available, don't show Absent
                 $leaveType = $availabilityStatus ?? 'N/A';
@@ -948,6 +953,7 @@ class HomeController extends Controller
                 'is_on_leave' => $leave ? true : false,
                 'leave_type' => $leaveType,
                 'leave_status' => $leaveStatus,
+                'leave_id' => $leaveId,
                 'employee' => $employee, // pass full employee model if needed in view
             ];
         }

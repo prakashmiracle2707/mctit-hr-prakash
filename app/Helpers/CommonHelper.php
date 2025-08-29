@@ -80,6 +80,110 @@ if (!function_exists('GetStatusName')) {
     }
 }
 
+if (!function_exists('leaveStatusBadge')) {
+    function leaveStatusBadge($leave)
+    {
+        switch ($leave->status) {
+            case 'Pending':
+                return '<div class="badge bg-warning p-2 px-3">Pending</div>';
+
+            case 'In_Process':
+                return '<div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>';
+
+            case 'Manager_Approved':
+                // Use relation instead of direct DB query
+                $mgrCount = $leave->leaveManagers ? $leave->leaveManagers->count() : 0;
+
+                if ($mgrCount == 0) {
+                    if(\Auth::user()->type == 'employee'){
+                        return '<div class="badge bg-warning p-2 px-3">Pending</div>';
+                    }else{
+                        return '<div class="badge p-2 px-3" style="background:#F54927;">Requires Director Approval</div>';
+                    }
+                }
+                return '<div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>';
+
+            case 'Manager_Rejected':
+                return '<div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>';
+
+            case 'Partially_Approved':
+                return '<div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>';
+
+            case 'Approved':
+                if ($leave->approved_type == 'auto') {
+                    return '<div class="badge bg-success p-2 px-3">System – Auto Approved</div>';
+                }
+                return '<div class="badge bg-success p-2 px-3">Approved</div>';
+
+            case 'Reject':
+                return '<div class="badge bg-danger p-2 px-3">Reject</div>';
+
+            case 'Draft':
+                return '<div class="badge bg-info p-2 px-3">Draft</div>';
+
+            case 'Cancelled':
+                return '<div class="badge bg-danger p-2 px-3">Cancelled</div>';
+
+            case 'Pre-Approved':
+                return '<div class="text-success"><b>Pre-Approved</b></div>';
+
+            default:
+                return '<div class="badge bg-secondary p-2 px-3">' . e($leave->status) . '</div>';
+        }
+    }
+}
+
+if (!function_exists('leaveStatusBadgeList')) {
+    function leaveStatusBadgeList($leaveId)
+    {
+        $leave = DB::table('leaves')->where('id', $leaveId)->first();
+        switch ($leave->status) {
+            case 'Pending':
+                return '<div class="badge bg-warning p-2 px-3">Pending</div>';
+
+            case 'In_Process':
+                return '<div class="badge p-2 px-3" style="background:#9D00FF;">In-Process</div>';
+
+            case 'Manager_Approved':
+                // Use relation instead of direct DB query
+                $mgrCount = DB::table('leave_managers')->where('leave_id', $leave->id)->count();
+
+                if ($mgrCount == 0) {
+                    return '<div class="badge p-2 px-3" style="background:#F54927;">Requires Director Approval</div>';
+                }
+                return '<div class="badge p-2 px-3" style="background:#50C878;">Awaiting Director Approval</div>';
+
+            case 'Manager_Rejected':
+                return '<div class="badge p-2 px-3" style="background:#D2042D;">Manager-Rejected</div>';
+
+            case 'Partially_Approved':
+                return '<div class="badge p-2 px-3" style="background:#9ACD32;">Partially-Approved</div>';
+
+            case 'Approved':
+                if ($leave->approved_type == 'auto') {
+                    return '<div class="badge bg-success p-2 px-3">System – Auto Approved</div>';
+                }
+                return '<div class="badge bg-success p-2 px-3">Approved</div>';
+
+            case 'Reject':
+                return '<div class="badge bg-danger p-2 px-3">Reject</div>';
+
+            case 'Draft':
+                return '<div class="badge bg-info p-2 px-3">Draft</div>';
+
+            case 'Cancelled':
+                return '<div class="badge bg-danger p-2 px-3">Cancelled</div>';
+
+            case 'Pre-Approved':
+                return '<div class="text-success"><b>Pre-Approved</b></div>';
+
+            default:
+                return '<div class="badge bg-secondary p-2 px-3">' . e($leave->status) . '</div>';
+        }
+    }
+}
+
+
 if (!function_exists('Get_MaxCheckOutTime')) {
     function Get_MaxCheckOutTime()
     {
