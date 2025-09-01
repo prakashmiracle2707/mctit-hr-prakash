@@ -129,7 +129,7 @@ class ReimbursementController extends Controller
             ]);
 
             if($settings['is_email_trigger'] === 'on'){
-                $toEmail = 'rmb@miraclecloud-technology.com';
+                $toEmail = $settings['DIRECTOR_EMAIL'];
                 //$toEmail = 'mctsource@miraclecloud-technology.com';
                 Mail::to($toEmail)->send(new ReimbursementRequestMail($reimbursement));
             }
@@ -238,13 +238,13 @@ class ReimbursementController extends Controller
 
         if($settings['is_email_trigger'] === 'on'){
             if($status == 'Pending'){
-                $toEmail = 'rmb@miraclecloud-technology.com';
+                $toEmail = $settings['DIRECTOR_EMAIL'];
                 // $toEmail = 'mctsource@miraclecloud-technology.com';
                 Mail::to($toEmail)->send(new ReimbursementRequestMail($reimbursement));
             }
 
             if($status == 'Submitted'){
-                $toEmail = 'nkalma@miraclecloud-technology.com';
+                $toEmail = $settings['CFO_EMAIL'];
                 // $toEmail = 'mctsource@miraclecloud-technology.com';
                 Mail::to($toEmail)->send(new ReimbursementResubmittingtMail($reimbursement));
             }
@@ -287,7 +287,7 @@ class ReimbursementController extends Controller
         if ($request->status == 'Send Follow Up Email') {
 
             if($settings['is_email_trigger'] === 'on' && $Reimbursement->follow_up_email === 0){
-                $toEmail='rmb@miraclecloud-technology.com';
+                $toEmail=$settings['DIRECTOR_EMAIL'];
                 Mail::to($toEmail)->send(new ReimbursementReminderApprovalMail($Reimbursement));
             }
             
@@ -309,7 +309,7 @@ class ReimbursementController extends Controller
             $Reimbursement->save();
             
             if($settings['is_email_trigger'] === 'on'){
-                $toEmail='nkalma@miraclecloud-technology.com';
+                $toEmail=$settings['CFO_EMAIL'];
                 Mail::to($toEmail)->send(new ReimbursementNotReceivedMail($Reimbursement));
             }
 
@@ -325,7 +325,7 @@ class ReimbursementController extends Controller
             $Reimbursement->save();
             
             if($settings['is_email_trigger'] === 'on'){
-                $toEmail='nkalma@miraclecloud-technology.com';
+                $toEmail=$settings['CFO_EMAIL'];
                 Mail::to($toEmail)->send(new ReimbursementYesReceivedMail($Reimbursement));
             }
 
