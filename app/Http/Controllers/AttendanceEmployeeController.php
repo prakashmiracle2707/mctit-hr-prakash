@@ -265,6 +265,7 @@ class AttendanceEmployeeController extends Controller
                     'date' => 'required',
                     'clock_in' => 'required',
                     'clock_out' => 'required',
+                    'checkout_date' => 'required|date',
                 ]
             );
             if ($validator->fails()) {
@@ -307,34 +308,33 @@ class AttendanceEmployeeController extends Controller
                     $overtime = '00:00:00';
                 }
 
-                $clockInTime = $request->clock_in ? $request->clock_in : null;
-                $clockOutTime = $request->clock_out;
+                $clockInDateTime  = Carbon::parse($request->date . ' ' . $request->clock_in);
+                $clockOutDateTime = Carbon::parse($request->checkout_date . ' ' . $request->clock_out);
 
-                if ($clockInTime) {
-                    //  Calculate Checkout Time Difference
-                    $checkoutTimeDiffSeconds = strtotime($clockOutTime) - strtotime($clockInTime);
-                    if ($checkoutTimeDiffSeconds > 0) {
-                        $checkoutHours = floor($checkoutTimeDiffSeconds / 3600);
-                        $checkoutMinutes = floor(($checkoutTimeDiffSeconds % 3600) / 60);
-                        $checkoutSeconds = floor($checkoutTimeDiffSeconds % 60);
-                        $checkoutTimeDiff = sprintf('%02d:%02d:%02d', $checkoutHours, $checkoutMinutes, $checkoutSeconds);
-                    } else {
-                        $checkoutTimeDiff = '00:00:00';
-                    }
+                if ($clockOutDateTime->greaterThan($clockInDateTime)) {
+                    $checkoutSeconds = $clockInDateTime->diffInSeconds($clockOutDateTime);
+                    $hours   = floor($checkoutSeconds / 3600);
+                    $minutes = floor(($checkoutSeconds % 3600) / 60);
+                    $seconds = $checkoutSeconds % 60;
+                    $checkoutTimeDiff = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
                 } else {
                     $checkoutTimeDiff = '00:00:00';
                 }
 
+                // checkout_date
+
                 $employeeAttendance                = new AttendanceEmployee();
                 $employeeAttendance->employee_id   = $request->employee_id;
                 $employeeAttendance->date          = $request->date;
-                $employeeAttendance->status        = 'Present';
+                $employeeAttendance->device_type_clockin        = 'desktop';
                 $employeeAttendance->clock_in      = $request->clock_in . ':00';
                 $employeeAttendance->clock_out     = $request->clock_out . ':00';
                 $employeeAttendance->late          = $late;
+                $employeeAttendance->checkout_date = $request->checkout_date;
                 $employeeAttendance->early_leaving = $earlyLeaving;
                 $employeeAttendance->overtime      = $overtime;
                 $employeeAttendance->total_rest    = '00:00:00';
+                $employeeAttendance->status        = 'Present';
                 $employeeAttendance->created_by    = \Auth::user()->creatorId();
                 $employeeAttendance->checkout_time_diff    = $checkoutTimeDiff;
                 $employeeAttendance->work_from_home   = $request->has('work_from_home') ? 1 : 0;
@@ -546,6 +546,7 @@ class AttendanceEmployeeController extends Controller
 
                 $clockIn = $request->clock_in;
                 $clockOut = $request->clock_out;
+                $checkoutDate = $request->checkout_date ?? $request->date;
 
                 if ($clockIn) {
                     $status = "present";
@@ -586,15 +587,19 @@ class AttendanceEmployeeController extends Controller
                     $clockInTime = $request->clock_in ? $request->clock_in : null;
                     $clockOutTime = $request->clock_out;
 
+                    $clockInDateTime  = Carbon::parse($request->date . ' ' . $clockIn);
+                    $clockOutDateTime = Carbon::parse($checkoutDate . ' ' . $clockOut);
+
 
                     if ($clockInTime) {
                         //  Calculate Checkout Time Difference
-                        $checkoutTimeDiffSeconds = strtotime($clockOutTime) - strtotime($clockInTime);
-                        if ($checkoutTimeDiffSeconds > 0) {
-                            $checkoutHours = floor($checkoutTimeDiffSeconds / 3600);
-                            $checkoutMinutes = floor(($checkoutTimeDiffSeconds % 3600) / 60);
-                            $checkoutSeconds = floor($checkoutTimeDiffSeconds % 60);
-                            $checkoutTimeDiff = sprintf('%02d:%02d:%02d', $checkoutHours, $checkoutMinutes, $checkoutSeconds);
+                        if ($clockOutDateTime->greaterThan($clockInDateTime)) {
+                            $checkoutSeconds = $clockInDateTime->diffInSeconds($clockOutDateTime);
+                            $checkoutTimeDiff = sprintf('%02d:%02d:%02d',
+                                floor($checkoutSeconds / 3600),
+                                floor(($checkoutSeconds % 3600) / 60),
+                                $checkoutSeconds % 60
+                            );
                         } else {
                             $checkoutTimeDiff = '00:00:00';
                         }
@@ -608,7 +613,7 @@ class AttendanceEmployeeController extends Controller
                         'overtime' => $overtime,
                         'clock_in' => $clockIn,
                         'clock_out' => $clockOut,
-                        'checkout_date' => $check->date,
+                        'checkout_date' => $checkoutDate,
                         'checkout_time_diff' => $checkoutTimeDiff,
                         'work_from_home' => $request->has('work_from_home') ? 1 : 0,
                         'is_leave' => $request->has('is_leave') ? 1 : 0
