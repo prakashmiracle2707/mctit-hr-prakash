@@ -36,11 +36,14 @@ if (!function_exists('Get_Device_Type')) {
     function Get_Device_Type()
     {
         $agent = new Agent();
-        $device = $agent->device();
-
-        if (in_array(strtolower($device), ['iphone','ipad','android','mobile'])) {
-            return 'mobile';
+        //$device = $agent->device();
+        if($agent->isMobile()){
+           return 'mobile'; 
         }
+
+        // if (in_array(strtolower($device), ['iphone','ipad','android','mobile'])) {
+        //     return 'mobile';
+        // }
         return 'desktop';
     }
 }
@@ -49,8 +52,8 @@ if (!function_exists('Get_Device_Type_Icon')) {
     function Get_Device_Type_Icon($TypeIcon, $UserId)
     {
         if ($TypeIcon === 'mobile' && ($UserId == 3 || $UserId == 1)) {
-            //return "<i class='ti ti-device-mobile' style='color:red;' title='Mobile'></i>";
-            return false;
+            return "<i class='ti ti-device-mobile' style='color:red;' title='Mobile'></i>";
+            // return false;
         }
         return false;
     }

@@ -537,8 +537,7 @@ class AttendanceEmployeeController extends Controller
 
         if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr') {
             $employeeId      = AttendanceEmployee::where('employee_id', $request->employee_id)->first();
-            $check = AttendanceEmployee::where('id', '=', $id)->where('employee_id', '=', $request->employee_id)->where('date', $request->date)->first();
-
+            $check = AttendanceEmployee::where('id', '=', $id)->where('employee_id', '=', $request->employee_id)->first();
 
             if (!empty($employeeId) || !empty($check)) {
                 $startTime = Utility::getValByName('company_start_time');
@@ -614,6 +613,7 @@ class AttendanceEmployeeController extends Controller
                         'clock_in' => $clockIn,
                         'clock_out' => $clockOut,
                         'checkout_date' => $checkoutDate,
+                        'date' => $request->date,
                         'checkout_time_diff' => $checkoutTimeDiff,
                         'work_from_home' => $request->has('work_from_home') ? 1 : 0,
                         'is_leave' => $request->has('is_leave') ? 1 : 0
