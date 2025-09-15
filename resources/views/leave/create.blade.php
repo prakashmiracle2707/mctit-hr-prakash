@@ -63,11 +63,11 @@
                     <option value="4:00 PM">4:00 PM</option>
                     <option value="4:15 PM">4:15 PM</option>
                     <option value="4:30 PM">4:30 PM</option>
-                    <option value="4:30 PM">4:45 PM</option>
+                    <option value="4:45 PM">4:45 PM</option>
                     <option value="5:00 PM">5:00 PM</option>
-                    <option value="4:15 PM">5:15 PM</option>
-                    <option value="4:30 PM">5:30 PM</option>
-                    <option value="4:30 PM">5:45 PM</option>
+                    <option value="5:15 PM">5:15 PM</option>
+                    <option value="5:30 PM">5:30 PM</option>
+                    <option value="5:45 PM">5:45 PM</option>
                     <option value="6:00 PM">6:00 PM</option>
                 </select>
                 <span style="color:#ff3a6e;font-size: 11px;"><b>Note :</b>Only one Early Leave is allowed per month. Must complete 8 hours. Applying on Same day is restricted.</span>
@@ -118,13 +118,13 @@
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('start_date', __('Start Date'), ['class' => 'col-form-label']) }}
-                {{ Form::text('start_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off', 'placeholder' => 'Select start date', 'id' => 'start_date']) }}
+                {{ Form::date('start_date', null, ['class' => 'form-control d_week current_date', 'required' => true, 'id' => 'start_date']) }}
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('end_date', __('End Date'), ['class' => 'col-form-label']) }}
-                {{ Form::text('end_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off', 'placeholder' => 'Select end date', 'id' => 'end_date']) }}
+                {{ Form::date('end_date', null, ['class' => 'form-control d_week current_date', 'required' => true, 'id' => 'end_date']) }}
             </div>
         </div>
     </div>
@@ -175,7 +175,8 @@
         <input type="submit" value="{{ __('Create') }}" id="apply-btn"  class="btn  btn-primary">
     @else
         <input type="submit" value="{{ __('Apply') }}"  id="apply-btn" class="btn  btn-primary">
-        <button type="button" class="btn btn-danger" id="save-draft-btn">{{ __('Save as Draft') }}</button>
+        <input type="submit" value="{{ __('Save as Draft') }}"  id="save-draft-btn" class="btn  btn-danger">
+        <!-- <button type="button" class="btn btn-danger" id="save-draft-btn">{{ __('Save as Draft') }}</button> -->
     @endif
     
 </div>
@@ -189,7 +190,7 @@
         if (month < 10) month = "0" + month;
         if (day < 10) day = "0" + day;
         var today = now.getFullYear() + '-' + month + '-' + day;
-        $('.current_date').val(today);
+        // $('.current_date').val(today);
     });
 </script>
 
