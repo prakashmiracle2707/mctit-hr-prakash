@@ -1181,22 +1181,36 @@
                                                 @endif
                                                 
                                                 <!-- <td>{{ $attendance->status }}</td> -->
-                                                <td>{{ $attendance->clock_in != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_in) : '00:00' }}
+                                                @php
+                                                    $clockInValue = $attendance->clock_in ?? '00:00:00';
+                                                    $clockOutValue = $attendance->clock_out ?? '00:00:00';
+                                                    $displayClockIn = $clockInValue != '00:00:00' ? \Auth::user()->timeFormat($clockInValue) : '00:00';
+                                                    $displayClockOut = $clockOutValue != '00:00:00' ? \Auth::user()->timeFormat($clockOutValue) : '00:00';
+                                                @endphp
+                                                <td>
+                                                    <a href="javascript:void(0)"
+                                                       class="edit-time btn-link"
+                                                       id="clock-in-{{ $attendance->id }}"
+                                                       data-id="{{ $attendance->id }}"
+                                                       data-time="{{ \Carbon\Carbon::createFromFormat('H:i:s', $clockInValue)->format('H:i') }}"
+                                                       data-date="{{ $attendance->date }}"
+                                                       data-clockout="{{ \Carbon\Carbon::createFromFormat('H:i:s', $clockOutValue)->format('H:i') }}"
+                                                       data-checkoutdate="{{ $attendance->checkout_date ?? '' }}">
+                                                       <span class="clock-text">{{ $displayClockIn }}</span>
+                                                    </a>
+
                                                     {!! Get_Device_Type_Icon($attendance->device_type_clockin,\Auth::user()->id) !!}
                                                 </td>
-                                                <td>
-                                                
-                                                    @if ($attendance->clock_out == '00:00:00' && $attendance->date < date('Y-m-d'))
-                                                        <span class="badge bg-danger p-1 px-1">Missed Checkout</span>
-                                                    @else
-                                                        {{ $attendance->clock_out != '00:00:00' ? date('h:i A', strtotime($attendance->clock_out)) : '00:00' }}
-                                                    @endif
+                                                <td id="clock-out-{{ $attendance->id }}">
+                                                    <span class="clock-out-text">{{ $displayClockOut }}</span>
                                                     {!! Get_Device_Type_Icon($attendance->device_type_clockout,\Auth::user()->id) !!}
                                                 </td>
                                                 <!-- <td>{{ $attendance->late }}</td>
                                                 <td>{{ $attendance->early_leaving }}</td>
                                                 <td>{{ $attendance->overtime }}</td> -->
-                                                <td>{{ $attendance->checkout_time_diff != '' ? $attendance->checkout_time_diff : '00:00:00' }}</td>
+                                                <td id="checkout-time-diff-{{ $attendance->id }}">
+                                                    {{ $attendance->checkout_time_diff ?? '00:00:00' }}
+                                                </td>
                                                 <td>{{ $attendance->totalBreakDuration ?? '00:00:00' }}</td>
                                                <!--  @if (Gate::check('Edit Attendance') || Gate::check('Delete Attendance'))
                                                 <td class="Action">
@@ -1242,6 +1256,53 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+
+
+                    <!-- Edit Time Modal -->
+                    <div class="modal fade" id="editTimeModal" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog modal-sm">
+                        <form id="edit-time-form">
+                          @csrf
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title">Edit Attendance Time</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                              <input type="hidden" id="attendance_id" name="id">
+
+                              <div class="mb-3">
+                                <label class="form-label">Date</label>
+                                <input type="date" id="attendance_date" name="date" class="form-control" required>
+                              </div>
+
+                              <div class="mb-3">
+                                <label class="form-label">Clock In</label>
+                                <input type="time" id="clock_in_time" name="clock_in" class="form-control" required>
+                              </div>
+
+                              <div class="mb-3">
+                                <label class="form-label">Checkout Date (optional)</label>
+                                <input type="date" id="checkout_date" name="checkout_date" class="form-control">
+                                <small class="text-muted">Leave empty for NULL</small>
+                              </div>
+
+                              <div class="mb-3">
+                                <label class="form-label">Clock Out (optional)</label>
+                                <input type="time" id="clock_out_time" name="clock_out" class="form-control">
+                                <small class="text-muted">Leave empty to set default 00:00:00</small>
+                              </div>
+
+                              <div id="edit-time-error" class="text-danger small" style="display:none;"></div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                              <button type="submit" class="btn btn-primary btn-sm" id="save-time-btn">Save</button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
                     </div>
 
                 </div>
@@ -1921,6 +1982,118 @@
             body: JSON.stringify({ device_type: device })
         });
     })();
+    </script>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var modalEl = document.getElementById('editTimeModal');
+          var modal = new bootstrap.Modal(modalEl);
+
+          // Open modal when clicking the anchor
+          document.querySelectorAll('.edit-time').forEach(function(a){
+            a.addEventListener('click', function(){
+              var id = this.dataset.id;
+              var time = this.dataset.time || '';
+              var date = this.dataset.date || '';
+              var clockout = this.dataset.clockout || '';
+              var checkoutdate = this.dataset.checkoutdate || '';
+
+              document.getElementById('attendance_id').value = id;
+              document.getElementById('clock_in_time').value = time;
+              document.getElementById('attendance_date').value = date;
+              document.getElementById('clock_out_time').value = clockout;
+              document.getElementById('checkout_date').value = checkoutdate;
+
+              document.getElementById('edit-time-error').style.display = 'none';
+              modal.show();
+            });
+          });
+
+          // AJAX submit
+          document.getElementById('edit-time-form').addEventListener('submit', function(e){
+            e.preventDefault();
+
+            var id = document.getElementById('attendance_id').value;
+            var clock_in = document.getElementById('clock_in_time').value; // HH:MM
+            var date = document.getElementById('attendance_date').value;
+            var clock_out = document.getElementById('clock_out_time').value || null; // optional
+            var checkout_date = document.getElementById('checkout_date').value || null;
+            var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            if (!id || !clock_in || !date) {
+              var err = document.getElementById('edit-time-error');
+              err.style.display = 'block';
+              err.textContent = 'Please fill required fields.';
+              return;
+            }
+
+            var saveBtn = document.getElementById('save-time-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            fetch("{{ url('/attendanceemployee/update-time') }}", {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({
+                id: id,
+                clock_in: clock_in,
+                date: date,
+                clock_out: clock_out,       // could be null
+                checkout_date: checkout_date // could be null
+              })
+            }).then(res => res.json())
+              .then(json => {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
+
+                if (json.success) {
+                  // Update UI cells
+                  var anchor = document.getElementById('clock-in-' + id);
+                  if (anchor) {
+                    anchor.setAttribute('data-time', json.clock_in_24);
+                    anchor.setAttribute('data-date', date);
+                    anchor.setAttribute('data-clockout', json.clock_out_24 || '00:00');
+                    anchor.setAttribute('data-checkoutdate', json.checkout_date || '');
+
+                    var span = anchor.querySelector('.clock-text');
+                    if (span) span.textContent = json.clock_in_display;
+                  }
+
+                  var coEl = document.getElementById('clock-out-' + id);
+                  if (coEl) {
+                    coEl.querySelector('.clock-out-text').textContent = json.clock_out_display || '00:00';
+                  }
+
+                  var cdEl = document.getElementById('checkout-date-' + id);
+                  if (cdEl) cdEl.textContent = json.checkout_date || '-';
+
+                  var diffEl = document.getElementById('checkout-time-diff-' + id);
+                  if (diffEl) diffEl.textContent = json.checkout_time_diff || '00:00:00';
+
+                  modal.hide();
+
+                } else {
+                  var err = document.getElementById('edit-time-error');
+                  err.style.display = 'block';
+                  err.textContent = json.message || 'Update failed';
+                }
+            }).catch(err => {
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Save';
+              var eDiv = document.getElementById('edit-time-error');
+              eDiv.style.display = 'block';
+              eDiv.textContent = 'Network error';
+              console.error(err);
+            });
+
+          });
+        });
     </script>
 
 @endpush
