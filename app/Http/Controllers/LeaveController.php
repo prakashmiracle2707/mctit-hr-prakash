@@ -99,7 +99,7 @@ class LeaveController extends Controller
 
             // For EL leave type, treat Pre-Approved as Approved
             $leaveType = LeaveType::find($LeaveDetails->leave_type_id);
-            if ($leaveType && $leaveType->code === 'EL' && $status === 'Pre-Approved') {
+            if ($leaveType && ($leaveType->code === 'EL' || $leaveType->code === 'OH') && $status === 'Pre-Approved') {
                 $status = 'Approved';
             }
 
@@ -810,7 +810,7 @@ class LeaveController extends Controller
                 if ($request->status == 'draft') {
                     $leave->status = 'Draft';  // Set status to 'Draft' if the save as draft button is clicked
                 } else {
-                    if($request->leave_type_id == 5){
+                    if($request->leave_type_id == 4 || $request->leave_type_id == 5){
                         $leave->status = 'Pre-Approved'; // Default status if not a draft
                     }else{
                         if(empty($defaultManagerList)){
@@ -1286,7 +1286,7 @@ class LeaveController extends Controller
                         $leave->status = 'Draft';  // Set status to 'Draft' if the save as draft button is clicked
                         $leave->save();
                     } else {
-                        if($request->leave_type_id == 5){
+                        if($request->leave_type_id == 4 || $request->leave_type_id == 5){
                             $leave->status = 'Pre-Approved'; // Default status if not a draft
                         }else{
 
@@ -1606,6 +1606,7 @@ class LeaveController extends Controller
                 
 
                 $data = [
+                    'leaveId' => Get_LeaveId($leave->id),
                     'employeeName' => $employee->name,
                     'leaveType' => $leavetype->title,
                     'leaveFullHalfDay' => $this->getLeaveFullHalfDay($leave->half_day_type),

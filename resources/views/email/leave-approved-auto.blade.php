@@ -41,6 +41,7 @@
     <table>
         <thead>
             <tr>
+                <th>#</th>
                 <th>Leave Type</th>
                 <th>Reason</th>
                 @if($start_date == $end_date)
@@ -55,6 +56,7 @@
         </thead>
         <tbody>
             <tr>
+                <td>{{ $leaveId ?? '' }}</td>
                 <td>{{ $leaveType ?? '' }}</td>
                 <td>{{ $leaveReason ?? '' }}</td>
                 @if($start_date == $end_date)
