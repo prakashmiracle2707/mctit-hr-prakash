@@ -1497,22 +1497,7 @@ class LeaveController extends Controller
         $leave->status = $request->status;
         $leave->remark = $request->remark;
         if ($leave->status == 'Approved' || $leave->status == 'HR Approved') {
-            $startDate = new \DateTime($leave->start_date);
-            $endDate = new \DateTime($leave->end_date);
-            $endDate->add(new \DateInterval('P1D'));  // Adjust end date to include the last day
-
-            // Calculate total leave days excluding Saturdays and Sundays
-            $total_leave_days = 0;
-            $currentDate = $startDate;
-
-            while ($currentDate < $endDate) {
-                if ($currentDate->format('N') < 6) { // Exclude Saturday (6) and Sunday (7)
-                    $total_leave_days++;
-                }
-                $currentDate->modify('+1 day');
-            }
-
-            // $leave->total_leave_days = $total_leave_days;
+            
             $leave->status = 'Approved';
             if($request->status == 'Approved'){
                 $leave->approved_type = 'manual';
@@ -1520,7 +1505,7 @@ class LeaveController extends Controller
                 $leave->approved_type = 'auto';
             }
             
-            $leave->approved_by = \Auth::user()->id;              // or hardcode system ID like 1
+            $leave->approved_by = \Auth::user()->id;         
             
             $leave->approved_at = now();
         }
@@ -1561,11 +1546,7 @@ class LeaveController extends Controller
                 $leaveDate = $formattedStartDate;
             }else{
 
-                $startDate = \Carbon\Carbon::parse($leave->start_date);
-                $endDate = \Carbon\Carbon::parse($leave->end_date);
-                $total_leave_days = $startDate->diffInDays($endDate);
-
-                if($total_leave_days > 1){
+                if($leave->total_leave_days > 1){
                     $leaveDate = $formattedStartDate." To ".$formattedEndDate." [".$leave->total_leave_days." Days ]";
                 }else{
                     $leaveDate = $formattedStartDate." To ".$formattedEndDate;

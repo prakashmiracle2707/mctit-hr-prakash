@@ -1897,4 +1897,30 @@
             }
         });
     </script>
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>
+    (function() {
+        function detectDeviceByWidth() {
+            let width = screen.width;
+            return (width <= 768) ? 'mobile' : 'desktop'; // threshold can be changed
+        }
+
+        let device = detectDeviceByWidth();
+
+        // Save in cookie for PHP
+        document.cookie = "device_type=" + device + "; path=/; max-age=" + (60*60*24) + "; SameSite=Lax";
+
+        // Also save in Laravel session (optional, for backend use)
+        fetch("{{ url('/set-device') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+            },
+            body: JSON.stringify({ device_type: device })
+        });
+    })();
+    </script>
+
 @endpush

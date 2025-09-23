@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Employee;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AwardController;
@@ -102,6 +103,14 @@ use App\Http\Controllers\CustomSaml2Controller;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+Route::post('/set-device', function (Request $request) {
+    $device = $request->input('device_type');
+    if (in_array($device, ['mobile', 'desktop'])) {
+        session(['device_type' => $device]);
+    }
+    return response()->json(['ok' => true]);
+});
 
 
 // Route::post('/saml2/test/acs', [CustomSaml2Controller::class, 'acs']);

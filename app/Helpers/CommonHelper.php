@@ -35,16 +35,14 @@ if (!function_exists('Get_LeaveId')) {
 if (!function_exists('Get_Device_Type')) {
     function Get_Device_Type()
     {
-        $agent = new Agent();
-        //$device = $agent->device();
+        return session('device_type', request()->cookie('device_type', 'desktop'));
+
+        /*$agent = new Agent();
         if($agent->isMobile()){
            return 'mobile'; 
         }
 
-        // if (in_array(strtolower($device), ['iphone','ipad','android','mobile'])) {
-        //     return 'mobile';
-        // }
-        return 'desktop';
+        return 'desktop';*/
     }
 }
 
