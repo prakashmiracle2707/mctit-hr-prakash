@@ -1,5 +1,9 @@
 {{ Form::open(['url' => 'reimbursements/changeaction', 'method' => 'post',  'enctype' => 'multipart/form-data', 'id' => 'reimbursement-action-form']) }}
 
+@php
+    // ensure $reimbursement is present
+    $reimbursementId = $reimbursement->id ?? null;
+@endphp
 <style>
     .custom-table {
         width: 100%;
@@ -45,9 +49,39 @@
         background-color: #0056b3;
     }
 
+    /* QR in top-right corner */
+    .qr-corner {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 120px;
+        height: 120px;
+        background: #fff;
+        border: 1px solid #e2e2e2;
+        border-radius: 4px;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .qr-corner img { max-width: 100%; max-height: 100%; display: block; }
+
 </style>
 
 <div class="modal-body">
+    {{-- small QR image top-right (only if reimbursement id exists) --}}
+    @if($reimbursementId && (Auth::user()->type == 'CEO' || Auth::user()->type == 'company') && in_array($reimbursement->status, ['Pending']))
+        <div class="row">
+            <div class="col-12">
+                <div class="qr-corner" title="Scan to pay (UPI)">
+                    {{-- Use the QR generation route; browser will request image (png/svg) --}}
+                    <img src="{{ url('qr/employee/' . $reimbursementId) }}" alt="QR Code" onerror="this.style.display='none'">
+                </div>
+            </div>
+        </div>
+        <br />
+    @endif
     <div class="row">
         <div class="col-12">
             <table class="custom-table">
@@ -223,6 +257,7 @@
 
                 <input type="hidden" name="reimbursement_id" value="{{ $reimbursement->id }}">
                 <input type="hidden" name="reimbursement_page" value="index">
+                <input type="hidden" id="qr_employee_id" name="employee_id" value="{{ $reimbursement->employee_id ?? '' }}">
             </table>
         </div>
     </div>
@@ -230,6 +265,9 @@
 
 <div class="modal-footer">
     @if (Auth::user()->type == 'CEO' && in_array($reimbursement->status, ['Pending', 'Approved', 'Reject']))
+        <!-- <button type="button" id="btn_approved_pay" class="btn btn-primary rounded">
+          {{ __('Approved & Pay') }}
+        </button> -->
         <input type="submit" value="{{ __('Approved') }}" class="btn btn-success rounded" name="status">
         <input type="submit" value="{{ __('Reject') }}" class="btn btn-danger rounded" name="status">
     @endif

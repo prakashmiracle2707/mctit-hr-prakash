@@ -1588,6 +1588,8 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    Route::get('/qr/employee/{id}', [ReimbursementController::class, 'generateQr'])->name('employee.qr');
+
     Route::get('/reimbursements/{id}/action', [ReimbursementController::class, 'action'])
     ->name('reimbursements.action');
 

@@ -537,40 +537,40 @@ class AttendanceEmployeeController extends Controller
             'clock_in' => 'required|date_format:H:i',
             'clock_out' => 'nullable|date_format:H:i',
             'checkout_date' => 'nullable|date',
-            'date' => 'nullable|date' // optional: update attendance date
+            'date' => 'nullable|date'
         ]);
 
-        // Permission check - adjust to your needs
+        // Permission - adjust if employees should be allowed
         if (!\Auth::user()->can('Edit Attendance') && !in_array(\Auth::user()->type, ['company','hr'])) {
             return response()->json(['success' => false, 'message' => 'Permission denied.'], 403);
         }
 
         $attendance = AttendanceEmployee::find($request->id);
-        if (!$attendance) {
+        if (! $attendance) {
             return response()->json(['success' => false, 'message' => 'Attendance not found.'], 404);
         }
 
-        // Normalize & assign
+        // Normalize/save values
         $attendance->clock_in = $request->clock_in . ':00';
 
         if ($request->filled('clock_out')) {
             $attendance->clock_out = $request->clock_out . ':00';
         } else {
-            // default
+            // default if not provided
             $attendance->clock_out = '00:00:00';
         }
 
-        // checkout_date: set null if not provided
+        // checkout_date: null if not provided
         $attendance->checkout_date = $request->filled('checkout_date') ? $request->checkout_date : null;
 
-        // optionally update the attendance date if present in request
+        // optionally update the attendance date
         if ($request->filled('date')) {
             $attendance->date = $request->date;
         }
 
         $attendance->save();
 
-        // Recompute checkout_time_diff if possible
+        // Recompute checkout_time_diff if both clock_in & clock_out & checkout_date present
         $checkoutTimeDiff = '00:00:00';
         if (
             !empty($attendance->clock_in) && $attendance->clock_in !== '00:00:00' &&
@@ -582,14 +582,14 @@ class AttendanceEmployeeController extends Controller
                 $clockInDT = Carbon::parse($clockInDate . ' ' . $attendance->clock_in);
                 $clockOutDT = Carbon::parse($attendance->checkout_date . ' ' . $attendance->clock_out);
 
-                // If clock_out datetime is earlier than clock_in, assume next day (adjust if your business logic differs)
+                // If clock_out datetime is earlier than clock_in, treat as next day (common rule)
                 if ($clockOutDT->lessThan($clockInDT)) {
                     $clockOutDT->addDay();
                 }
 
                 if ($clockOutDT->greaterThan($clockInDT)) {
                     $sec = $clockInDT->diffInSeconds($clockOutDT);
-                    $checkoutTimeDiff = sprintf('%02d:%02d:%02d', intdiv($sec,3600), intdiv($sec % 3600, 60), $sec % 60);
+                    $checkoutTimeDiff = sprintf('%02d:%02d:%02d', intdiv($sec,3600), intdiv($sec % 3600,60), $sec % 60);
                 } else {
                     $checkoutTimeDiff = '00:00:00';
                 }
@@ -601,12 +601,12 @@ class AttendanceEmployeeController extends Controller
             $attendance->checkout_time_diff = $checkoutTimeDiff;
             $attendance->save();
         } else {
-            // ensure default if not both values present
+            // clear if incomplete
             $attendance->checkout_time_diff = '00:00:00';
             $attendance->save();
         }
 
-        // Prepare display values (use your user's formatter if available)
+        // Prepare display values
         $clockInDisplay = \Auth::user()
             ? \Auth::user()->timeFormat($attendance->clock_in)
             : Carbon::createFromFormat('H:i:s', $attendance->clock_in)->format('h:i A');
@@ -622,7 +622,7 @@ class AttendanceEmployeeController extends Controller
             'message' => 'Attendance updated successfully.',
             'clock_in_24' => Carbon::createFromFormat('H:i:s', $attendance->clock_in)->format('H:i'),
             'clock_in_display' => $clockInDisplay,
-            'clock_out_24' => $attendance->clock_out ? Carbon::createFromFormat('H:i:s', $attendance->clock_out)->format('H:i') : '00:00',
+            'clock_out_24' => ($attendance->clock_out && $attendance->clock_out !== '00:00:00') ? Carbon::createFromFormat('H:i:s', $attendance->clock_out)->format('H:i') : '00:00',
             'clock_out_display' => $clockOutDisplay,
             'checkout_date' => $checkoutDateDisplay,
             'checkout_time_diff' => $attendance->checkout_time_diff ?? '00:00:00',

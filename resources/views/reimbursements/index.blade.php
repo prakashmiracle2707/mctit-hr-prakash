@@ -189,7 +189,7 @@
                                             @if (\Auth::user()->type != 'employee')
                                                 <div class="action-btn bg-success me-2">
                                                     <a href="#" class="mx-3 btn btn-sm align-items-center"
-                                                        data-size="lg"
+                                                        data-size="xl"
                                                         data-url="{{ URL::to('reimbursements/' . $reimbursement->id . '/action') }}"
                                                         data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
                                                         title="" data-title="{{ __('Reimbursement Action') }}"

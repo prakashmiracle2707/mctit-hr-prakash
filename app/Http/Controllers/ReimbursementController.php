@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Models\Reimbursement;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,7 @@ use App\Mail\ReimbursementYesReceivedMail;
 use App\Mail\ReimbursementReminderApprovalMail;
 use App\Mail\ReimbursementResubmittingtMail;
 use App\Mail\ReimbursementQueryRaisedMail;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 
 class ReimbursementController extends Controller
@@ -396,6 +398,48 @@ class ReimbursementController extends Controller
         return redirect()->route('reimbursements.index')->with('success', __('Reimbursement status successfully updated.') . 
                 ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? 
                 '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+    }
+
+    public function generateQr($id)
+    {
+            $reimbursement = Reimbursement::find($id);
+            // $reimbursement_employee = 1;
+            
+            $employee = User::find($reimbursement->employee_id);
+
+            if (!$employee || empty($employee->upi_id)) {
+                abort(404, 'UPI ID not found for this employee');
+            }
+
+            // sanitize inputs
+            $upiId = trim($employee->upi_id);
+            // remove accidental spaces inside UPI id (UPI ids should not contain spaces)
+            $upiId = str_replace(' ', '', $upiId);
+
+            $name = trim($employee->name);
+            $amount = number_format((float) $reimbursement->amount, 2, '.', ''); // ensures 2 decimals
+            $note = "Reimbursement R00{$reimbursement->id}";
+
+            // build UPI string: encode only parameter values (not the separators)
+            $upiString = "upi://pay?pa=" . rawurlencode($upiId)
+                       . "&pn=" . rawurlencode($name)
+                       . "&am=" . rawurlencode($amount)
+                       . "&cu=" . rawurlencode('INR')
+                       . "&tn=" . rawurlencode($note);
+
+            // Log the UPI string for debugging (check storage/logs/laravel.log)
+            Log::debug('Generated UPI string for QR: ' . $upiString);
+
+            try {
+                // Try PNG first (may require imagick)
+                $png = QrCode::format('png')->size(300)->errorCorrection('H')->generate($upiString);
+                return response($png, 200)->header('Content-Type', 'image/png');
+            } catch (\Throwable $e) {
+                // fallback to SVG if PNG backend fails (e.g., Imagick missing)
+                Log::warning('PNG generation failed for UPI QR, falling back to SVG. Error: ' . $e->getMessage());
+                $svg = QrCode::format('svg')->size(300)->errorCorrection('H')->generate($upiString);
+                return response($svg, 200)->header('Content-Type', 'image/svg+xml');
+            }
     }
 
 }

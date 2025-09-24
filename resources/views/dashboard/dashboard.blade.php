@@ -1195,7 +1195,8 @@
                                                        data-time="{{ \Carbon\Carbon::createFromFormat('H:i:s', $clockInValue)->format('H:i') }}"
                                                        data-date="{{ $attendance->date }}"
                                                        data-clockout="{{ \Carbon\Carbon::createFromFormat('H:i:s', $clockOutValue)->format('H:i') }}"
-                                                       data-checkoutdate="{{ $attendance->checkout_date ?? '' }}">
+                                                       data-checkoutdate="{{ $attendance->checkout_date ?? '' }}"
+                                                       data-employee="{{ $attendance->employee->name ?? '' }}">
                                                        <span class="clock-text">{{ $displayClockIn }}</span>
                                                     </a>
 
@@ -1261,37 +1262,39 @@
 
                     <!-- Edit Time Modal -->
                     <div class="modal fade" id="editTimeModal" tabindex="-1" aria-hidden="true">
-                      <div class="modal-dialog modal-sm">
+                      <div class="modal-dialog modal-lg">
                         <form id="edit-time-form">
                           @csrf
                           <div class="modal-content">
                             <div class="modal-header">
-                              <h5 class="modal-title">Edit Attendance Time</h5>
+                              <h5 class="modal-title" id="editTimeModalLabel">Edit Attendance Time</h5>
                               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
                               <input type="hidden" id="attendance_id" name="id">
 
-                              <div class="mb-3">
-                                <label class="form-label">Date</label>
-                                <input type="date" id="attendance_date" name="date" class="form-control" required>
+                              <div class="row mb-3">
+                                <div class="col-md-6">
+                                  <label class="form-label">Clock In Date</label>
+                                  <input type="date" id="attendance_date" name="date" class="form-control" required readonly>
+                                </div>
+                                <div class="col-md-6">
+                                  <label class="form-label">Clock In Time</label>
+                                  <input type="time" id="clock_in_time" name="clock_in" class="form-control" required>
+                                </div>
                               </div>
 
-                              <div class="mb-3">
-                                <label class="form-label">Clock In</label>
-                                <input type="time" id="clock_in_time" name="clock_in" class="form-control" required>
-                              </div>
-
-                              <div class="mb-3">
-                                <label class="form-label">Checkout Date (optional)</label>
-                                <input type="date" id="checkout_date" name="checkout_date" class="form-control">
-                                <small class="text-muted">Leave empty for NULL</small>
-                              </div>
-
-                              <div class="mb-3">
-                                <label class="form-label">Clock Out (optional)</label>
-                                <input type="time" id="clock_out_time" name="clock_out" class="form-control">
-                                <small class="text-muted">Leave empty to set default 00:00:00</small>
+                              <div class="row mb-3">
+                                <div class="col-md-6">
+                                  <label class="form-label">Clock Out Date (optional)</label>
+                                  <input type="date" id="checkout_date" name="checkout_date" class="form-control">
+                                  <small class="text-muted">Leave empty for NULL</small>
+                                </div>
+                                <div class="col-md-6">
+                                  <label class="form-label">Clock Out Time (optional)</label>
+                                  <input type="time" id="clock_out_time" name="clock_out" class="form-control">
+                                  <small class="text-muted">Leave empty to set default 00:00:00</small>
+                                </div>
                               </div>
 
                               <div id="edit-time-error" class="text-danger small" style="display:none;"></div>
@@ -1304,6 +1307,7 @@
                         </form>
                       </div>
                     </div>
+
 
                 </div>
 
@@ -1960,6 +1964,9 @@
     </script>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- bootstrap CSS/JS -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script> -->
     <script>
     (function() {
         function detectDeviceByWidth() {
@@ -1986,114 +1993,125 @@
 
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
+      // delegated click handler so it works across pagination/pages
+        document.addEventListener('click', function (e) {
+          var anchor = e.target.closest('.edit-time');
+          if (!anchor) return;
+
+          e.preventDefault();
+
+          var id = anchor.dataset.id;
+          var time = anchor.dataset.time || '';
+          var date = anchor.dataset.date || '';
+          var clockout = anchor.dataset.clockout || '';
+          var checkoutdate = anchor.dataset.checkoutdate || '';
+          var employee = anchor.dataset.employee || '';
+
+          document.getElementById('attendance_id').value = id;
+          document.getElementById('clock_in_time').value = time;
+          document.getElementById('attendance_date').value = date;
+          document.getElementById('clock_out_time').value = clockout;
+          document.getElementById('checkout_date').value = checkoutdate;
+
+          // Set modal title with employee name
+          var title = document.getElementById('editTimeModalLabel');
+          title.textContent = 'Edit Attendance Time (' + employee + ')';
+
+          document.getElementById('edit-time-error').style.display = 'none';
+
           var modalEl = document.getElementById('editTimeModal');
-          var modal = new bootstrap.Modal(modalEl);
+          var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modal.show();
+        });
 
-          // Open modal when clicking the anchor
-          document.querySelectorAll('.edit-time').forEach(function(a){
-            a.addEventListener('click', function(){
-              var id = this.dataset.id;
-              var time = this.dataset.time || '';
-              var date = this.dataset.date || '';
-              var clockout = this.dataset.clockout || '';
-              var checkoutdate = this.dataset.checkoutdate || '';
+      // AJAX submit
+      document.getElementById('edit-time-form').addEventListener('submit', function(e){
+        e.preventDefault();
 
-              document.getElementById('attendance_id').value = id;
-              document.getElementById('clock_in_time').value = time;
-              document.getElementById('attendance_date').value = date;
-              document.getElementById('clock_out_time').value = clockout;
-              document.getElementById('checkout_date').value = checkoutdate;
+        var id = document.getElementById('attendance_id').value;
+        var clock_in = document.getElementById('clock_in_time').value; // HH:MM
+        var date = document.getElementById('attendance_date').value;
+        var clock_out = document.getElementById('clock_out_time').value || null; // optional
+        var checkout_date = document.getElementById('checkout_date').value || null;
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-              document.getElementById('edit-time-error').style.display = 'none';
-              modal.show();
-            });
-          });
+        if (!id || !clock_in || !date) {
+          var err = document.getElementById('edit-time-error');
+          err.style.display = 'block';
+          err.textContent = 'Please fill required fields.';
+          return;
+        }
 
-          // AJAX submit
-          document.getElementById('edit-time-form').addEventListener('submit', function(e){
-            e.preventDefault();
+        var saveBtn = document.getElementById('save-time-btn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
 
-            var id = document.getElementById('attendance_id').value;
-            var clock_in = document.getElementById('clock_in_time').value; // HH:MM
-            var date = document.getElementById('attendance_date').value;
-            var clock_out = document.getElementById('clock_out_time').value || null; // optional
-            var checkout_date = document.getElementById('checkout_date').value || null;
-            var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        fetch("{{ url('/attendanceemployee/update-time') }}", {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': token,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            id: id,
+            clock_in: clock_in,
+            date: date,
+            clock_out: clock_out,
+            checkout_date: checkout_date
+          })
+        }).then(function(res) {
+          return res.json();
+        }).then(function(json) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save';
 
-            if (!id || !clock_in || !date) {
-              var err = document.getElementById('edit-time-error');
-              err.style.display = 'block';
-              err.textContent = 'Please fill required fields.';
-              return;
+          if (json.success) {
+            // Update UI: clock-in anchor text & data attributes
+            var anchor = document.getElementById('clock-in-' + id);
+            if (anchor) {
+              anchor.setAttribute('data-time', json.clock_in_24 || clock_in);
+              anchor.setAttribute('data-date', date);
+              anchor.setAttribute('data-clockout', json.clock_out_24 || '00:00');
+              anchor.setAttribute('data-checkoutdate', json.checkout_date || '');
+              var span = anchor.querySelector('.clock-text');
+              if (span) span.textContent = json.clock_in_display || (clock_in + ' AM');
             }
 
-            var saveBtn = document.getElementById('save-time-btn');
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Saving...';
+            // Update clock-out display cell
+            var coEl = document.getElementById('clock-out-' + id);
+            if (coEl) {
+              var textEl = coEl.querySelector('.clock-out-text');
+              if (textEl) textEl.textContent = json.clock_out_display || '00:00';
+            }
 
-            fetch("{{ url('/attendanceemployee/update-time') }}", {
-              method: 'POST',
-              credentials: 'same-origin',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': token,
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                id: id,
-                clock_in: clock_in,
-                date: date,
-                clock_out: clock_out,       // could be null
-                checkout_date: checkout_date // could be null
-              })
-            }).then(res => res.json())
-              .then(json => {
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Save';
+            // Update checkout_time_diff display cell
+            var diffEl = document.getElementById('checkout-time-diff-' + id);
+            if (diffEl) diffEl.textContent = json.checkout_time_diff || '00:00:00';
 
-                if (json.success) {
-                  // Update UI cells
-                  var anchor = document.getElementById('clock-in-' + id);
-                  if (anchor) {
-                    anchor.setAttribute('data-time', json.clock_in_24);
-                    anchor.setAttribute('data-date', date);
-                    anchor.setAttribute('data-clockout', json.clock_out_24 || '00:00');
-                    anchor.setAttribute('data-checkoutdate', json.checkout_date || '');
-
-                    var span = anchor.querySelector('.clock-text');
-                    if (span) span.textContent = json.clock_in_display;
-                  }
-
-                  var coEl = document.getElementById('clock-out-' + id);
-                  if (coEl) {
-                    coEl.querySelector('.clock-out-text').textContent = json.clock_out_display || '00:00';
-                  }
-
-                  var cdEl = document.getElementById('checkout-date-' + id);
-                  if (cdEl) cdEl.textContent = json.checkout_date || '-';
-
-                  var diffEl = document.getElementById('checkout-time-diff-' + id);
-                  if (diffEl) diffEl.textContent = json.checkout_time_diff || '00:00:00';
-
-                  modal.hide();
-
-                } else {
-                  var err = document.getElementById('edit-time-error');
-                  err.style.display = 'block';
-                  err.textContent = json.message || 'Update failed';
-                }
-            }).catch(err => {
-              saveBtn.disabled = false;
-              saveBtn.textContent = 'Save';
-              var eDiv = document.getElementById('edit-time-error');
-              eDiv.style.display = 'block';
-              eDiv.textContent = 'Network error';
-              console.error(err);
-            });
-
-          });
+            // Close modal
+            var modalEl = document.getElementById('editTimeModal');
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.hide();
+          } else {
+            var err = document.getElementById('edit-time-error');
+            err.style.display = 'block';
+            err.textContent = json.message || 'Update failed';
+          }
+        }).catch(function(err) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save';
+          var eDiv = document.getElementById('edit-time-error');
+          eDiv.style.display = 'block';
+          eDiv.textContent = 'Network error';
+          console.error(err);
         });
+
+      });
+    });
     </script>
+
 
 @endpush
