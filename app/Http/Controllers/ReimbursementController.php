@@ -348,7 +348,6 @@ class ReimbursementController extends Controller
                 Mail::to($Reimbursement->employee->email)->send(new ReimbursementApprovedMail($Reimbursement));
             }
             
-            
         }
 
         if ($request->status == 'Reject') {
@@ -387,6 +386,20 @@ class ReimbursementController extends Controller
                 Mail::to($Reimbursement->employee->email)->send(new ReimbursementPaidMail($Reimbursement));
             }
 
+        }else if ($request->status == 'Approved & Pay') {
+            $Reimbursement->approved_at = Carbon::now();
+            $Reimbursement->assign_to = Auth::id();
+            $Reimbursement->paid_by = Auth::id();
+            $Reimbursement->paid_at = Carbon::now();
+            $Reimbursement->remark = $request->remark;
+            $Reimbursement->paid_receipt = null;
+            $Reimbursement->status = 'Paid';
+            $Reimbursement->payment_type = 'UPI';
+
+            // Send Email
+            if($settings['is_email_trigger'] === 'on'){
+                Mail::to($Reimbursement->employee->email)->send(new ReimbursementPaidMail($Reimbursement));
+            }
         }else{
             $Reimbursement->status = $request->status;
         }

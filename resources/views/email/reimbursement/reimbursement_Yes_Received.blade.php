@@ -34,7 +34,7 @@
 
     <p class="thank-you">Thank you – Payment Received</p>
 
-    <p>Hello Nilesh Kalma,</p>
+    <p>Hello {{ $reimbursement->paid_by == 35 ? 'Sir':'Nilesh Kalma' }},</p>
 
     <p>I hope you are doing well.</p>
 

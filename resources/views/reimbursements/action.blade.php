@@ -68,10 +68,10 @@
     .qr-corner img { max-width: 100%; max-height: 100%; display: block; }
 
 </style>
-
+ 
 <div class="modal-body">
     {{-- small QR image top-right (only if reimbursement id exists) --}}
-    @if($reimbursementId && (Auth::user()->type == 'CEO' || Auth::user()->type == 'company') && in_array($reimbursement->status, ['Pending']))
+    @if((Auth::user()->type == 'CEO' &&  in_array($reimbursement->status, ['Pending','Paid','Approved'])) || (Auth::user()->type == 'management' &&  $reimbursement->status == 'Approved') || Auth::user()->type == 'company')
         <div class="row">
             <div class="col-12">
                 <div class="qr-corner" title="Scan to pay (UPI)">
@@ -196,7 +196,7 @@
                     <tr id="payment_type_row" style="display: none;">
                         <th>{{ __('Payment Type') }}</th>
                         <td colspan="3">
-                            {{ Form::select('payment_type', ['Cash' => 'Cash', 'Online' => 'Online'], $reimbursement->payment_type ?? null, [
+                            {{ Form::select('payment_type', ['Cash' => 'Cash', 'Online' => 'Online', 'UPI' => 'UPI'], $reimbursement->payment_type ?? null, [
                                 'class' => 'form-control',
                                 'id' => 'payment_type',
                                 'placeholder' => 'Select Payment Type'
@@ -268,6 +268,7 @@
         <!-- <button type="button" id="btn_approved_pay" class="btn btn-primary rounded">
           {{ __('Approved & Pay') }}
         </button> -->
+        <input type="submit" value="{{ __('Approved & Pay') }}" class="btn btn-primary rounded" name="status">
         <input type="submit" value="{{ __('Approved') }}" class="btn btn-success rounded" name="status">
         <input type="submit" value="{{ __('Reject') }}" class="btn btn-danger rounded" name="status">
     @endif
@@ -326,7 +327,7 @@
 
 
         // Form submit validation (optional double-check)
-        $('#reimbursement-action-form').on('submit', function (e) {
+        /*$('#reimbursement-action-form').on('submit', function (e) {
             const paymentType = $('#payment_type').val();
             const fileInput = $('#paid_receipt_input').val();
             const status_selector = $('#status_selector').val();
@@ -358,8 +359,90 @@
             }
 
             
-        });
+        });*/
+
     });
+</script>
+<script>
+$(function () {
+
+  var $form = $('#reimbursement-action-form');
+
+  // 1) Capture clicks on any submit-like buttons that represent a "status"
+  //    Works with <input type="submit" name="status" value="...">
+  //    or <button type="button" data-status="...">Approved & Pay</button>
+  $(document).on('click', 'input[type="submit"][name="status"], button[data-status], button[name="status"]', function (e) {
+    var $btn = $(this);
+    var statusVal = $btn.attr('name') === 'status' ? $btn.val() : ($btn.data('status') || $btn.val());
+    // store chosen status on the form (not an input yet)
+    $form.data('chosen_status', statusVal);
+    // If the button is a real submit button, let the submit event run.
+    // If it's type="button" (like Approved & Pay sometimes), we trigger submit manually:
+    if ($btn.is('button') && $btn.attr('type') === 'button') {
+      // we may need to show QR modal or custom confirmation first; if not, submit
+      // For Approved & Pay your code probably shows a QR/confirm popup. If you want auto-submit:
+      // $form.trigger('submit'); // only if you want direct submit without confirmation
+    }
+  });
+
+  // 2) Intercept form submit to add the hidden status input and run validations / confirmations
+  $form.on('submit', function (e) {
+    // if some other code already prevented default and will call form.submit(),
+    // this still runs when actual submission occurs
+    e.preventDefault();
+
+    var chosen = $form.data('chosen_status') || $('input[name="status"]').val() || $('#status_selector').val();
+    if (!chosen) {
+      // fallback - nothing chosen
+      if (!confirm('No action selected. Submit anyway?')) {
+        return false;
+      }
+    }
+
+    // Put confirmation message
+    var msg = 'Are you sure you want to proceed with: ' + (chosen || 'Submit') + ' ?';
+    if (!confirm(msg)) {
+      return false;
+    }
+
+    // existing validation logic (example: Mark as Paid requires payment_type / receipt)
+    if (chosen === 'Mark as Paid') {
+      var paymentType = $('#payment_type').val();
+      var fileInput = $('#paid_receipt_input').val();
+      if ((paymentType === '' || paymentType === null) && fileInput === '') {
+        toastr.error('Please select Payment Type and upload Paid Receipt.');
+        return false;
+      }
+    }
+
+    if (chosen === 'Query Raised') {
+      var comment = $('#accountant_comment').val() || '';
+      if (comment.trim() === '') {
+        toastr.error('Please enter the accountant query comment.');
+        return false;
+      }
+    }
+
+    // remove any previous hidden field then add fresh one
+    $form.find('input[name="status"][type="hidden"]').remove();
+    $('<input>').attr({
+      type: 'hidden',
+      name: 'status',
+      value: chosen
+    }).appendTo($form);
+
+    // optional flag for Approved & Pay confirmation (if used)
+    if ($form.data('approve_and_pay_confirmed')) {
+      // keep it, else you can set it here if needed:
+      // $('<input>').attr({ type: 'hidden', name: 'approve_and_pay_confirmed', value: '1' }).appendTo($form);
+    }
+
+    // finally submit without reinvoking this handler loop
+    $form.off('submit'); // prevent recursion
+    $form.submit();
+  });
+
+});
 </script>
 
 {{ Form::close() }}

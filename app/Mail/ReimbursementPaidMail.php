@@ -24,10 +24,19 @@ class ReimbursementPaidMail extends Mailable
 
     public function build()
     {
-        $emails = ['rmb@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com'];
-        // $emails = ['hchavda@miraclecloud-technology.com'];
-        $fromEmail = 'nkalma@miraclecloud-technology.com';
-        $fromName = 'Nilesh Kalma';
+        // $emails = ['rmb@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com'];
+        // $emails = ['nishadprakash2699@gmail.com'];
+        
+        if ($this->reimbursement->payment_type == 'UPI' && $this->reimbursement->paid_by == 35) {
+            $emails = ['rmb@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com','nkalma@miraclecloud-technology.com'];
+            $fromName = 'MCT IT SOLUTIONS PVT. LTD';
+            $fromEmail = 'hr@miraclecloud-technology.com';
+        }else{
+            $emails = ['rmb@miraclecloud-technology.com', 'hchavda@miraclecloud-technology.com'];
+            $fromName = 'Nilesh Kalma';
+            $fromEmail = 'nkalma@miraclecloud-technology.com';
+        }
+        
 
         $email = $this->from($fromEmail, ucfirst($fromName))
                       ->replyTo($fromEmail, ucfirst($fromName))
