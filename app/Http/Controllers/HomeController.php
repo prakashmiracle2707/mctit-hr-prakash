@@ -657,7 +657,7 @@ class HomeController extends Controller
                     $leave = LocalLeave::where('employee_id', $employee->id)
                         ->whereDate('start_date', '<=', $today)
                         ->whereDate('end_date', '>=', $today)
-                        ->whereIn('leave_type_id', [1, 2])
+                        ->whereIn('leave_type_id', [1,2,4,6])
                         ->with('leaveType') // assumes relation is defined
                         ->first();
 
@@ -926,7 +926,7 @@ class HomeController extends Controller
             $leave = LocalLeave::where('employee_id', $employee->id)
                 ->whereDate('start_date', '<=', $today)
                 ->whereDate('end_date', '>=', $today)
-                ->whereIn('leave_type_id', [1, 2])
+                ->whereIn('leave_type_id', [1,2,4,6])
                 ->with('leaveType') // assumes relation is defined
                 ->first();
 
