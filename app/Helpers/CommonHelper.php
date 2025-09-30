@@ -99,7 +99,7 @@ if (!function_exists('leaveStatusBadge')) {
                 $mgrCount = $leave->leaveManagers ? $leave->leaveManagers->count() : 0;
 
                 if ($mgrCount == 0) {
-                    if(\Auth::user()->type == 'employee'){
+                    if(isset(Auth::user()->type) && \Auth::user()->type == 'employee'){
                         return '<div class="badge bg-warning p-2 px-3">Pending</div>';
                     }else{
                         return '<div class="badge p-2 px-3" style="background:#F54927;">Requires Director Approval</div>';
