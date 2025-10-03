@@ -49,7 +49,8 @@ if (!function_exists('Get_Device_Type')) {
 if (!function_exists('Get_Device_Type_Icon')) {
     function Get_Device_Type_Icon($TypeIcon, $UserId)
     {
-        if ($TypeIcon === 'mobile' && ($UserId == 3 || $UserId == 1)) {
+        //if ($TypeIcon === 'mobile' && ($UserId == 3 || $UserId == 1)) {
+        if ($TypeIcon === 'mobile') {
             return "<i class='ti ti-device-mobile' style='color:red;' title='Mobile'></i>";
             // return false;
         }
@@ -87,6 +88,10 @@ if (!function_exists('GetStatusName')) {
 if (!function_exists('leaveStatusBadge')) {
     function leaveStatusBadge($leave)
     {
+        if($leave->leave_type_id == 7){
+            return "<span>-</span>";
+        }
+
         switch ($leave->status) {
             case 'Pending':
                 return '<div class="badge bg-warning p-2 px-3">Pending</div>';
