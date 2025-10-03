@@ -419,7 +419,7 @@ if (!function_exists('getTotalLeaveDays')) {
         $end   = Carbon::parse($endDate)->endOfDay();
 
         // e.g. leave_type_id = 5 is excluded (as per your original code)
-        if ($leave_type_id == 5) {
+        if ($leave_type_id == 5 || $leave_type_id == 7) {
             return 0;
         }
 
@@ -509,7 +509,7 @@ if (!function_exists('createLeaveDaysFromLeaveId')) {
                     $units = 0.5;
                 }
 
-                if ((int)$leave->leave_type_id == 5) {
+                if ((int)$leave->leave_type_id == 5 || (int)$leave->leave_type_id == 7) {
                     $units = 0;
                 }
 

@@ -103,7 +103,7 @@ class LeaveController extends Controller
                 $status = 'Approved';
             }
 
-            $days = $this->calculateLeaveDays($LeaveDetails, $financialYear);
+            $days = $this->getTotalLeaveDays($LeaveDetails->start_date,$LeaveDetails->end_date,$LeaveDetails->leave_type_id,$LeaveDetails->half_day_type);
 
             if (isset($leaveCounts[$LeaveDetails->leave_type_id][$status])) {
                 $leaveCounts[$LeaveDetails->leave_type_id][$status] += $days;
@@ -231,6 +231,13 @@ class LeaveController extends Controller
         $start = \Carbon\Carbon::parse($leave->start_date);
         $end = \Carbon\Carbon::parse($leave->end_date);
         $days = 0;
+        if($leave->half_day_type = 5){
+            return $days;
+        }
+
+        if($leave->half_day_type = 7){
+            return $days;
+        }
 
         for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
             if (in_array($date->dayOfWeek, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) continue;
@@ -429,7 +436,7 @@ class LeaveController extends Controller
 
         $totalLeaveDays = 0;
 
-        if($leave_type_id != 5){
+        if($leave_type_id != 5 && $leave_type_id != 7){
             // Fetch all holidays in the date range
             $holidays = \App\Models\Holiday::where('is_optional', 0)
                         ->pluck('start_date')
@@ -810,7 +817,7 @@ class LeaveController extends Controller
                 if ($request->status == 'draft') {
                     $leave->status = 'Draft';  // Set status to 'Draft' if the save as draft button is clicked
                 } else {
-                    if($request->leave_type_id == 4 || $request->leave_type_id == 5){
+                    if($request->leave_type_id == 4 || $request->leave_type_id == 5 || $request->leave_type_id == 7){
                         $leave->status = 'Pre-Approved'; // Default status if not a draft
                     }else{
                         if(empty($defaultManagerList)){
@@ -956,6 +963,30 @@ class LeaveController extends Controller
                                         ->replyTo($data["replyTo"], $data["replyToName"])
                                         ->cc($emails);
                             });
+                        }else if ($leave->leave_type_id == 7) {
+                            Mail::send('email.leave-request-coming-late', $data, function ($message) use ($data,$emails) {
+                                // Convert properly from d/m/Y
+                                $date = Carbon::createFromFormat('d/m/Y', $data["leaveDate"]);
+
+                                $today = Carbon::today();
+                                $tomorrow = Carbon::tomorrow();
+
+                                if ($date->isSameDay($today)) {
+                                    $dateText = 'today';
+                                } elseif ($date->isSameDay($tomorrow)) {
+                                    $dateText = 'tomorrow';
+                                } else {
+                                    $dateText = $date->format('d/m/Y'); // → 03 Oct 2025
+                                }
+
+                                $subjectTxt = $data['leaveType']." on ".$dateText;
+
+                                $message->to($data["toEmail"])
+                                        ->subject($subjectTxt)
+                                        ->from($data["fromEmail"], $data["fromNameEmail"])
+                                        ->replyTo($data["replyTo"], $data["replyToName"])
+                                        ->cc($emails);
+                            });
                         }else{
 
                             if(empty($managers)){
@@ -977,7 +1008,7 @@ class LeaveController extends Controller
                     
                 }
 
-
+                // echo "<pre>";print_r($leave);exit;
                 return redirect()->route('leave.index')->with('success', __('Leave successfully created.'));
             } else {
                 return redirect()->back()->with('error', __('Leave type ' . $leave_type->name . ' allows a maximum of ' . $allowed_leave . ' days. Please ensure your selected days are under ' . $leave_type->days . ' days.'));
@@ -1286,7 +1317,7 @@ class LeaveController extends Controller
                         $leave->status = 'Draft';  // Set status to 'Draft' if the save as draft button is clicked
                         $leave->save();
                     } else {
-                        if($request->leave_type_id == 4 || $request->leave_type_id == 5){
+                        if($request->leave_type_id == 4 || $request->leave_type_id == 5 || $request->leave_type_id == 7){
                             $leave->status = 'Pre-Approved'; // Default status if not a draft
                         }else{
 

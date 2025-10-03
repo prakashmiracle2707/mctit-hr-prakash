@@ -403,12 +403,12 @@
 
                     $.each(data, function(key, value) {
 
-                        if (value.total_leave == value.days && value.code != 'WFH' && value.code != 'EL' && value.code != 'LWP' && value.code != 'WKG') {
+                        if (value.total_leave == value.days && value.code != 'WFH' && value.code != 'EL' && value.code != 'LWP' && value.code != 'WKG' && value.code != 'CLO') {
                             $('#leave_type_id').append('<option value="' + value.id +
                                 '" disabled>' + value.title + '&nbsp(' +value.code + ')' + '&nbsp(' + value.total_leave +
                                 '/' + value.days + ')</option>');
                         } else {
-                            if(value.code != 'WFH' && value.code != 'EL' && value.code != 'LWP' && value.code != 'WKG'){
+                            if(value.code != 'WFH' && value.code != 'EL' && value.code != 'LWP' && value.code != 'WKG' && value.code != 'CLO'){
                                 $('#leave_type_id').append('<option value="' + value.id + '">' +
                                 value.title + '&nbsp(' +value.code + ')' + '&nbsp(' + value.total_leave + '/' + value
                                 .days + ')</option>');
