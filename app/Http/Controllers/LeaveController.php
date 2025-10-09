@@ -206,8 +206,10 @@ class LeaveController extends Controller
         }
 
         return $query->with(['employees', 'leaveType'])
-            ->orderByRaw("FIELD(status, 'Pending', 'Manager_Approved') DESC")
-            ->orderBy('applied_on', 'desc')
+            ->orderByRaw("FIELD(status, 'Pending', 'Manager_Approved') DESC,start_date DESC")
+            //  ->orderByRaw("FIELD(status, 'Pending', 'Manager_Approved') DESC")
+            //  ->orderBy('applied_on', 'desc')
+            //  ->orderBy('start_date', 'desc')
             ->get();
     }
 

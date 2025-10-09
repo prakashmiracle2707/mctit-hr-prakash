@@ -123,9 +123,11 @@
                                             <h5 class="mb-0">Allowed Leave</h5>
                                             <div>
                                                 @foreach($leaveTypesAll as $type)
-                                                    <p class="text-muted text-sm mb-0">
-                                                        Total {{ $type->title }} : {{ $type->allowed_leave }}
-                                                    </p>
+                                                    @if(  $type->title != 'Coming Late Office')
+                                                        <p class="text-muted text-sm mb-0">
+                                                            Total {{ $type->title }} : {{ $type->allowed_leave }}
+                                                        </p>
+                                                    @endif
                                                 @endforeach
                                             </div>
                                         </div>
@@ -153,10 +155,12 @@
                                             <h5 class="mb-0">Approved Leave</h5>
                                             <div>
                                                 @foreach ($leaveCounts as $leaveTypeId => $statuses)
-                                                    <p class="text-muted text-sm mb-0">
-                                                        Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
-                                                        {{ $statuses['Approved'] ?? 0 }}
-                                                    </p>
+                                                    @if(  $leaveTypes[$leaveTypeId] != 'Coming Late Office')
+                                                        <p class="text-muted text-sm mb-0">
+                                                            Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
+                                                            {{ $statuses['Approved'] ?? 0 }}
+                                                        </p>
+                                                    @endif
                                                 @endforeach
                                             </div>
                                         </div>
@@ -179,10 +183,12 @@
                                             <h5 class="mb-0">Rejected Leave</h5>
                                             <div>
                                                 @foreach ($leaveCounts as $leaveTypeId => $statuses)
-                                                    <p class="text-muted text-sm mb-0">
-                                                        Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
-                                                        {{ $statuses['Rejected'] ?? 0 }}
-                                                    </p>
+                                                    @if(  $leaveTypes[$leaveTypeId] != 'Coming Late Office')
+                                                        <p class="text-muted text-sm mb-0">
+                                                            Total {{ $leaveTypes[$leaveTypeId] ?? 'Unknown' }} :
+                                                            {{ $statuses['Rejected'] ?? 0 }}
+                                                        </p>
+                                                    @endif
                                                 @endforeach
                                             </div>
                                         </div>
