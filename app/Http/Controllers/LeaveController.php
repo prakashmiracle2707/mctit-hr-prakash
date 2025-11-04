@@ -61,7 +61,7 @@ class LeaveController extends Controller
             $leaveTypes = $this->getLeaveTypes(['SL', 'CL', 'WFH', 'OH', 'EL']);
         } else {
             $leaves = $this->getLeavesForAdmin($financialYear, $selectedEmployeeId);
-            $leaveTypes = $this->getLeaveTypes(['SL', 'CL', 'WFH', 'OH', 'EL']);
+            $leaveTypes = $this->getLeaveTypes(['SL', 'CL', 'WFH', 'OH', 'EL', 'LWP']);
         }
 
         // Initialize leave counts
@@ -840,8 +840,8 @@ class LeaveController extends Controller
                     /* Call createLeaveDaysFromLeaveId Function and update Start */
                         $total_leave_days =createLeaveDaysFromLeaveId($leave->id);
                         // Update the Leave record
-                        $leave->total_leave_days = $total_leave_days;
-                        $leave->save();
+                        // $leave->total_leave_days = $total_leave_days;
+                        // $leave->save();
                     /* Call createLeaveDaysFromLeaveId Function and update End */
                 }
                 
@@ -1455,8 +1455,8 @@ class LeaveController extends Controller
                         /* Call createLeaveDaysFromLeaveId Function and update Start */
                             $total_leave_days =createLeaveDaysFromLeaveId($leave->id);
                             // Update the Leave record
-                            $leave->total_leave_days = $total_leave_days;
-                            $leave->save();
+                            // $leave->total_leave_days = $total_leave_days;
+                            // $leave->save();
                         /* Call createLeaveDaysFromLeaveId Function and update End */
                     }
                    
@@ -1738,7 +1738,7 @@ class LeaveController extends Controller
         ->leftJoin('leaves', function ($join) use ($request, $startDate, $endDate) {
             $join->on('leaves.leave_type_id', '=', 'leave_types.id')
                 ->where('leaves.employee_id', '=', $request->employee_id)
-                ->where('leaves.status', '=', 'Approved')
+                ->whereIn('leaves.status', ['Approved', 'Pre-Approved'])
                 ->whereBetween('leaves.created_at', [$startDate, $endDate]);
         })
         ->where('leave_types.created_by', '=', \Auth::user()->creatorId());
@@ -1758,7 +1758,13 @@ class LeaveController extends Controller
 
         // Pro-rate leave based on months worked
         foreach ($leave_counts as $leave) {
-            $leave->days = round(($leave->days / 12) * $monthsWorked);
+            $EmpCountDay=round(($leave->days / 12) * $monthsWorked);
+            if($EmpCountDay < $leave->days){
+                $leave->days = $EmpCountDay;
+            }else{
+                $leave->days = $leave->days;
+            }
+            
         }
 
         return $leave_counts;
