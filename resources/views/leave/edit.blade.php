@@ -55,6 +55,15 @@
                     <option value="afternoon" {{ old('half_day_type', $leave->half_day_type) == 'afternoon' ? 'selected' : '' }}>
                         {{ __('Second Half (Afternoon)') }}
                     </option>
+
+                    <option value="leave_am_wfh_pm" {{ old('half_day_type', $leave->half_day_type) == 'leave_am_wfh_pm' ? 'selected' : '' }}>
+                        {{ __('Morning Leave / Afternoon WFH') }}
+                    </option>
+
+                    <option value="wfh_am_leave_pm" {{ old('half_day_type', $leave->half_day_type) == 'wfh_am_leave_pm' ? 'selected' : '' }}>
+                        {{ __('Morning WFH / Afternoon Leave') }}
+                    </option>
+
                 </select>
             </div>
         </div>

@@ -15,16 +15,21 @@
         </div>
     @endif
 
+
     @if (\Auth::user()->type != 'employee')
         <div class="row">
             <div class="col-md-12">
                 <div class="form-group">
                     {{ Form::label('employee_id', __('Employee'), ['class' => 'col-form-label']) }}<x-required></x-required>
                     {{ Form::select('employee_id', $employees, null, ['class' => 'form-control select2', 'id' => 'employee_id', 'placeholder' => __('Select Employee')]) }}
+
                 </div>
             </div>
         </div>
+        <input type="hidden" value=false name="employee_wfh" id="employee_wfh" />
     @else
+        <input type="hidden" value={{ !empty($employees) ? $employees->work_from_home : false }} name="employee_wfh" id="employee_wfh" />
+        <input type="hidden" value={{ !empty($employees) ? $employees->id : 0 }} name="employee_id_hidden" id="employee_id_hidden" />
         {{-- @foreach ($employees as $employee) --}}
         {!! Form::hidden('employee_id', !empty($employees) ? $employees->id : 0, ['id' => 'employee_id']) !!}
         {{-- @endforeach --}}
@@ -36,7 +41,7 @@
                 <select name="leave_type_id" id="leave_type_id" class="form-control select" required>
                     <option value="">{{ __('Select Leave Type') }}</option>
                     @foreach ($leavetypes as $leave)
-                        <option value="{{ $leave->id }}">{{ $leave->title }} (<span class="float-right pr-5">
+                        <option value="{{ $leave->id }}" data-code="{{ $leave->code }}">{{ $leave->title }} (<span class="float-right pr-5">
                                 {{ $leave->days }}</span>)</option>
                     @endforeach
                 </select>
@@ -49,6 +54,8 @@
                     <option value="full_day">{{ __('Full Day') }}</option>
                     <option value="morning">{{ __('First Half (Morning)') }}</option>
                     <option value="afternoon">{{ __('Second Half (Afternoon)') }}</option>
+                    <option value="leave_am_wfh_pm">{{ __('Morning Leave / Afternoon WFH') }}</option>
+                    <option value="wfh_am_leave_pm">{{ __('Morning WFH / Afternoon Leave') }}</option>
                 </select>
             </div>
         </div>
@@ -224,6 +231,19 @@
             }else{
                 $('#end_date').prop('disabled', false);
             }
+
+            // single-condition: if no WFH in the list, hide & disable hybrid half-day options
+            var hybridA = 'leave_am_wfh_pm';
+            var hybridB = 'wfh_am_leave_pm';
+            var employee_wfh = $('#employee_wfh').val();
+
+            if(selectedValue == "2" && employee_wfh == "true"){
+                $('#half_day_type option[value="' + hybridA + '"]').show();
+                $('#half_day_type option[value="' + hybridB + '"]').show();
+            }else{
+                $('#half_day_type option[value="' + hybridA + '"]').hide();
+                $('#half_day_type option[value="' + hybridB + '"]').hide();
+            }
         });
 
         $('#start_date').on('blur', function () {
@@ -320,5 +340,8 @@
                 $('#half_day_type_div').css('display','block');
             }
         });
+
+
     });
+
 </script>

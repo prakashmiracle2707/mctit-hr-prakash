@@ -38,19 +38,7 @@
                         <tr>
                             <th>{{ __('Leave(Full/Half Day) ') }}</th>
                             <td>
-                                @switch($leave->half_day_type)
-                                    @case('full_day')
-                                        <div class="badge bg-success">{{ __('Full Day') }}</div>
-                                        @break
-                                    @case('morning')
-                                        <div class="badge bg-dark">{{ __('First Half (Morning)') }}</div>
-                                        @break
-                                    @case('afternoon')
-                                        <div class="badge bg-danger">{{ __('Second Half (Afternoon)') }}</div>
-                                        @break
-                                    @default
-                                        <div class="badge bg-secondary">{{ __('Not Specified') }}</div>
-                                @endswitch
+                                {{ indexHalfLabel($leave->half_day_type) }}
                             </td>
                         </tr>
                         @endif

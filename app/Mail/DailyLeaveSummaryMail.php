@@ -25,7 +25,10 @@ class DailyLeaveSummaryMail extends Mailable
     {
         // $emails = ['hchavda@miraclecloud-technology.com','nkalma@miraclecloud-technology.com','nbhatasna@miraclecloud-technology.com','klalani@miraclecloud-technology.com','mgohil@miraclecloud-technology.com','somit@miraclecloud-technology.com','prakashn@miraclecloud-technology.com','sunnym@miraclecloud-technology.com','kamlani@miraclecloud-technology.com'];
         
-        $emails = ['hchavda@miraclecloud-technology.com','nkalma@miraclecloud-technology.com','nbhatasna@miraclecloud-technology.com','klalani@miraclecloud-technology.com','mgohil@miraclecloud-technology.com','somit@miraclecloud-technology.com','prakashn@miraclecloud-technology.com','kamlani@miraclecloud-technology.com'];
+        // $emails = ['hchavda@miraclecloud-technology.com','nkalma@miraclecloud-technology.com','nbhatasna@miraclecloud-technology.com','klalani@miraclecloud-technology.com','mgohil@miraclecloud-technology.com','somit@miraclecloud-technology.com','prakashn@miraclecloud-technology.com','kamlani@miraclecloud-technology.com'];
+
+        $emails = ['hchavda@miraclecloud-technology.com','nkalma@miraclecloud-technology.com','nbhatasna@miraclecloud-technology.com','klalani@miraclecloud-technology.com','mgohil@miraclecloud-technology.com','prakashn@miraclecloud-technology.com','kamlani@miraclecloud-technology.com'];
+        
         $fromEmail = 'hr@miraclecloud-technology.com';
         $fromName = 'MCT IT SOLUTIONS PVT LTD';
 

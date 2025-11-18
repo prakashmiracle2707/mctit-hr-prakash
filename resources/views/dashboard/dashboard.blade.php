@@ -680,16 +680,7 @@
                                                 <br /> <span class="badge bg-primary">{{ $leave->early_time }}</span>
                                             @endif
                                             <br />
-                                            @switch($leave->half_day_type)
-                                                @case('morning')
-                                                    <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
-                                                    @break
-                                                @case('afternoon')
-                                                    <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
-                                                    @break
-                                                @default
-                                                    <div></div>
-                                            @endswitch
+                                            <?php echo indexHalfLabel($leave); ?>
                                         </td>
                                         <td>
                                             @if($leave->start_date == $leave->end_date)
@@ -756,19 +747,8 @@
                                         <td>{{ !empty($leave->employee_id) ? $leave->employees->name : '' }}
                                             </td>
                                         <td>{{ !empty($leave->leave_type_id) ? $leave->leaveType->title : '' }}
-                                            
-                                            @switch($leave->half_day_type)
-                                                @case('morning')
-                                                    <br />
-                                                    <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
-                                                    @break
-                                                @case('afternoon')
-                                                    <br />
-                                                    <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
-                                                    @break
-                                                @default
-                                                    <div></div>
-                                            @endswitch
+                                            <br />
+                                            <?php echo indexHalfLabel($leave); ?>
 
                                             @if ($leave->leave_type_id == 5 && !empty($leave->early_time))
                                                 <span class="badge bg-primary">{{ $leave->early_time }}</span>
@@ -1415,16 +1395,7 @@
                                                         <span class="badge bg-primary">{{ $leave->early_time }}</span>
                                                     @endif
                                                     <br />
-                                                    @switch($leave->half_day_type)
-                                                        @case('morning')
-                                                            <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
-                                                            @break
-                                                        @case('afternoon')
-                                                            <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
-                                                            @break
-                                                        @default
-                                                            <div></div>
-                                                    @endswitch
+                                                    <?php echo indexHalfLabel($leave); ?>
                                                 </td>
                                                 <td>
                                                     @if($leave->start_date == $leave->end_date)
@@ -1572,16 +1543,7 @@
                                                         <span class="badge bg-primary">{{ $leave->early_time }}</span>
                                                     @endif
                                                     <br />
-                                                    @switch($leave->half_day_type)
-                                                        @case('morning')
-                                                            <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
-                                                            @break
-                                                        @case('afternoon')
-                                                            <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
-                                                            @break
-                                                        @default
-                                                            <div></div>
-                                                    @endswitch
+                                                    <?php echo indexHalfLabel($leave); ?>
                                                 </td>
                                                 <td>
                                                     @if($leave->start_date == $leave->end_date)
@@ -1638,16 +1600,7 @@
                                                         <span class="badge bg-primary">{{ $leave->early_time }}</span>
                                                     @endif
                                                     <br />
-                                                    @switch($leave->half_day_type)
-                                                        @case('morning')
-                                                            <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
-                                                            @break
-                                                        @case('afternoon')
-                                                            <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
-                                                            @break
-                                                        @default
-                                                            <div></div>
-                                                    @endswitch
+                                                   <?php echo indexHalfLabel($leave); ?>
                                                 </td>
                                                 <td>
                                                     @if($leave->start_date == $leave->end_date)

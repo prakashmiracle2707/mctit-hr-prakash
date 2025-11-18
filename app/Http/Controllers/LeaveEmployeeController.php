@@ -168,6 +168,10 @@ class LeaveEmployeeController extends Controller
                 return 'First Half (Morning)';
             case 'afternoon':
                 return 'Second Half (Afternoon)';
+            case 'leave_am_wfh_pm':
+                return 'Morning Leave / Afternoon WFH';
+            case 'wfh_am_leave_pm':
+                return 'Morning WFH / Afternoon Leave';
             default:
                 return 'Not Specified';  // Default if no matching type is found
         }

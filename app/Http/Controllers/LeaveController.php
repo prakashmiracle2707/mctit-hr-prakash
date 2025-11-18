@@ -630,7 +630,7 @@ class LeaveController extends Controller
                         'start_date' => 'required',
                         'end_date' => 'required',
                         'leave_reason' => 'required',
-                        'half_day_type' => 'nullable|in:full_day,morning,afternoon', 
+                        'half_day_type' => 'nullable|in:full_day,morning,afternoon,leave_am_wfh_pm,wfh_am_leave_pm', 
                         'cc_email_id' => 'required|array',
                         'cc_email_id.*' => 'exists:employees,id',
                         // 'managers' => 'array',
@@ -647,7 +647,7 @@ class LeaveController extends Controller
                         'start_date' => 'required',
                         'end_date' => 'required',
                         'leave_reason' => 'required',
-                        'half_day_type' => 'nullable|in:full_day,morning,afternoon', 
+                        'half_day_type' => 'nullable|in:full_day,morning,afternoon,leave_am_wfh_pm,wfh_am_leave_pm', 
                         'cc_email_id' => 'required|array',
                         'cc_email_id.*' => 'exists:employees,id',
                         //'managers' => 'array',
@@ -1116,7 +1116,7 @@ class LeaveController extends Controller
                             'start_date' => 'required',
                             'end_date' => 'required',
                             'leave_reason' => 'required',
-                            'half_day_type' => 'nullable|in:full_day,morning,afternoon', // Validate half_day_type
+                            'half_day_type' => 'nullable|in:full_day,morning,afternoon,leave_am_wfh_pm,wfh_am_leave_pm', // Validate half_day_type
                             'cc_email_id' => 'nullable|array', // Allow cc_email_id as an array of IDs
                             'cc_email_id.*' => 'exists:employees,id', // Ensure each value is a valid employee ID
                             'leave_time' => 'required',
@@ -1133,7 +1133,7 @@ class LeaveController extends Controller
                             'start_date' => 'required',
                             'end_date' => 'required',
                             'leave_reason' => 'required',
-                            'half_day_type' => 'nullable|in:full_day,morning,afternoon', // Validate half_day_type
+                            'half_day_type' => 'nullable|in:full_day,morning,afternoon,leave_am_wfh_pm,wfh_am_leave_pm', // Validate half_day_type
                             'cc_email_id' => 'nullable|array', // Allow cc_email_id as an array of IDs
                             'cc_email_id.*' => 'exists:employees,id', // Ensure each value is a valid employee ID
                             //'managers' => 'array',
@@ -1517,6 +1517,10 @@ class LeaveController extends Controller
                 return 'First Half (Morning)';
             case 'afternoon':
                 return 'Second Half (Afternoon)';
+            case 'leave_am_wfh_pm':
+                return 'Morning Leave / Afternoon WFH';
+            case 'wfh_am_leave_pm':
+                return 'Morning WFH / Afternoon Leave';
             default:
                 return 'Not Specified';  // Default if no matching type is found
         }

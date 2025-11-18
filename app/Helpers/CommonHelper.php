@@ -125,7 +125,7 @@ if (!function_exists('leaveStatusBadge')) {
                 return '<div class="badge bg-success p-2 px-3">Approved</div>';
 
             case 'Reject':
-                return '<div class="badge bg-danger p-2 px-3">Reject</div>';
+                return '<div class="badge bg-danger p-2 px-3">Rejected</div>';
 
             case 'Draft':
                 return '<div class="badge bg-info p-2 px-3">Draft</div>';
@@ -175,7 +175,7 @@ if (!function_exists('leaveStatusBadgeList')) {
                 return '<div class="badge bg-success p-2 px-3">Approved</div>';
 
             case 'Reject':
-                return '<div class="badge bg-danger p-2 px-3">Reject</div>';
+                return '<div class="badge bg-danger p-2 px-3">Rejected</div>';
 
             case 'Draft':
                 return '<div class="badge bg-info p-2 px-3">Draft</div>';
@@ -447,7 +447,7 @@ if (!function_exists('getTotalLeaveDays')) {
 
             // Half-day logic for SL/CL only
 
-            if (in_array($half_day_type, ['morning', 'afternoon'], true)) {
+            if (in_array($half_day_type, ['morning', 'afternoon','leave_am_wfh_pm','wfh_am_leave_pm'], true)) {
                 $total += 0.5;
             } else {
                 $total += 1;
@@ -510,7 +510,7 @@ if (!function_exists('createLeaveDaysFromLeaveId')) {
                 $units = 1.0;
 
                 // If leave is half-day (morning or afternoon)
-                if (in_array($leave->half_day_type, ['morning', 'afternoon'], true)) {
+                if (in_array($leave->half_day_type, ['morning', 'afternoon','leave_am_wfh_pm','wfh_am_leave_pm'], true)) {
                     $units = 0.5;
                 }
 
@@ -539,6 +539,50 @@ if (!function_exists('createLeaveDaysFromLeaveId')) {
         return $totalUnits;
     }
 }
+
+
+if (!function_exists('indexHalfLabel')) {
+    function indexHalfLabel($value)
+    {
+        switch ($value->half_day_type) {
+            case 'morning':
+                return '<div class="badge bg-dark">1st H/D (Morning)</div>';
+            case 'afternoon':
+                return '<div class="badge bg-danger">2nd H/D (Afternoon)</div>';
+            case 'leave_am_wfh_pm':
+                return '<div class="badge bg-info">Morning Leave / Afternoon WFH</div>';
+            case 'wfh_am_leave_pm':
+                return '<div class="badge bg-primary">Morning WFH / Afternoon Leave</div>';
+            case 'full_day':
+                return false;
+            default:
+                return false;
+        }
+    }
+}
+
+if (!function_exists('getHalfDayLabel')) {
+    function getHalfDayLabel($half_day_type, $leaveType = '')
+    {
+        switch ($half_day_type) {
+            case 'morning':
+                return '1st H/D (Morning) Leave';
+
+            case 'afternoon':
+                return '2nd H/D (Afternoon) Leave';
+
+            case 'leave_am_wfh_pm':
+                return 'Morning Leave / Afternoon WFH';
+
+            case 'wfh_am_leave_pm':
+                return 'Morning WFH / Afternoon Leave';
+
+            default:
+                return $leaveType; // fallback to full leave type
+        }
+    }
+}
+
     
 
 ?>

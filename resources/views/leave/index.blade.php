@@ -249,16 +249,7 @@
                                         @endif
                                         <br />
 
-                                        @switch($leave->half_day_type)
-                                            @case('morning')
-                                                <div class="badge bg-dark">{{ __('1st H/D (Morning)') }}</div>
-                                                @break
-                                            @case('afternoon')
-                                                <div class="badge bg-danger">{{ __('2nd H/D (Afternoon)') }}</div>
-                                                @break
-                                            @default
-                                                <div></div>
-                                        @endswitch
+                                        <?php echo indexHalfLabel($leave); ?>
                                     </td>
                                     <td>
                                         @if($leave->start_date == $leave->end_date)
@@ -394,6 +385,8 @@
         $(document).on('change', '#employee_id', function() {
             var employee_id = $(this).val();
 
+            var wfhExists = false;
+
             $.ajax({
                 url: '{{ route('leave.jsoncount') }}',
                 type: 'POST',
@@ -408,6 +401,11 @@
                         '<option value="">{{ __('Select Leave Type') }}</option>');
 
                     $.each(data, function(key, value) {
+
+                        // mark if WFH exists
+                        if (value.code === 'WFH') {
+                            wfhExists = true;
+                        }
 
                         if (value.total_leave == value.days && value.code != 'WFH' && value.code != 'EL' && value.code != 'LWP' && value.code != 'WKG' && value.code != 'CLO') {
                             $('#leave_type_id').append('<option value="' + value.id +
@@ -431,9 +429,34 @@
                         }
                     });
 
+                    // single-condition: if no WFH in the list, hide & disable hybrid half-day options
+                    var hybridA = 'leave_am_wfh_pm';
+                    var hybridB = 'wfh_am_leave_pm';
+
+
+                    if (!wfhExists) {
+                        $('#half_day_type option[value="' + hybridA + '"]').hide();
+                        $('#half_day_type option[value="' + hybridB + '"]').hide();
+
+                        // reset if one of the hybrids is currently selected
+                        var cur = $('#half_day_type').val();
+                        if (cur === hybridA || cur === hybridB) {
+                            $('#half_day_type').val('full_day');
+                        }
+
+                       
+                    } else {
+                        // ensure hybrids visible/enabled when WFH exists
+                        $('#half_day_type option[value="' + hybridA + '"]').show();
+                        $('#half_day_type option[value="' + hybridB + '"]').show();
+                    }
+
+                    $('#employee_wfh').val(wfhExists);
+
                 }
             });
         });
+
     </script>
 
 @endpush

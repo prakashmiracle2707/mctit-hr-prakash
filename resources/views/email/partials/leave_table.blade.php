@@ -21,11 +21,7 @@
                     @endif
                     @if ($leave->half_day_type)
                         <br>
-                        @if ($leave->half_day_type == 'morning')
-                            <span class="badge bg-dark">1st H/D (Morning)</span>
-                        @elseif ($leave->half_day_type == 'afternoon')
-                            <span class="badge bg-danger">2nd H/D (Afternoon)</span>
-                        @endif
+                        <b>{{ indexHalfLabel($leave->half_day_type) }}</b>
                     @endif
                 </td>
                 <td>

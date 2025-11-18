@@ -12,7 +12,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('leaves', function (Blueprint $table) {
-            $table->enum('half_day_type', ['full_day', 'morning', 'afternoon'])->default('full_day');
+            $table->enum('half_day_type', ['full_day', 'morning', 'afternoon','leave_am_wfh_pm','wfh_am_leave_pm'])->default('full_day');
         });
     }
 
