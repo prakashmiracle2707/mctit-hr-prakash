@@ -1528,18 +1528,39 @@ class LeaveController extends Controller
 
     public function changeaction(Request $request, UltraMsgService $whatsapp)
     {
+        $LeaveStatus = $request->status;
 
+        if($LeaveStatus == 'Rejected'){
+            $LeaveStatus = 'Reject';
+        }
         $leave = LocalLeave::find($request->leave_id);
 
-        $leave->status = $request->status;
+        $leave->status = $LeaveStatus;
         $leave->remark = $request->remark;
-        if ($leave->status == 'Approved' || $leave->status == 'HR Approved') {
+        if ($leave->status == 'Approved' || $leave->status == 'Auto Approved' || $leave->status == 'HR Approved') {
             
             $leave->status = 'Approved';
-            if($request->status == 'Approved'){
+            if($LeaveStatus == 'Approved'){
                 $leave->approved_type = 'manual';
+            }else if($LeaveStatus == 'HR Approved'){
+                $leave->approved_type = 'hr';
             }else{
                 $leave->approved_type = 'auto';
+            }
+            
+            $leave->approved_by = \Auth::user()->id;         
+            
+            $leave->approved_at = now();
+        }
+
+
+        if ($leave->status == 'Reject' || $leave->status == 'HR Rejected') {
+            
+            $leave->status = 'Reject';
+            if($LeaveStatus == 'Reject'){
+                $leave->approved_type = 'manual';
+            }else{
+                $leave->approved_type = 'hr';
             }
             
             $leave->approved_by = \Auth::user()->id;         
@@ -1564,7 +1585,7 @@ class LeaveController extends Controller
 
             // $uArr = [
             //     'leave_status_name' => $employee->name,
-            //     'leave_status' => $request->status,
+            //     'leave_status' => $LeaveStatus,
             //     'leave_reason' => $leave->leave_reason,
             //     'leave_start_date' => $leave->start_date,
             //     'leave_end_date' => $leave->end_date,
@@ -1608,9 +1629,9 @@ class LeaveController extends Controller
                 $leaveTypeId = $leave->leave_type_id;
                 $leaveTime = $leave->early_time;
                 
-                if($request->status == 'Approved'){
+                if($LeaveStatus == 'Approved'){
                     $whatsapp->sendLeaveApproved($leaveId, $employeeName, $leaveTypeId, $leaveType, $leaveTime, $leaveDateTo, $leaveReason, $leave_status, $employeePhone);
-                }else if($request->status == 'HR Approved'){
+                }else if($LeaveStatus == 'Auto Approved'){
                     $whatsapp->sendLeaveAutoApproved($leaveId, $employeeName, $leaveTypeId, $leaveType, $leaveTime, $leaveDateTo, $leaveReason, $leave_status, $employeePhone);
                 }else{
                     $whatsapp->sendLeaveRejected($leaveId, $employeeName, $leaveTypeId, $leaveType, $leaveTime, $leaveDateTo, $leaveReason, $leave_status, $employeePhone);
@@ -1645,10 +1666,14 @@ class LeaveController extends Controller
 
             
 
-                if($request->status == 'Approved'){
+                if($LeaveStatus == 'Approved'){
                     $emailTemp='email.leave-approved';
-                }else if($request->status == 'HR Approved'){
+                }else if($LeaveStatus == 'Auto Approved'){
                     $emailTemp='email.leave-approved-auto'; 
+                }else if($LeaveStatus == 'HR Approved'){
+                    $emailTemp='email.leave-approved-hr';
+                }else if($LeaveStatus == 'HR Rejected'){
+                    $emailTemp='email.leave-rejected-hr';
                 }else{
                     $emailTemp='email.leave-rejected';
                 }

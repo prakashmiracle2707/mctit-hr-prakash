@@ -136,10 +136,15 @@
 
 @if (!$hideFooter && in_array($leave->status, ['Manager_Approved', 'Partially_Approved', 'Reject','Approved','Pre-Approved']) && (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'CEO') && $leave->status != "Cancelled")
 <div class="modal-footer">
+    @if (Auth::user()->type != 'company')
     <input type="submit" value="{{ __('Approved') }}" class="btn btn-success rounded" name="status">
-    <input type="submit" value="{{ __('Reject') }}" class="btn btn-danger rounded" name="status">
+    <input type="submit" value="{{ __('Rejected') }}" class="btn btn-danger rounded" name="status">
+    @endif
     @if (Auth::user()->type == 'company')
-        <input type="submit" value="{{ __('HR Approved') }}" class="btn btn-outline-success rounded" name="status">
+        <input type="submit" value="{{ __('Auto Approved') }}" class="btn btn-outline-success rounded" name="status">
+
+        <input type="submit" value="{{ __('HR Approved') }}" class="btn btn-success rounded" name="status">
+        <input type="submit" value="{{ __('HR Rejected') }}" class="btn btn-danger rounded" name="status">
     @endif
 </div>
 @endif

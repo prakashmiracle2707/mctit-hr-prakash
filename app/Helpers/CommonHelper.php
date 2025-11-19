@@ -122,9 +122,16 @@ if (!function_exists('leaveStatusBadge')) {
                 if ($leave->approved_type == 'auto') {
                     return '<div class="badge bg-success p-2 px-3">System – Auto Approved</div>';
                 }
+
+                if ($leave->approved_type == 'hr') {
+                    return '<div class="badge bg-success p-2 px-3">HR Approved</div>';
+                }
                 return '<div class="badge bg-success p-2 px-3">Approved</div>';
 
             case 'Reject':
+                if ($leave->approved_type == 'hr') {
+                    return '<div class="badge bg-danger p-2 px-3">HR Rejected</div>';
+                }
                 return '<div class="badge bg-danger p-2 px-3">Rejected</div>';
 
             case 'Draft':
