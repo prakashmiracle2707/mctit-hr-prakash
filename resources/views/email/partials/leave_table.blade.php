@@ -19,19 +19,12 @@
                     @if ($leave->leave_type_id == 5 && $leave->early_time)
                         <br><span class="badge bg-primary">{{ $leave->early_time }}</span>
                     @endif
-                
+
                     @if ($leave->half_day_type)
                         <br>
-                        @if ($leave->half_day_type == 'morning')
-                            <span class="badge bg-dark">1st H/D (Morning)</span>
-                        @elseif ($leave->half_day_type == 'afternoon')
-                            <span class="badge bg-danger">2nd H/D (Afternoon)</span>
-                        @elseif ($leave->half_day_type == 'leave_am_wfh_pm')
-                            <span class="badge bg-info">Morning Leave / Afternoon WFH</span>
-                        @elseif ($leave->half_day_type == 'wfh_am_leave_pm')
-                            <span class="badge bg-primary">Morning WFH / Afternoon Leave</span>
-                        @endif
+                        {!! indexHalfLabel($leave) !!}
                     @endif
+                    
                 </td>
                 <td>
                     @if($leave->start_date == $leave->end_date)
