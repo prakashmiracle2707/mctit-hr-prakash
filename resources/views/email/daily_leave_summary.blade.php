@@ -23,7 +23,7 @@
 <body>
 
     {{-- ✅ Today’s Section --}}
-    <h2>🟢 Today's Leave Summary ({{ \Carbon\Carbon::today()->format('d M Y') }} | {{ \Carbon\Carbon::today()->format('l') }})</h2>
+    <h4>🟢 Today's Leave Summary ({{ \Carbon\Carbon::today()->format('d M Y') }} | {{ \Carbon\Carbon::today()->format('l') }})</h4>
 
     @if($todayLeaves->isEmpty())
         <p>No approved leaves for today.</p>
@@ -32,7 +32,7 @@
     @endif
 
     {{-- ✅ Next Working Day Section --}}
-    <h2>🟡 Next Working Day Leave Summary ({{ $nextWorkingDay->format('d M Y') }} | {{ $nextWorkingDay->format('l') }})</h2>
+    <h4>🟡 Next Working Day Leave Summary ({{ $nextWorkingDay->format('d M Y') }} | {{ $nextWorkingDay->format('l') }})</h4>
 
     @if($nextDayLeaves->isEmpty())
         <p>No approved leaves for {{ $nextWorkingDay->format('l') }}.</p>

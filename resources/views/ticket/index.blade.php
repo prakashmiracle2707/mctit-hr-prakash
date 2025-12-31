@@ -18,22 +18,7 @@
 @endpush
 
 @section('action-button')
-    @can('Create Ticket')
-        @if(session()->has('selected_project_id') && session('selected_project_id') !== 'all')
-            @if($selectedProjectName)
-                <a href="#"
-                   data-url="{{ route('ticket.create') }}"
-                   data-ajax-popup="true"
-                   data-title="{{ __('Create New Ticket') . ' : ' . $selectedProjectName }}"
-                   data-size="lg"
-                   data-bs-toggle="tooltip"
-                   title="{{ __('Create') }}"
-                   class="btn btn-sm btn-primary">
-                    <i class="ti ti-plus"></i>
-                </a>
-            @endif
-        @endif
-    @endcan
+    
 @endsection
 
 
@@ -133,6 +118,29 @@
     
     <div class="row">
         <div class="col-xl-12">
+            @can('Create Ticket')
+                @if(session()->has('selected_project_id') && session('selected_project_id') !== 'all')
+                    @if($selectedProjectName)
+                        <a href="#"
+                           data-url="{{ route('ticket.create') }}"
+                           data-ajax-popup="true"
+                           data-title="{{ __('Create New Ticket') . ' : ' . $selectedProjectName }}"
+                           data-size="lg"
+                           style="float:right;" 
+                           data-bs-toggle="tooltip"
+                           title="{{ __('Create') }}"
+                           class="btn btn-sm btn-primary">
+                            <i class="ti ti-plus"></i> Create Ticket
+                        </a>
+                    @endif
+                @endif
+            @endcan
+        </div>
+    </div>
+    <br />
+    <br />
+    <div class="row">
+        <div class="col-xl-12">
             <div class="card">
                 <div class="card-header card-body table-border-style">
                     {{-- <h5></h5> --}}
@@ -145,6 +153,7 @@
                                         <th>{{ __('Project') }}</th>
                                     @endif
                                     <th>{{ __('Title') }}</th>
+                                    <th>{{ __('Severity') }}</th>
                                     <th>{{ __('Priority') }}</th>
                                     <th>{{ __('Status') }}</th>
                                     <th>{{ __('Assignee') }}</th>
@@ -155,6 +164,18 @@
                             </thead>
                             <tbody>
                                 @foreach ($tickets as $ticket)
+                                        @php
+                                            $sev = $ticket->severity ?? 'Low';
+                                            if ($sev === 'Critical') {
+                                                $sevColor = '#d32f2f';
+                                            } elseif ($sev === 'High') {
+                                                $sevColor = '#ff5722';
+                                            } elseif ($sev === 'Medium') {
+                                                $sevColor = '#ff9800';
+                                            } else {
+                                                $sevColor = '#4caf50';
+                                            }
+                                        @endphp
                                     <tr>
                                         <td>
                                             @if ($ticket->ticketUnread() > 0)
@@ -186,8 +207,11 @@
                                         </td>
                                         @endif
                                         <td style="white-space: normal; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word;width: 400px;">{{ $ticket->title }}</td>
-
-                                        
+                                        <td>
+                                            <div class="badge p-2 px-3" style="background-color: {{ $sevColor }}; color: #fff;">
+                                                {{ strtoupper($sev) }}
+                                            </div>
+                                        </td>
 
                                         <td>
                                             @if ($ticket->getpriority)
@@ -222,7 +246,7 @@
                                                     <div class="action-btn bg-primary me-2">
                                                         <a href="{{ URL::to('ticket/' . $ticket->id . '/reply') }}"
                                                            class="mx-3 btn btn-sm align-items-center"
-                                                           data-bs-toggle="tooltip" title="{{ __('Reply') }}">
+                                                           data-bs-toggle="tooltip" title="{{ __('View') }}">
                                                             <span class="text-white"><i class="ti ti-arrow-back-up"></i></span>
                                                         </a>
                                                     </div>

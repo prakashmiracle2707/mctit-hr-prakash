@@ -837,6 +837,9 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    Route::post('ticket/{id}/change-status', [TicketController::class, 'changeStatus'])->name('ticket.changeStatus')
+    ->middleware(['auth', 'XSS']);
+
     // Attendance Routes Group
     Route::prefix('attendanceemployee')->middleware(['auth', 'XSS'])->group(function () {
         // Break Management Routes

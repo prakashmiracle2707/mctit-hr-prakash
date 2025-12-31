@@ -20,7 +20,7 @@
 
     <div class="row">
 
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-4">
             {{ Form::label('ticket_type_id', __('Ticket Type'), ['class' => 'col-form-label']) }} <x-required></x-required>
             {{ Form::select('ticket_type_id', $ticketTypes, null, [
                 'class' => 'form-control select2',
@@ -29,7 +29,17 @@
             ]) }}
         </div>
 
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-4">
+            {{ Form::label('severity', __('Severity'), ['class' => 'col-form-label']) }}
+            {{ Form::select(
+                'severity',
+                ['Critical' => 'Critical', 'High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],
+                old('severity', $ticket->severity ?? 'Low'),
+                ['class' => 'form-control select2', 'placeholder' => __('Select Severity')]
+            ) }}
+        </div>
+
+        <div class="form-group col-md-4">
             {{ Form::label('priority_id', __('Priority'), ['class' => 'col-form-label']) }} <x-required></x-required>
             {{ Form::select('priority_id', $ticketPriorities, $ticket->priority, [
                 'class' => 'form-control select2',

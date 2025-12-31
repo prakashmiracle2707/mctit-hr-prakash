@@ -1,6 +1,9 @@
 @php
     $chatgpt = App\Models\Utility::getValByName('enable_chatgpt');
     $attechment = \App\Models\Utility::get_file('uploads/tickets/');
+
+    $statuses = \App\Models\TicketStatus::all();
+    $canChange = (\Auth::user()->type == 'company' || $ticket->ticket_created == \Auth::user()->id);
 @endphp
 
 @extends('layouts.admin')
@@ -9,6 +12,9 @@
 @section('page-title')
     {{ __('Ticket Reply') }}
 @endsection
+
+
+
 @section('title')
     <div class="d-inline-block">
         <h5 class="h4 d-inline-block font-weight-400 mb-0 ">{{ __('Ticket Reply') }}</h5>
@@ -29,15 +35,45 @@
 @endpush
 
 @section('action-button')
-    @if (\Auth::user()->type == 'company' || $ticket->ticket_created == \Auth::user()->id)
-        <div class="float-end">
-            <a href="#" data-size="lg" data-url="{{ URL::to('ticket/' . $ticket->id . '/edit') }}"
-                data-ajax-popup="true" data-bs-toggle="tooltip" title="{{ __('Edit') }}"
-                data-title="{{ __('Edit Ticket') }}" class="btn btn-sm btn-info">
-                <i class="ti ti-pencil"></i>
-            </a>
+    <div class="float-end d-flex align-items-center gap-2">
+        @php
+            // Check if user is project manager of this ticket's project
+            $isProjectManager = false;
+
+            if ($ticket->project_id) {
+                $project = \App\Models\Project::find($ticket->project_id);
+
+                if ($project && is_array($project->project_manager_ids)) {
+                    $isProjectManager = in_array((string)\Auth::user()->employee?->id, $project->project_manager_ids);
+                }
+            }
+        @endphp
+
+        @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'client' || $ticket->ticket_created == \Auth::user()->id || $isProjectManager)
+            <div class="float-end">
+                <a href="#" data-size="lg" data-url="{{ URL::to('ticket/' . $ticket->id . '/edit') }}"
+                    data-ajax-popup="true" data-bs-toggle="tooltip" title="{{ __('Edit') }}"
+                    data-title="{{ __('Edit Ticket') }}" class="btn btn-sm btn-info">
+                    <i class="ti ti-pencil"></i>
+                </a>
+            </div>
+        @endif
+
+        {{-- STATUS DROPDOWN --}}
+        {{-- STATUS DROPDOWN --}}
+        <div style="width: 180px;">
+            {{ Form::select(
+                'status',
+                $statuses->pluck('name', 'id'),
+                $ticket->status,
+                [
+                    'class' => 'form-control form-control-sm',
+                    'id' => 'ticketStatusDropdown'
+                ]
+            ) }}
         </div>
-    @endif
+    </div>
+
 @endsection
 
 @section('content')
@@ -128,7 +164,7 @@
 
                                                             <a href="{{ URL::to('ticket/' . $subtask->id . '/reply') }}"
                                                                            class="btn btn-sm align-items-center"
-                                                                           data-bs-toggle="tooltip" title="{{ __('Reply') }}">{{ $subtask->ticket_code }}
+                                                                           data-bs-toggle="tooltip" title="{{ __('View') }}">{{ $subtask->ticket_code }}
                                                             </a>
                                                         </td>
                                                         @if (session('selected_project_id') === 'all')
@@ -174,7 +210,7 @@
                                                                     <div class="action-btn bg-primary me-2">
                                                                         <a href="{{ URL::to('ticket/' . $subtask->id . '/reply') }}"
                                                                            class="mx-3 btn btn-sm align-items-center"
-                                                                           data-bs-toggle="tooltip" title="{{ __('Reply') }}">
+                                                                           data-bs-toggle="tooltip" title="{{ __('View') }}">
                                                                             <span class="text-white"><i class="ti ti-arrow-back-up"></i></span>
                                                                         </a>
                                                                     </div>
@@ -218,12 +254,80 @@
                         <div class="card border">
                             <div class="card-body p-0">
                                 <div class="p-4 border-bottom">
-
-                                    @if ($ticket->getpriority)
-                                        <div class="badge mb-2" style="background-color: {{ $ticket->getpriority->color }}">
-                                            {{ $ticket->getpriority->name }}
+                                    <div class="row">
+                                        <div class="col-6">
+                                            @if ($ticket->getpriority)
+                                                <div class="mt-2">
+                                                    <strong>Priority :</strong>
+                                                    <div class="badge mb-2" style="background-color: {{ $ticket->getpriority->color }}">
+                                                        {{ $ticket->getpriority->name }}
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
-                                    @endif
+
+                                        <div class="col-6">
+                                            @if (!empty($ticket->severity))
+                                                @php
+                                                    // Map severity → colors (same logic used earlier)
+                                                    switch ($ticket->severity) {
+                                                        case 'Critical':
+                                                            $sevColor = '#d32f2f';
+                                                            break;
+                                                        case 'High':
+                                                            $sevColor = '#ff5722';
+                                                            break;
+                                                        case 'Medium':
+                                                            $sevColor = '#ff9800';
+                                                            break;
+                                                        default:
+                                                            $sevColor = '#4caf50'; // Low
+                                                    }
+                                                @endphp
+
+                                                <div class="mt-2">
+                                                    <strong>Severity :</strong>
+                                                    <span class="badge mb-2" style="background-color: {{ $sevColor }}; color:#fff;">
+                                                        {{ $ticket->severity }}
+                                                    </span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="col-8">
+                                                @php
+                                                    // Get last history (statusHistories relation is ordered desc in model)
+                                                    $lastStatusChange = $ticket->statusHistories->first() ?? null;
+                                                @endphp
+
+                                                @if($lastStatusChange)
+                                                    <div class="mt-2">
+                                                        <strong>{{ __('Last status by') }}:</strong>
+
+                                                        @if($lastStatusChange->changedBy)
+                                                            {{ ucfirst($lastStatusChange->changedBy->name) }}
+                                                        @else
+                                                            {{ __('User ID') . ' #' . ($lastStatusChange->changed_by ?? '-') }}
+                                                        @endif
+
+                                                        &nbsp; • &nbsp;
+
+                                                        <strong>{{ __('At') }}:</strong>
+                                                        {{ \Auth::user()->dateFormat($lastStatusChange->created_at) }}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+
+                                    
+
+
 
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h5 class="two-line-truncate">{{ $ticket->title }}</h5>
@@ -335,7 +439,7 @@
                                     <div class="text-end">
                                         <div class="col-12">
                                             <button type="submit" class="btn btn-sm bg-primary w-100" style="color: white">
-                                                <i class="ti ti-circle-plus me-1 mb-0"></i> {{ __('Send') }}</button>
+                                                <i class="ti ti-circle-plus me-1 mb-0"></i> {{ __('Submit') }}</button>
                                         </div>
                                     </div>
                                     {{ Form::close() }}
@@ -419,5 +523,82 @@
             </div>
         </div>
     </div>
+
+
+@push('script-page')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const dropdown = document.getElementById('ticketStatusDropdown');
+    if (!dropdown) return;
+
+    // Save previous selected value so we can revert if user clicks Cancel
+    let previousValue = dropdown.value;
+
+    const fetchUrl = "{{ route('ticket.changeStatus', $ticket->id) }}";
+
+    dropdown.addEventListener('change', async function () {
+
+        const newStatus = this.value;
+
+        // Show confirm dialog
+        if (!confirm("Are you sure you want to change the ticket status?")) {
+            // User canceled → revert the selection
+            dropdown.value = previousValue;
+            return;
+        }
+
+        dropdown.disabled = true;
+
+        const formData = new FormData();
+        formData.append('status', newStatus);
+
+        try {
+            const resp = await fetch(fetchUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const data = await resp.json().catch(() => null);
+
+            if (resp.status === 403) {
+                toastr.error("Permission denied");
+                dropdown.value = previousValue;
+                dropdown.disabled = false;
+                return;
+            }
+
+            if (!data) {
+                toastr.error("Unexpected server response");
+                dropdown.value = previousValue;
+                dropdown.disabled = false;
+                return;
+            }
+
+            if (data.success) {
+                
+
+                // Reload after update (optional)
+                setTimeout(() => window.location.reload(), 500);
+
+            }
+
+        } catch (err) {
+            console.error(err);
+        }
+
+        dropdown.disabled = false;
+
+    });
+
+});
+</script>
+@endpush
+
 
 @endsection

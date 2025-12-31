@@ -116,7 +116,7 @@
                                             @endif
                                         @endif
                                         <br />
-                                        {{ indexHalfLabel($leave->half_day_type) }}
+                                        {{ indexHalfLabel($leave) }}
                                     </td>
                                     <td>
                                         @if($leave->start_date == $leave->end_date)

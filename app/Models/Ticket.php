@@ -12,6 +12,7 @@ class Ticket extends Model
         'title',
         'employee_id',
         'priority',
+        'severity',
         'start_date',
         'end_date',
         'description',
@@ -73,6 +74,11 @@ class Ticket extends Model
     public function getstatus()
     {
         return $this->belongsTo(\App\Models\TicketStatus::class, 'status'); 
+    }
+
+    public function statusHistories()
+    {
+        return $this->hasMany(\App\Models\TicketStatusHistory::class)->orderBy('created_at', 'desc');
     }
 
 }
